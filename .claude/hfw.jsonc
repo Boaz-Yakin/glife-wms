@@ -1,0 +1,92 @@
+{
+  // hfw 워크플로우 설정
+  // 참고: https://github.com/Yeachan-Heo/oh-my-claudecode
+  // 이 파일은 .claude/hfw.jsonc 에 위치한다
+
+  "autopilot": {
+    // ──────────────────────────────────────────────
+    // 워크플로우 정의 (Named Autopilot Stage Profiles)
+    // 사용법: /autopilot --workflow <name> "작업 설명"
+    // ──────────────────────────────────────────────
+    "workflows": {
+
+      // 전체 개발 사이클: 기획 → 아키텍처 → 구현 → QA
+      "full-cycle": {
+        "version": 1,
+        "stages": ["ralplan", "execution", "qa"]
+      },
+
+      // 빠른 기능 구현: 계획 → 구현 (TRD 작성 후 바로 구현할 때)
+      "fast-build": {
+        "version": 1,
+        "stages": ["ralplan", "execution"]
+      },
+
+      // 리뷰 & 리팩토링: 계획 → 구현 → Ralph(재검토) → QA
+      "review-refactor": {
+        "version": 1,
+        "stages": ["ralplan", "execution", "ralph", "qa"]
+      }
+    },
+
+    // ──────────────────────────────────────────────
+    // 실행 전략: team 모드로 실행 (병렬 처리)
+    // ──────────────────────────────────────────────
+    "execution": "team",
+
+    "team": {
+      // 기본 에이전트 타입 설정
+      // 옵션: "claude", "codex", "gemini", "antigravity", "cursor", "grok"
+      "agentTypes": ["claude"],
+
+      // 역할별 에이전트 라우팅
+      // 특정 역할에 더 적합한 모델을 지정할 수 있다
+      "roleRouting": {
+        // 아키텍처 & 코드 리뷰
+        "architect": {
+          "model": "claude",
+          "instruction": "ADR/TRD 검토 후 아키텍처 일관성 확인. CLAUDE.md의 CRITICAL 규칙 준수 여부 반드시 검증"
+        },
+        // QA & 테스트
+        "qa": {
+          "model": "claude",
+          "instruction": "TRD의 Implementation Checklist 기준으로 검증. 에러 처리, 보안 체크리스트 항목 누락 없이 확인"
+        },
+        // 코드 작성 실행자
+        "executor": {
+          "model": "claude",
+          "instruction": "TRD 설계를 정확히 따라 구현. 임의로 Out of Scope 기능 추가 금지"
+        }
+      }
+    }
+  },
+
+  // ──────────────────────────────────────────────
+  // 팀 협업 설정
+  // ──────────────────────────────────────────────
+  "team": {
+    // 팀 작업 시 기본 에이전트 수
+    "defaultWorkerCount": 1
+  },
+
+  // ──────────────────────────────────────────────
+  // 프로젝트 컨텍스트 설정
+  // ──────────────────────────────────────────────
+  "project": {
+    // AI가 항상 먼저 읽어야 할 컨텍스트 파일 (우선순위 순)
+    "contextFiles": [
+      "CLAUDE.md",
+      "docs/01_PRD.md",
+      "docs/02_ADR.md",
+      "docs/03_TRD.md"
+    ],
+
+    // QA 단계에서 실행할 검증 스크립트
+    "qaCommands": [
+      "npm run lint",
+      "npm run type-check",
+      "npm run test",
+      "bash scripts/validate-arch.sh"
+    ]
+  }
+}

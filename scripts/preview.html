@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Glife WMS Barcode System Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'base',
+            themeVariables: {
+                primaryColor: '#e0e7ff',
+                primaryTextColor: '#1e1b4b',
+                primaryBorderColor: '#6366f1',
+                lineColor: '#4f46e5',
+                secondaryColor: '#f1f5f9',
+                tertiaryColor: '#ffffff'
+            }
+        });
+    </script>
+    <style>
+        @page {
+            size: letter;
+            margin: 15mm 14mm 15mm 14mm;
+            @bottom-right {
+                content: counter(page);
+            }
+        }
+
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', '맑은 고딕', helvetica, sans-serif;
+            color: #1e293b;
+            line-height: 1.6;
+            font-size: 13px;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 2px solid #2563eb;
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 14px;
+        }
+
+        h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1e3a8a;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
+            margin-top: 24px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 700;
+            color: #2563eb;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+
+        h4 {
+            font-size: 13px;
+            font-weight: 600;
+            color: #334155;
+            margin-top: 14px;
+            margin-bottom: 6px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        blockquote {
+            margin: 10px 0;
+            padding: 8px 14px;
+            background-color: #f8fafc;
+            border-left: 4px solid #3b82f6;
+            color: #475569;
+            font-size: 12px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 11.5px;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 7px 9px;
+            text-align: left;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #1e293b;
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #f1f5f9;
+            color: #0f172a;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 11.5px;
+            border: 1px solid #e2e8f0;
+        }
+
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12px 14px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 11px;
+            line-height: 1.45;
+            margin: 10px 0;
+            page-break-inside: avoid;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+        }
+
+        .mermaid {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 14px;
+            margin: 14px 0;
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #e2e8f0;
+            margin: 20px 0;
+        }
+
+        ul, ol {
+            margin-top: 0;
+            margin-bottom: 8px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 4px;
+        }
+
+        strong {
+            color: #0f172a;
+        }
+    </style>
+</head>
+<body>
+    <h1>[바코드 시스템 설계서] Glife WMS Barcode System Architecture &amp; Specification</h1>
+<blockquote>
+<p><strong>문서 버전</strong>: v1.0<br />
+<strong>작성일</strong>: 2026-09-09<br />
+<strong>적용 시스템</strong>: Glife WMS_APP (No-Click 고속 피킹 및 현장 재고관리 모듈)<br />
+<strong>관련 문서</strong>: <br />
+- <a href="01_PRD.md">01_PRD.md</a><br />
+- <a href="02_ADR.md">02_ADR.md</a> (ADR-003, ADR-005)<br />
+- <a href="03_TRD.md">03_TRD.md</a><br />
+- <a href="현장_재고_조사_UI_UX_설계.md">현장_재고_조사_UI_UX_설계.md</a></p>
+</blockquote>
+<hr />
+<h2>1. 개요 및 설계 목표</h2>
+<p>Glife WMS의 핵심 설계 원칙은 <strong>"터치 없는 고속 작업(No-Click, 0.05초 반응 속도)"</strong>과 <strong>"작업자 실수 및 데이터 오염 원천 차단"</strong>입니다.<br />
+본 바코드 시스템은 창고 내 모든 개체(로케이션, 품목, 박스, 주문, 작업자)와 공정 제어 명령(Command)을 표준화된 바코드 규격으로 정의하여, 모바일 PWA 환경에서 블루투스 웨어러블 링 스캐너(Ring Scanner) 및 카메라로 100% 원활하게 작동하도록 설계되었습니다.</p>
+<pre><code>┌────────────────────────────────────────────────────────────────────────┐
+│                      Glife WMS 바코드 시스템 4대 목표                    │
+├────────────────────────────────────────────────────────────────────────┤
+│ 1. Zero-Touch (No-Click): 화면 터치 조작 없이 바코드만으로 작업 완결    │
+│ 2. Self-Routing: 접두사(Prefix) 기반 시스템 자동 판별 및 라우팅         │
+│ 3. 0.05s Instant Feedback: 스캔 즉시 시각/청각/촉각 3중 감각 피드백      │
+│ 4. Plug &amp; Play: 별도 앱 설치 없는 웹 표준 Bluetooth HID 키보드 웨지    │
+└────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr />
+<h2>2. 바코드 심볼로지(Symbology) 및 데이터 규격 (Data Schema)</h2>
+<p>작업자가 어떤 화면에 있든, 스캐너가 읽은 데이터의 <strong>접두사(Prefix)</strong>를 통해 시스템이 해당 바코드의 유형과 목적을 스스로 판별합니다.</p>
+<h3>2.1 바코드 데이터 표준 명세표</h3>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">구분</th>
+<th style="text-align: left;">접두사(Prefix) / 체계</th>
+<th style="text-align: left;">권장 규격 (Symbology)</th>
+<th style="text-align: left;">데이터 예시</th>
+<th style="text-align: left;">상세 설명 및 부착 위치</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>로케이션 (Location)</strong></td>
+<td style="text-align: left;"><code>LOC-[Zone][Aisle][Bay][Level:알파벳][Bin]</code></td>
+<td style="text-align: left;"><strong>Code 128</strong></td>
+<td style="text-align: left;"><code>LOC-A0105B01</code></td>
+<td style="text-align: left;">창고 선반 랙 전면 부착.<br>Zone(1)+Aisle(2)+Bay(2)+Level(영문1)+Bin(2).<br>• 인간 표기: <strong><code>A01-05-B01</code></strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>상품 단품 (Item / SKU)</strong></td>
+<td style="text-align: left;">12~13자리 숫자 또는 <code>SKU-*</code></td>
+<td style="text-align: left;"><strong>UPC-A / EAN-13 / Code 128</strong></td>
+<td style="text-align: left;"><code>8801234567890</code><br><code>SKU-APPLE-01</code></td>
+<td style="text-align: left;">제조사 바코드(UPC/EAN) 원본 활용.<br>피킹 시 수량 자동 카운트, 재고 위치 역추적.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>박스/입고 (Box / Case)</strong></td>
+<td style="text-align: left;">14자리 숫자</td>
+<td style="text-align: left;"><strong>ITF-14</strong> (Interleaved 2 of 5)</td>
+<td style="text-align: left;"><code>18801234567897</code></td>
+<td style="text-align: left;">골판지 박스 표면 인쇄용 규격.<br>입고 적치 및 박스 단위 재고 이동 시 묶음(Box) 처리.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>명령 바코드 (Command)</strong></td>
+<td style="text-align: left;"><code>CMD-[ACTION]</code></td>
+<td style="text-align: left;"><strong>Code 128</strong></td>
+<td style="text-align: left;"><code>CMD-SKIP</code><br><code>CMD-UNDO</code><br><code>CMD-DONE</code></td>
+<td style="text-align: left;"><strong>현장 제어용 3대 명령 바코드</strong>.<br>작업자 카트/명찰에 부착하여 화면 터치 없이 제어.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>작업자 (User / Badge)</strong></td>
+<td style="text-align: left;"><code>USR-[사번/ID]</code></td>
+<td style="text-align: left;"><strong>Code 128</strong></td>
+<td style="text-align: left;"><code>USR-1042</code></td>
+<td style="text-align: left;">작업자 사원증/배지에 부착.<br>스캔 즉시 PIN/비밀번호 없이 0.1초 만에 자동 로그인.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>주문/전표 (Order / Pick)</strong></td>
+<td style="text-align: left;"><code>ORD-[송장번호/일자-순번]</code></td>
+<td style="text-align: left;"><strong>Code 128</strong></td>
+<td style="text-align: left;"><code>ORD-20260908-01</code></td>
+<td style="text-align: left;">종이 픽티켓 또는 출하 전표 상단 인쇄.<br>스캔 시 해당 주문의 피킹 러너 즉시 구동.</td>
+</tr>
+</tbody>
+</table>
+<h3>2.2 로케이션 5단계 좌표 체계 및 인간 인지 최적화 표준 가이드</h3>
+<p>창고 랙 및 보관 구역의 물리적 좌표를 표준 5단계 계층으로 정의하되, 현장 작업자의 시각적 혼동(숫자 연속 <code>01010101</code>로 인한 전치 오류)을 원천 차단하기 위해 <strong>영숫자 교차(Alphanumeric Alternation) 및 3단 인지 청킹(Chunking)</strong>을 공식 표준으로 적용합니다.</p>
+<pre><code>[로케이션 좌표 계층 구조]
+ Zone (구역) ➔ Aisle (통로) ➔ Bay (베이/열) ➔ Level (단/층: 영문) ➔ Bin (칸)
+</code></pre>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">좌표 요소</th>
+<th style="text-align: center;">코드 길이</th>
+<th style="text-align: center;">형식</th>
+<th style="text-align: center;">예시</th>
+<th style="text-align: left;">물리적 의미 및 현장 설명</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><strong>1. Zone (구역)</strong></td>
+<td style="text-align: center;">1자</td>
+<td style="text-align: center;">영문 대문자</td>
+<td style="text-align: center;"><code>A</code>, <code>F</code>, <code>R</code></td>
+<td style="text-align: left;">보관 특성/온도 구역 (<code>A</code>: 상온 Ambient, <code>F</code>: 냉동 Freeze, <code>R</code>: 대량보관 Reserve)</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>2. Aisle (통로)</strong></td>
+<td style="text-align: center;">2자</td>
+<td style="text-align: center;">2자리 숫자</td>
+<td style="text-align: center;"><code>01</code>, <code>02</code></td>
+<td style="text-align: left;">창고 통로 번호. 피킹 경로 생성 시 최적 동선(S-Shape) 정렬의 1차 기준.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>3. Bay (베이/열)</strong></td>
+<td style="text-align: center;">2자</td>
+<td style="text-align: center;">2자리 숫자</td>
+<td style="text-align: center;"><code>01</code>, <code>05</code>, <code>12</code></td>
+<td style="text-align: left;">통로 내 기둥과 기둥 사이의 랙 1칸(수평 위치, 열 번호). 동선 정렬의 2차 기준.</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>4. Level (단/층)</strong></td>
+<td style="text-align: center;"><strong>1자</strong></td>
+<td style="text-align: center;"><strong>영문 대문자</strong></td>
+<td style="text-align: center;"><strong><code>A</code>, <code>B</code>, <code>C</code>, <code>D</code></strong></td>
+<td style="text-align: left;"><strong>[인간 인지 표준] 랙의 수직 선반 단(바닥부터 최하단 <code>A단(1단)</code>, <code>B단(2단)</code>, <code>C단(3단)</code>, <code>D단(4단)</code>)</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>5. Bin (빈/칸)</strong></td>
+<td style="text-align: center;">2자</td>
+<td style="text-align: center;">2자리 숫자</td>
+<td style="text-align: center;"><code>01</code>, <code>02</code>, <code>03</code></td>
+<td style="text-align: left;">단(Level) 내에서 바구니/칸막이로 가로 분할된 세부 위치.<br>• 단 전체를 단일 위치로 사용 시 기본값 <code>01</code> 지정.</td>
+</tr>
+</tbody>
+</table>
+<h4>인간 인지 최적화 2대 표준 규칙</h4>
+<ol>
+<li><strong>원칙 ①: 영숫자 교차 (Alphanumeric Alternation)</strong></li>
+<li>연속된 숫자열(<code>A-01-05-02-01</code> 또는 <code>A01010101</code>)은 숫자가 겹쳐 작업자의 눈 피로도와 읽기 실수를 유발합니다.</li>
+<li>선반 단(Level)을 숫자가 아닌 <strong>영문 알파벳(<code>A</code>, <code>B</code>, <code>C</code>, <code>D</code>...)</strong>으로 치환하여 숫자와 문자를 교차 배치함으로써 시각적 착시를 100% 방지합니다.</li>
+<li><strong>원칙 ②: 3단 인지 청킹 (Cognitive 3-Chunk Grouping)</strong></li>
+<li>인간의 단기 기억 용량(밀러의 법칙: 3~4 청크)에 맞춰 작업자의 동선 이동 순서대로 3개 덩어리로 묶습니다:<ul>
+<li><code>[1단계: 어느 통로로 가는가?]</code> ➔ <strong><code>A01</code></strong> (Zone + Aisle)</li>
+<li><code>[2단계: 몇 번째 랙 기둥인가?]</code> ➔ <strong><code>05</code></strong> (Bay)</li>
+<li><code>[3단계: 선반의 어느 단/칸인가?]</code> ➔ <strong><code>B01</code></strong> (Level: B단 + Bin: 01번칸)</li>
+</ul>
+</li>
+</ol>
+<h4>공식 데이터 표현 규격 (Data Format Specification)</h4>
+<ul>
+<li><strong>인간 판독용 공식 표기 (Human-Readable Text)</strong>:<br />
+  ➔ <strong><code>A01 - 05 - B01</code></strong> (A구역 01번 통로 / 05번 베이 / B단 01번칸)</li>
+<li><strong>바코드 스캔 데이터 (Machine-Readable String)</strong>:<br />
+  ➔ <strong><code>LOC-A0105B01</code></strong> (Code 128, 총 12자리 컴팩트 포맷으로 스캔 성공률 극대화)</li>
+<li><strong>현장 구두 소통 호칭 (Verbal Communication)</strong>:<br />
+  ➔ <em>"A 1통로, 5열, </em><em>B단 1번</em><em>"</em></li>
+<li><strong>하위 호환성 및 유연한 파싱 (Backward Compatibility)</strong>:<br />
+  시스템 파서는 신규 표준(<code>LOC-A0105B01</code>, <code>A01-05-B01</code>)은 물론, 과거 숫자 기반 좌표(<code>LOC-A01050201</code>, <code>A-01-05-02-01</code>)가 인입되어도 자동으로 <code>Level 02 ➔ B</code>로 상호 매핑하여 완벽히 호환 처리합니다.</li>
+</ul>
+<hr />
+<h2>3. 현장 제어용 3대 명령 바코드 (Command Barcodes)</h2>
+<p>피킹 작업 중 장갑을 착용한 손으로 스마트폰 화면을 터치하는 비효율을 방지하기 위해 <strong>명령 바코드</strong>를 제공합니다. 작업자는 카트 손잡이나 손목 밴드에 부착된 바코드를 스캔하여 조작합니다.</p>
+<pre><code>┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   CMD-SKIP   │     │   CMD-UNDO   │     │   CMD-DONE   │
+│ |||||||||||| │     │ |||||||||||| │     │ |||||||||||| │
+│  [결품 패스]  │     │  [직전 취소]  │     │  [피킹 완료]  │
+└──────────────┘     └──────────────┘     └──────────────┘
+</code></pre>
+<ol>
+<li><strong><code>CMD-SKIP</code> (결품 / 위치 건너뛰기)</strong>:</li>
+<li><strong>동작</strong>: 현재 로케이션에 실물 재고가 없거나 찾을 수 없을 때 스캔.</li>
+<li><strong>효과</strong>:<ul>
+<li>피킹 화면은 지체 없이 다음 최적 동선 로케이션으로 자동 전환.</li>
+<li>백엔드 <code>cycle_count_requests</code> 테이블에 <code>URGENT</code> 우선순위의 <strong>긴급 실사 요청 자동 발행</strong>.</li>
+<li>재고관리자(<code>INSPECTOR</code>) 화면에 즉각 결품 알림 배너 표시.</li>
+</ul>
+</li>
+<li><strong><code>CMD-UNDO</code> (직전 스캔 취소)</strong>:</li>
+<li><strong>동작</strong>: 실수로 다른 상품을 찍었거나, 수량을 초과 스캔했을 때 스캔.</li>
+<li><strong>효과</strong>: 직전 1회의 스캔 카운트를 원복(-1)하고 정상 상태로 복구.</li>
+<li><strong><code>CMD-DONE</code> (작업 강제 종료 및 전송)</strong>:</li>
+<li><strong>동작</strong>: 배치 피킹 완료 시점 또는 관리자 승인 하에 잔여 품목을 스킵하고 조기 마감할 때 스캔.</li>
+<li><strong>효과</strong>: 현재까지의 피킹 실적을 확정 저장하고 결과 요약 화면으로 이동.</li>
+</ol>
+<hr />
+<h2>4. 하드웨어 구성 및 통신 아키텍처 (Bluetooth HID Wedge)</h2>
+<p>별도의 OS 네이티브 SDK나 복잡한 시리얼(SPP) 드라이버 설치 없이, <strong>순수 웹 기술(PWA)</strong>로 장치 독립성을 확보합니다.</p>
+<pre><code>┌────────────────────────────────┐
+│  웨어러블 핑거 링 스캐너          │
+│  (양손 자유 / 360도 회전 헤드)    │
+└───────────────┬────────────────┘
+                │ Bluetooth HID (Keyboard Wedge)
+                ▼
+┌────────────────────────────────┐
+│  스마트폰 / 태블릿 (PWA 웹앱)     │
+│  - 전역 Keydown 버퍼 리스너     │
+│  - 50ms 스트림 파서            │
+│  - Web Audio / Haptic 사운드   │
+└────────────────────────────────┘
+</code></pre>
+<h3>4.1 권장 하드웨어 구성</h3>
+<ul>
+<li><strong>피킹 작업자 (<code>PICKER</code>)</strong>:</li>
+<li><strong>스캐너</strong>: 블루투스 핑거 링 스캐너 (Ring Scanner, 예: Eyoyo, Zebra RS5100 등)</li>
+<li><strong>단말기</strong>: 손목 스트랩 장착 스마트폰 또는 피킹 카트 거치대</li>
+<li><strong>장점</strong>: 양손으로 상자와 과일을 들면서 검지 손가락 측면의 버튼 하나로 즉각 스캔 가능</li>
+<li><strong>재고 검사자 (<code>INSPECTOR</code>)</strong>:</li>
+<li><strong>단말기</strong>: 스마트폰 카메라(HTML5 <code>BarcodeDetector</code> API 내장) 또는 링 스캐너 연동</li>
+</ul>
+<h3>4.2 전역 키보드 웨지 리스너 (Global Keyboard Wedge Engine)</h3>
+<p>바코드 스캐너는 텍스트 입력 후 마지막에 <code>Enter</code> 키(<code>\r\n</code>)를 전송합니다. 본 시스템은 브라우저의 <code>keydown</code> 이벤트를 전역에서 캡처하여 처리합니다.</p>
+<ul>
+<li><strong>인간 타이핑 vs 바코드 입력 자동 구분 로직</strong>:</li>
+<li>일반 사람의 키보드 타이핑: 문자 간 간격 80ms ~ 250ms</li>
+<li>바코드 스캐너 전송: 문자 간 간격 <strong>5ms ~ 20ms</strong> 초고속 연속 전송</li>
+<li>입력 간격이 50ms 미만인 연속 문자열이 인입된 후 <code>Enter</code>가 수신되면 바코드로 확정 판정.</li>
+<li><strong>포커스 프리(Focus-Free)</strong>:</li>
+<li>화면 내 <code>&lt;input&gt;</code> 포커스가 없거나, 엉뚱한 곳을 보고 있어도 전역 이벤트 리스너가 바코드를 감지하여 즉시 처리.</li>
+</ul>
+<hr />
+<h2>5. 소프트웨어 바코드 라우터 및 상태 머신 (State Machine)</h2>
+<p>스캔된 바코드의 접두사와 현재 애플리케이션의 컨텍스트에 따라 자동으로 상태가 전환됩니다.</p>
+<div class="mermaid">
+flowchart TD
+    Scan([바코드 스캔 발생: 0.05s]) --> Parse{Prefix 분석}
+
+    Parse -->|LOC-*| LocBranch[로케이션 바코드]
+    Parse -->|UPC / SKU| ItemBranch[상품/단품 바코드]
+    Parse -->|CMD-*| CmdBranch[명령 바코드]
+    Parse -->|USR-*| AuthBranch[작업자 바코드]
+    Parse -->|ORD-*| OrderBranch[주문/송장 바코드]
+
+    LocBranch --> ModeCheck1{현재 모드는?}
+    ModeCheck1 -->|피킹 러너| PickLoc[목표 로케이션 도달 검증 ➔ 상품 스캔 대기]
+    ModeCheck1 -->|현장 재고관리| InvLoc[해당 랙 적치 품목 목록 즉시 로딩]
+
+    ItemBranch --> ModeCheck2{현재 모드는?}
+    ModeCheck2 -->|피킹 러너| PickItem[해당 품목 카운트 +1 / 목표 수량 도달 체크]
+    ModeCheck2 -->|현장 재고관리| InvItem[해당 상품이 보관된 모든 로케이션 역추적]
+
+    CmdBranch -->|CMD-SKIP| DoSkip[결품 확정 ➔ 긴급 실사 큐 발행 ➔ 다음 로케이션]
+    CmdBranch -->|CMD-UNDO| DoUndo[직전 카운트 1회 취소 복구]
+    CmdBranch -->|CMD-DONE| DoDone[피킹 완료 및 결과 보고서 생성]
+
+    AuthBranch --> DoLogin[해당 작업자 세션 0.1s 자동 로그인]
+    OrderBranch --> DoLoadOrder[해당 피킹 전표 배치 즉시 로딩]
+</div>
+
+<hr />
+<h2>6. 즉시 피드백 엔진 (Audio &amp; Haptic Feedback)</h2>
+<p>작업자가 피킹 중 시선을 화면에 고정하지 않고 상품과 랙에 집중할 수 있도록 청각(Web Audio) 및 촉각(Vibration API) 피드백을 제공합니다.</p>
+<table>
+<thead>
+<tr>
+<th>상황 / 상태</th>
+<th>사운드 피드백 (Web Audio API)</th>
+<th>햅틱 피드백 (Vibration API)</th>
+<th>시각 피드백 (UI Color)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>정상 스캔 / 카운트 +1</strong></td>
+<td><strong>1200Hz 단일 핑 비프음</strong> (50ms)</td>
+<td><strong>50ms 단타 진동</strong></td>
+<td>에메랄드 그린 (<code>#10B981</code>) 펄스</td>
+</tr>
+<tr>
+<td><strong>로케이션 일치 도달</strong></td>
+<td><strong>880Hz 도-미 화음 비프</strong> (80ms)</td>
+<td><strong>80ms 단타 진동</strong></td>
+<td>블루 (<code>#3B82F6</code>) 테두리 활성화</td>
+</tr>
+<tr>
+<td><strong>목표 수량 달성 완료</strong></td>
+<td><strong>1500Hz 멜로디 완료음</strong> (120ms)</td>
+<td><strong>50ms - 50ms - 100ms 2단 진동</strong></td>
+<td>바이올렛 (<code>#8B5CF6</code>) 완료 배지</td>
+</tr>
+<tr>
+<td><strong>오스캔 / 불일치 에러</strong></td>
+<td><strong>400Hz 저음 버저음 2회</strong> (100ms × 2)</td>
+<td><strong>250ms 롱 진동</strong></td>
+<td>로즈 레드 (<code>#EF4444</code>) 화면 점멸</td>
+</tr>
+<tr>
+<td><strong>명령 실행 (<code>CMD-*</code>)</strong></td>
+<td><strong>600Hz ➔ 1000Hz 슬라이드 상승음</strong></td>
+<td><strong>100ms - 50ms - 100ms 2회 진동</strong></td>
+<td>앰버 옐로우 (<code>#F59E0B</code>) 알림</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>7. 현장 라벨 제작 및 물리적 배치 가이드 (Physical Deployment)</h2>
+<h3>7.1 로케이션 라벨 규격 및 시각적 계층화 디자인 (선반 랙 전면)</h3>
+<ul>
+<li><strong>권장 크기</strong>: 가로 100mm × 세로 45mm 이상</li>
+<li><strong>재질</strong>:</li>
+<li><strong>유포지(PP) 또는 PET 합성지</strong> 사용 (종이 라벨 금지: 습기 및 박스 마찰에 쉽게 훼손됨)</li>
+<li><strong>무광 라미네이팅 코팅</strong>: 창고 천장 LED 조명 반사로 인한 바코드 스캔 난반사 에러 차단</li>
+<li><strong>시각적 계층화 (Visual Hierarchy) 디자인 원칙</strong>:</li>
+<li>선반 앞에 도착한 작업자가 당장 확인해야 하는 핵심 정보인 <strong><code>B01(B단 01번칸)</code>만 초대형 볼드(44pt)</strong>로 강조.</li>
+<li>상위 위치(<code>A01 - 05 -</code>)는 기본 폰트(20pt)로 차분하게 배치하여 불필요한 시선 분산 방지.</li>
+<li><strong>단별 컬러 밴드(Color Band) 가이드</strong>:</li>
+<li>작업자가 멀리서도 직관적으로 높이를 인지하도록 라벨 우측 또는 선반 프레임에 컬러 띠 적용:<ul>
+<li><strong>A단 (1단 / 최하단)</strong>: <strong>초록색 띠</strong> (<code>#10B981</code>)</li>
+<li><strong>B단 (2단 / 중단)</strong>: <strong>노란색/골드 띠</strong> (<code>#F59E0B</code>)</li>
+<li><strong>C단 (3단 / 상단)</strong>: <strong>파란색 띠</strong> (<code>#3B82F6</code>)</li>
+<li><strong>D단 (4단 / 최상단)</strong>: <strong>보라색 띠</strong> (<code>#8B5CF6</code>)</li>
+</ul>
+</li>
+</ul>
+<pre><code class="language-text">┌────────────────────────────────────────────────────────┐
+│  A01 - 05 -        B01                 [상온 / B단 2단] │
+│ (통로 01·베이 05)  (B단 01번칸 - 44pt)  [🟡 골드 밴드]  │
+│  ────────────────────────────────────────────────────  │
+│    ||| | ||||| || |||||||| |||| | |||| ||| |||| |      │
+│                     LOC-A0105B01                       │
+└────────────────────────────────────────────────────────┘
+</code></pre>
+<h3>7.2 작업자 보조 도구 (명령 바코드 패치)</h3>
+<ul>
+<li><strong>피킹 카트 손잡이 전면</strong>:</li>
+<li>가로 스트립 형태로 <code>CMD-SKIP</code>, <code>CMD-UNDO</code>, <code>CMD-DONE</code> 3개 바코드 라벨 부착.</li>
+<li><strong>작업자 명찰 뒷면 또는 손목 밴드</strong>:</li>
+<li>카트 없이 단독 피킹하는 작업자를 위해 휴대용 카드 패치 제공.</li>
+</ul>
+<hr />
+<h2>8. 시스템 도입 및 롤아웃 체크리스트 (Rollout Checklist)</h2>
+<table>
+<thead>
+<tr>
+<th>단계</th>
+<th>세부 점검 항목</th>
+<th>담당</th>
+<th>완료 기준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>준비</strong></td>
+<td>기존 상품 마스터의 UPC/EAN 데이터 검증</td>
+<td>데이터 관리자</td>
+<td>중복 UPC 여부 및 누락율 0% 확인</td>
+</tr>
+<tr>
+<td><strong>인쇄</strong></td>
+<td>영숫자 교차(<code>A01-05-B01</code>) 및 단별 컬러 밴드 기준 로케이션 라벨 1회 일괄 출력</td>
+<td>창고 관리자</td>
+<td>유포지 무광 코팅 라벨 출력 완료</td>
+</tr>
+<tr>
+<td><strong>부착</strong></td>
+<td>랙 선반 프레임 눈높이/손높이 위치에 라벨 정위치 부착</td>
+<td>현장 작업자</td>
+<td>전 구역 로케이션 라벨 부착 및 오부착 검수</td>
+</tr>
+<tr>
+<td><strong>장비</strong></td>
+<td>핑거 링 스캐너 스마트폰 Bluetooth HID 페어링 테스트</td>
+<td>IT / 현장</td>
+<td>스캐너 ➔ 웹 브라우저 50ms 이내 입력 확인</td>
+</tr>
+<tr>
+<td><strong>소프트웨어</strong></td>
+<td>WMS_APP 전역 키보드 리스너 및 3중 피드백 엔진 탑재</td>
+<td>개발팀</td>
+<td>No-Click 연속 스캔 및 명령 바코드 처리 정상 확인</td>
+</tr>
+<tr>
+<td><strong>현장 테스트</strong></td>
+<td>실제 피킹 동선 및 긴급 실사 연동 모의 테스트 (5회 반복)</td>
+<td>피커 / 인스펙터</td>
+<td>터치 없이 1개 오더 피킹 완결 시간 50% 단축 검증</td>
+</tr>
+</tbody>
+</table>
+</body>
+</html>
