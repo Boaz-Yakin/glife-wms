@@ -1,0 +1,18 @@
+{
+  "/(picking)/picking/page": "/picking",
+  "/(picking)/picking/run/page": "/picking/run",
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/inventory/adjust/route": "/api/inventory/adjust",
+  "/api/inventory/queue/route": "/api/inventory/queue",
+  "/api/picking/orders/route": "/api/picking/orders",
+  "/api/picking/run/route": "/api/picking/run",
+  "/api/picking/skip/route": "/api/picking/skip",
+  "/favicon.ico/route": "/favicon.ico",
+  "/inventory/count/page": "/inventory/count",
+  "/inventory/lookup/page": "/inventory/lookup",
+  "/inventory/page": "/inventory",
+  "/inventory/queue/page": "/inventory/queue",
+  "/inventory/transfer/page": "/inventory/transfer",
+  "/page": "/"
+}

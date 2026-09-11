@@ -1,0 +1,45 @@
+
+> mobile-app@0.1.0 build
+> next build
+
+▲ Next.js 16.3.4 (Turbopack)
+- Environments: .env.local
+✓ Running next.config.ts took 41ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 4.4s
+  Running TypeScript ...
+  Finished TypeScript in 3.5s ...
+  Collecting page data using 15 workers ...
+  Generating static pages using 15 workers (0/16) ...
+  Generating static pages using 15 workers (4/16) 
+  Generating static pages using 15 workers (8/16) 
+  Generating static pages using 15 workers (12/16) 
+✓ Generating static pages using 15 workers (16/16) in 612ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ƒ /api/inventory/adjust
+├ ƒ /api/inventory/queue
+├ ƒ /api/picking/orders
+├ ƒ /api/picking/run
+├ ƒ /api/picking/skip
+├ ○ /inventory
+├ ○ /inventory/count
+├ ○ /inventory/lookup
+├ ○ /inventory/queue
+├ ○ /inventory/transfer
+├ ○ /picking
+└ ○ /picking/run
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+npm notice
+npm notice New minor version of npm available! 11.9.0 -> 11.19.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.19.1
+npm notice To update run: npm install -g npm@11.19.1
+npm notice

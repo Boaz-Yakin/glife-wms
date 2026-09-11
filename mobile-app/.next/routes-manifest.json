@@ -1,0 +1,141 @@
+{
+  "version": 3,
+  "pages404": true,
+  "appType": "app",
+  "caseSensitive": false,
+  "basePath": "",
+  "redirects": [
+    {
+      "source": "/:path+/",
+      "destination": "/:path+",
+      "internal": true,
+      "priority": true,
+      "statusCode": 308,
+      "regex": "^(?:/((?:[^/]+?)(?:/(?:[^/]+?))*))/$"
+    }
+  ],
+  "headers": [],
+  "onMatchHeaders": [],
+  "rewrites": {
+    "beforeFiles": [],
+    "afterFiles": [],
+    "fallback": []
+  },
+  "dynamicRoutes": [],
+  "staticRoutes": [
+    {
+      "page": "/",
+      "regex": "^/(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/(?:/)?$"
+    },
+    {
+      "page": "/_global-error",
+      "regex": "^/_global\\-error(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_global\\-error(?:/)?$"
+    },
+    {
+      "page": "/_not-found",
+      "regex": "^/_not\\-found(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/_not\\-found(?:/)?$"
+    },
+    {
+      "page": "/api/inventory/adjust",
+      "regex": "^/api/inventory/adjust(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/inventory/adjust(?:/)?$"
+    },
+    {
+      "page": "/api/inventory/queue",
+      "regex": "^/api/inventory/queue(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/inventory/queue(?:/)?$"
+    },
+    {
+      "page": "/api/picking/orders",
+      "regex": "^/api/picking/orders(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/picking/orders(?:/)?$"
+    },
+    {
+      "page": "/api/picking/run",
+      "regex": "^/api/picking/run(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/picking/run(?:/)?$"
+    },
+    {
+      "page": "/api/picking/skip",
+      "regex": "^/api/picking/skip(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/api/picking/skip(?:/)?$"
+    },
+    {
+      "page": "/favicon.ico",
+      "regex": "^/favicon\\.ico(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/favicon\\.ico(?:/)?$"
+    },
+    {
+      "page": "/inventory",
+      "regex": "^/inventory(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inventory(?:/)?$"
+    },
+    {
+      "page": "/inventory/count",
+      "regex": "^/inventory/count(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inventory/count(?:/)?$"
+    },
+    {
+      "page": "/inventory/lookup",
+      "regex": "^/inventory/lookup(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inventory/lookup(?:/)?$"
+    },
+    {
+      "page": "/inventory/queue",
+      "regex": "^/inventory/queue(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inventory/queue(?:/)?$"
+    },
+    {
+      "page": "/inventory/transfer",
+      "regex": "^/inventory/transfer(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/inventory/transfer(?:/)?$"
+    },
+    {
+      "page": "/picking",
+      "regex": "^/picking(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/picking(?:/)?$"
+    },
+    {
+      "page": "/picking/run",
+      "regex": "^/picking/run(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/picking/run(?:/)?$"
+    }
+  ],
+  "dataRoutes": [],
+  "rsc": {
+    "header": "rsc",
+    "varyHeader": "rsc, next-router-state-tree, next-router-prefetch, next-router-segment-prefetch",
+    "prefetchHeader": "next-router-prefetch",
+    "didPostponeHeader": "x-nextjs-postponed",
+    "contentTypeHeader": "text/x-component",
+    "suffix": ".rsc",
+    "prefetchSegmentHeader": "next-router-segment-prefetch",
+    "prefetchSegmentSuffix": ".segment.rsc",
+    "prefetchSegmentDirSuffix": ".segments",
+    "clientParamParsing": false,
+    "dynamicRSCPrerender": false
+  },
+  "rewriteHeaders": {
+    "pathHeader": "x-nextjs-rewritten-path",
+    "queryHeader": "x-nextjs-rewritten-query"
+  }
+}
