@@ -31,7 +31,7 @@
 | **인증** | `auth.users` | `id`, `email`, `phone`, `encrypted_password` | Supabase 내장 시스템 (직접 관리 불필요) |
 | **유저 정보** | `profiles` | `id` (FK: auth.users.id), `name`, `role`, `status` | 로그인한 유저는 본인 정보만 Read/Update |
 | **매장 정보** | `stores` | `id` (PK), `no`, `address` | 누구나 (또는 인증된 유저만) **Read-Only** |
-| **상품 정보** | `items` | `id` (PK), `sku`, `upc`, `name`, `desc`, `box_price`, `unit_price` 등 | 누구나 (또는 인증된 유저만) **Read-Only** |
+| **상품 정보** | `items` | `id` (PK), `sku`, `upc`, `name_en`, `name_kr`, `box_price`, `unit_price` 등 | 누구나 (또는 인증된 유저만) **Read-Only** |
 | **주문 내역** | `orders` | `id` (PK), `user_id` (FK), `store_id` (FK), `order_date`, `status`, `note` | 생성자 본인만 **Read/Write**, 관리자는 전체 Read |
 | **주문 상세** | `order_items`| `id` (PK), `order_id` (FK), `item_id` (FK), `qty`, `uom`, `price` | *정규화를 위해 새로 추가된 테이블* |
 

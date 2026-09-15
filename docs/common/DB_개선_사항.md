@@ -61,7 +61,7 @@
 1. **`stores`**: 매장/고객사 기본 정보
 2. **`users`**: 작업자 및 관리자 계정 (권한: ADMIN, INSPECTOR, STORE, PICKER)
 3. **`locations`**: 창고 로케이션 마스터 (Zone-Aisle-Bay-Level-Bin 5단계 좌표)
-4. **`items`**: 상품 마스터 (SKU, 바코드, 단가, 규격, 온도구분, 안전재고)
+4. **`items`**: 상품 마스터 (SKU, 바코드, 단가, 규격, 파트너사, 안전재고)
 5. **`inventory`**: 로케이션별 실시간 재고 원장 (실재고, 할당재고, 마이너스 방지 제약)
 6. **`orders`**: 주문 헤더 (송장번호, 매장, 총 청구액, 상태)
 7. **`order_items`**: 주문 상세 품목 (SKU, 수량, 피킹수량, 피커, 피킹시각)
@@ -105,8 +105,23 @@ CREATE TABLE users (
 );
 
 -- =============================================================================
--- 2. 물리적 로케이션 및 상품 마스터
+-- 2. 물리적 로케이션, 파트너 및 상품 마스터
 -- =============================================================================
+
+CREATE TYPE partner_type AS ENUM ('MANUFACTURER', 'SUPPLIER', 'BOTH');
+
+-- 파트너 마스터
+CREATE TABLE partners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    type partner_type NOT NULL DEFAULT 'BOTH',
+    contact_person VARCHAR(100),
+    phone VARCHAR(50),
+    email VARCHAR(100),
+    address TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
 -- 로케이션 마스터 (S-Shape 동선 및 Cold Chain 자동 계산용)
 -- [바코드 신표준] 인간 표기: 'A01-05-B01' | 스캔 데이터: 'LOC-A0105B01'
@@ -129,22 +144,25 @@ CREATE TABLE items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sku VARCHAR(50) UNIQUE NOT NULL,           -- 상품 식별 코드 (SKU)
     upc VARCHAR(50) UNIQUE NOT NULL,           -- 바코드 (UPC/EAN-13)
-    name VARCHAR(100) NOT NULL,                -- 품목명 (영문)
-    name_ko VARCHAR(100),                      -- 한국어 품목명 (ITEM_KO)
-    desc_ko TEXT,                              -- 한국어 상세 설명
-    category VARCHAR(50),                      -- 카테고리
-    item_volume NUMERIC(10, 2),                -- 부피/체적 (물류 공간 계산용)
-    uom VARCHAR(20) DEFAULT 'BOX',             -- 기본 출고 단위 (BOX, EA, CASE 등)
-    units_per_box INT NOT NULL DEFAULT 1,      -- [추가] 박스당 낱개 수 (UOM 환산용)
-    unit_price NUMERIC(12, 2) DEFAULT 0,       -- 낱개 단가
+    name_en VARCHAR(255) NOT NULL,             -- 품목명 (영문/표준)
+    name_kr VARCHAR(255),                      -- 한국어 품목명
+    item_volume NUMERIC(10, 3),                -- 부피/체적
+    desc_en TEXT,                              -- 영문 상세 설명
+    desc_kr TEXT,                              -- 한국어 상세 설명
+    category VARCHAR(100),                     -- 카테고리
+    note TEXT,                                 -- 특이사항
+    uom VARCHAR(20) NOT NULL,                  -- 기본 출고 단위
     box_price NUMERIC(12, 2) DEFAULT 0,        -- 박스 단가
-    zone_type VARCHAR(5) NOT NULL DEFAULT 'A', -- [Cold Chain] 'A'(상온), 'F'(냉동차량)
-    default_location_id VARCHAR(20) REFERENCES locations(id), -- 기본 적치 로케이션
-    min_stock_qty INT NOT NULL DEFAULT 0,      -- [추가] 안전 재고 수량 (보충 트리거 기준)
-    shelf_life_days INT,                       -- [추가] 기본 유통기한 일수 (NULL = 비관리 품목)
-    image_url TEXT,                            -- [추가] 상품 이미지 URL (현장 식별용)
-    is_active BOOLEAN NOT NULL DEFAULT TRUE,   -- [추가] 단종/판매중단 시 비활성화
-    note TEXT,
+    pack_price NUMERIC(12, 2) DEFAULT 0,       -- 팩(묶음) 단가
+    unit_price NUMERIC(12, 2) NOT NULL DEFAULT 0, -- 낱개 단가
+    units_per_box INT,                         -- 박스당 낱개 수
+    zone_type VARCHAR(5) NOT NULL DEFAULT 'A', -- [Cold Chain]
+    min_stock_qty INT DEFAULT 0,               -- 안전 재고 수량
+    shelf_life_days INT,                       -- 유통기한 일수
+    image_url TEXT,                            -- 상품 이미지 URL
+    is_active BOOLEAN DEFAULT TRUE,            -- 단종 여부
+    manufacturer_id UUID REFERENCES partners(id), -- 제조사 ID
+    supplier_id UUID REFERENCES partners(id),     -- 공급사 ID
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

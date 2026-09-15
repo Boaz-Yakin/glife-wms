@@ -1,5 +1,5 @@
 import * as React from "react"
-import { getItems } from "@/services/master.service"
+import { getItems, getPartners } from "@/services/master.service"
 import { ItemsTable } from "@/components/features/master/ItemsTable"
 
 export default async function MasterItemsPage({
@@ -18,6 +18,8 @@ export default async function MasterItemsPage({
     search
   })
 
+  const { data: partners } = await getPartners()
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -32,7 +34,7 @@ export default async function MasterItemsPage({
           데이터를 불러오지 못했습니다. ({error})
         </div>
       ) : (
-        <ItemsTable data={data || []} totalCount={count} />
+        <ItemsTable data={data || []} totalCount={count} partners={partners || []} />
       )}
     </div>
   )

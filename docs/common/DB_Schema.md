@@ -96,16 +96,20 @@
 | `id` | UUID | PRIMARY KEY | 상품 고유 식별자 (`gen_random_uuid()`) |
 | `sku` | VARCHAR(50) | UNIQUE, NOT NULL | 상품 관리 코드 (SKU) |
 | `upc` | VARCHAR(50) | UNIQUE, NOT NULL | 바코드 번호 (EAN-13 / UPC) |
-| `name` | VARCHAR(100) | NOT NULL | 품목명 (영문/표준) |
-| `name_ko` | VARCHAR(100) | NULL | 한국어 품목명 |
-| `desc_ko` | TEXT | NULL | 한국어 상세 설명 |
+| `name_en` | VARCHAR(255) | NOT NULL | 품목명 (영문/표준) |
+| `name_kr` | VARCHAR(255) | NULL | 한국어 품목명 |
+| `desc_en` | TEXT | NULL | 영문 상세 설명 |
+| `desc_kr` | TEXT | NULL | 한국어 상세 설명 |
 | `category` | VARCHAR(50) | NULL | 카테고리 분류 |
 | `item_volume` | NUMERIC(10,2) | NULL | 상품 체적/부피 (차량 적재 및 공간 계산용) |
 | `uom` | VARCHAR(20) | DEFAULT 'BOX' | 기본 출고 단위 (`'BOX'`, `'EA'` 등) |
 | `units_per_box` | INT | NOT NULL, DEFAULT 1 | **[추가]** 박스당 낱개 수 (UOM 변환용) |
 | `unit_price` | NUMERIC(12,2) | DEFAULT 0 | 낱개 단가 |
+| `pack_price` | NUMERIC(12,2) | DEFAULT 0 | 팩(묶음) 단가 |
 | `box_price` | NUMERIC(12,2) | DEFAULT 0 | 박스 단가 |
 | `zone_type` | VARCHAR(5) | NOT NULL, DEFAULT 'A' | **[추가]** 콜드체인 구분 (`'A'`: 상온, `'F'`: 냉동) |
+| `manufacturer_id` | UUID | REFERENCES partners(id) | **[추가]** 제조사 ID |
+| `supplier_id` | UUID | REFERENCES partners(id) | **[추가]** 공급사 ID |
 | `default_location_id` | VARCHAR(20) | REFERENCES locations(id) | 기본 적치 로케이션 |
 | `min_stock_qty` | INT | NOT NULL, DEFAULT 0 | **[추가]** 안전 재고 수량 (보충 알림 기준) |
 | `shelf_life_days` | INT | NULL | **[추가]** 기본 유통기한 일수 |
@@ -203,6 +207,24 @@
 | `completed_by` | UUID | REFERENCES users(id) | 실사를 확인/완료한 INSPECTOR |
 | `completed_at` | TIMESTAMPTZ | NULL | 실사 완료 시각 |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | 큐 요청 생성 일시 |
+
+---
+
+### 2.6 Partners (`partners`)
+
+제조사(Manufacturer) 및 공급사(Supplier) 등 파트너사 마스터 정보입니다.
+
+| 컬럼명 | 데이터 타입 | 제약 조건 | 설명 |
+| --- | --- | --- | --- |
+| `id` | UUID | PRIMARY KEY | 파트너 고유 ID (PK) |
+| `name` | VARCHAR(255) | NOT NULL | 파트너사 이름 (예: 농심, CJ대한통운) |
+| `type` | ENUM | DEFAULT 'BOTH' | 파트너 타입 (`'MANUFACTURER'`, `'SUPPLIER'`, `'BOTH'`) |
+| `contact_person` | VARCHAR(100) | | 담당자명 |
+| `phone` | VARCHAR(50) | | 연락처 |
+| `email` | VARCHAR(100) | | 이메일 |
+| `address` | TEXT | | 주소 |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | 등록일시 |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | 수정일시 |
 
 ---
 

@@ -3,19 +3,25 @@ import { createClient } from '@/lib/supabase/server'
 export interface ItemData {
   id: string
   sku: string
-  name: string
-  barcode: string
-  description?: string
+  name_en: string
+  upc: string | null
+  desc_en?: string | null
+  uom: string
+  unit_price: number
+  zone_type: 'A' | 'F'
+  manufacturer_id?: string | null
+  manufacturer?: { name: string } | null
   created_at: string
 }
 
 export async function getItems({ page = 1, limit = 20, search = '' }) {
   const supabase = await createClient()
-  
-  let query = (supabase as any).from('items').select('*', { count: 'exact' })
-  
+  let query = supabase.from('items').select(`
+    *,
+    manufacturer:manufacturer_id(name)
+  `, { count: 'exact' })
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,name.ilike.%${search}%`)
+    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%`)
   }
   
   const from = (page - 1) * limit
@@ -37,6 +43,18 @@ export async function createItem(item: Partial<ItemData>) {
   return { data, error }
 }
 
+export async function getPartners() {
+  const supabase = await createClient()
+  const { data, error } = await supabase.from('partners').select('*').order('name', { ascending: true })
+  
+  if (error) {
+    console.error('getPartners error:', error)
+    return { data: [], error: error.message }
+  }
+  
+  return { data, error: null }
+}
+
 export interface LocationData {
   id: string
   barcode: string
@@ -48,10 +66,10 @@ export interface LocationData {
 
 export async function getLocations({ search = '' }) {
   const supabase = await createClient()
-  let query = (supabase as any).from('locations').select('*').order('barcode', { ascending: true })
+  let query = supabase.from('locations').select('*').order('code', { ascending: true })
   
   if (search) {
-    query = query.ilike('barcode', `%${search}%`)
+    query = query.ilike('code', `%${search}%`)
   }
   
   const { data, error } = await query

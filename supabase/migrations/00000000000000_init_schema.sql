@@ -7,6 +7,7 @@
 CREATE TYPE user_role AS ENUM ('ADMIN', 'INSPECTOR', 'PICKER', 'STORE');
 CREATE TYPE order_status AS ENUM ('PENDING', 'RECEIVED', 'ALLOCATED', 'PICKING', 'PICKED', 'DISPATCHED', 'CANCELED');
 CREATE TYPE zone_type AS ENUM ('A', 'F'); -- A: Ambient, F: Frozen
+CREATE TYPE partner_type AS ENUM ('MANUFACTURER', 'SUPPLIER', 'BOTH');
 
 -- 2. Tables
 
@@ -41,21 +42,43 @@ CREATE TABLE public.locations (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2.4 Items
+-- 2.4 Partners (Manufacturers & Suppliers)
+CREATE TABLE public.partners (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    name VARCHAR(255) NOT NULL,
+    type partner_type NOT NULL DEFAULT 'BOTH',
+    contact_person VARCHAR(100),
+    phone VARCHAR(50),
+    email VARCHAR(100),
+    address TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 2.5 Items
 CREATE TABLE public.items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sku VARCHAR(50) UNIQUE NOT NULL,
     upc VARCHAR(50),
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
+    name_en VARCHAR(255) NOT NULL,
+    name_kr VARCHAR(255),
+    item_volume DECIMAL(10, 3),
+    desc_en TEXT,
+    desc_kr TEXT,
     category VARCHAR(100),
-    ko_name VARCHAR(255),
-    ko_desc TEXT,
+    note TEXT,
     uom VARCHAR(20) NOT NULL,
     box_price DECIMAL(10, 2),
+    pack_price DECIMAL(10, 2),
     unit_price DECIMAL(10, 2) NOT NULL,
     units_per_box INT,
     zone_type zone_type NOT NULL DEFAULT 'A',
+    min_stock_qty INT DEFAULT 0,
+    shelf_life_days INT,
+    image_url TEXT,
+    is_active BOOLEAN DEFAULT TRUE,
+    manufacturer_id UUID REFERENCES public.partners(id),
+    supplier_id UUID REFERENCES public.partners(id),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -169,6 +192,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stores ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.locations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.partners ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.inventory ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
@@ -182,9 +206,10 @@ CREATE POLICY "Admins can view all profiles" ON public.users FOR SELECT USING (
   EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN')
 );
 
--- stores, locations, items: Anyone authenticated can read
+-- stores, locations, partners, items: Anyone authenticated can read
 CREATE POLICY "Authenticated users can view stores" ON public.stores FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Authenticated users can view locations" ON public.locations FOR SELECT TO authenticated USING (true);
+CREATE POLICY "Authenticated users can view partners" ON public.partners FOR SELECT TO authenticated USING (true);
 CREATE POLICY "Authenticated users can view items" ON public.items FOR SELECT TO authenticated USING (true);
 
 -- inventory: Authenticated can read
