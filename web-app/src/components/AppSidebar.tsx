@@ -14,6 +14,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
   SidebarRail,
 } from "@/components/ui/sidebar"
 
@@ -45,8 +48,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       title: "Master Data",
-      url: "/master/items",
+      url: "/master",
       icon: Database,
+      isActive: true,
+      items: [
+        { title: "Items (SKU)", url: "/master/items" },
+        { title: "Locations", url: "/master/locations" },
+        { title: "Labels", url: "/master/labels" },
+        { title: "Partners", url: "/master/partners" },
+      ]
     },
     {
       title: "Settings",
@@ -77,10 +87,37 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu className="px-2 mt-4">
           {navItems.map((item) => (
             <SidebarMenuItem key={item.title} className="mt-1">
-              <SidebarMenuButton render={<Link href={item.url} />} isActive={pathname.startsWith(item.url)} tooltip={item.title}>
-                <item.icon className="size-4" />
-                <span>{item.title}</span>
+              <SidebarMenuButton 
+                render={!item.items ? <Link href={item.url} /> : undefined}
+                isActive={pathname.startsWith(item.url) && !item.items} 
+                tooltip={item.title}
+              >
+                {!item.items ? (
+                  <>
+                    <item.icon className="size-4" />
+                    <span>{item.title}</span>
+                  </>
+                ) : (
+                  <div className="flex items-center w-full">
+                    <item.icon className="size-4 mr-2" />
+                    <span className="font-semibold">{item.title}</span>
+                  </div>
+                )}
               </SidebarMenuButton>
+              {item.items && (
+                <SidebarMenuSub>
+                  {item.items.map((subItem) => (
+                    <SidebarMenuSubItem key={subItem.title}>
+                      <SidebarMenuSubButton 
+                        render={<Link href={subItem.url} />}
+                        isActive={pathname === subItem.url}
+                      >
+                        <span>{subItem.title}</span>
+                      </SidebarMenuSubButton>
+                    </SidebarMenuSubItem>
+                  ))}
+                </SidebarMenuSub>
+              )}
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
