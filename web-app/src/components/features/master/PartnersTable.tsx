@@ -8,7 +8,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
-import { Plus } from "lucide-react"
+import { Plus, Pencil } from "lucide-react"
 
 import {
   Table,
@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 
-import { createPartnerAction } from "@/app/(dashboard)/master/partners/actions"
+import { createPartnerAction, updatePartnerAction } from "@/app/(dashboard)/master/partners/actions"
 import { PartnerFormDialog } from "./PartnerFormDialog"
 
 export interface PartnerData {
@@ -36,49 +36,6 @@ export interface PartnerData {
   created_at: string
 }
 
-const columns: ColumnDef<PartnerData>[] = [
-  {
-    accessorKey: "name",
-    header: "Partner Name",
-    cell: ({ row }) => <div className="font-semibold">{row.original.name}</div>,
-  },
-  {
-    accessorKey: "type",
-    header: "Type",
-    cell: ({ row }) => {
-      const type = row.original.type
-      let color = "bg-slate-100 text-slate-800"
-      if (type === 'MANUFACTURER') color = "bg-blue-100 text-blue-800"
-      if (type === 'SUPPLIER') color = "bg-emerald-100 text-emerald-800"
-      
-      return <Badge variant="secondary" className={color}>{type}</Badge>
-    },
-  },
-  {
-    accessorKey: "contact_person",
-    header: "Contact Person",
-    cell: ({ row }) => row.original.contact_person || "-",
-  },
-  {
-    accessorKey: "phone",
-    header: "Phone",
-    cell: ({ row }) => row.original.phone || "-",
-  },
-  {
-    accessorKey: "email",
-    header: "Email",
-    cell: ({ row }) => row.original.email || "-",
-  },
-  {
-    accessorKey: "created_at",
-    header: "Registered Date",
-    cell: ({ row }) => {
-      const date = new Date(row.original.created_at)
-      return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('en-US')}</div>
-    }
-  },
-]
-
 interface PartnersTableProps {
   data: PartnerData[]
 }
@@ -87,6 +44,65 @@ export function PartnersTable({ data }: PartnersTableProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
+  const [selectedPartner, setSelectedPartner] = React.useState<PartnerData | null>(null)
+  
+  const handleEdit = React.useCallback((partner: PartnerData) => {
+    setSelectedPartner(partner)
+    setIsDialogOpen(true)
+  }, [])
+
+  const columns = React.useMemo<ColumnDef<PartnerData>[]>(() => [
+    {
+      accessorKey: "name",
+      header: "Partner Name",
+      cell: ({ row }) => <div className="font-semibold">{row.original.name}</div>,
+    },
+    {
+      accessorKey: "type",
+      header: "Type",
+      cell: ({ row }) => {
+        const type = row.original.type
+        let color = "bg-slate-100 text-slate-800"
+        if (type === 'MANUFACTURER') color = "bg-blue-100 text-blue-800"
+        if (type === 'SUPPLIER') color = "bg-emerald-100 text-emerald-800"
+        
+        return <Badge variant="secondary" className={color}>{type}</Badge>
+      },
+    },
+    {
+      accessorKey: "contact_person",
+      header: "Contact Person",
+      cell: ({ row }) => row.original.contact_person || "-",
+    },
+    {
+      accessorKey: "phone",
+      header: "Phone",
+      cell: ({ row }) => row.original.phone || "-",
+    },
+    {
+      accessorKey: "email",
+      header: "Email",
+      cell: ({ row }) => row.original.email || "-",
+    },
+    {
+      accessorKey: "created_at",
+      header: "Registered Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at)
+        return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('en-US')}</div>
+      }
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => {
+        return (
+          <Button variant="ghost" size="icon" onClick={() => handleEdit(row.original)}>
+            <Pencil className="h-4 w-4" />
+          </Button>
+        )
+      },
+    }
+  ], [handleEdit])
   
   const filteredData = React.useMemo(() => {
     if (!searchQuery) return data
@@ -105,13 +121,15 @@ export function PartnersTable({ data }: PartnersTableProps) {
 
   const handleSubmit = async (formData: FormData) => {
     setLoading(true)
-    const result = await createPartnerAction(formData)
+    const result = selectedPartner 
+      ? await updatePartnerAction(formData)
+      : await createPartnerAction(formData)
     setLoading(false)
 
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("Partner successfully registered.")
+      toast.success(`Partner successfully ${selectedPartner ? "updated" : "registered"}.`)
       setIsDialogOpen(false)
     }
   }
@@ -128,7 +146,10 @@ export function PartnersTable({ data }: PartnersTableProps) {
           />
         </div>
         
-        <Button onClick={() => setIsDialogOpen(true)}>
+        <Button onClick={() => {
+          setSelectedPartner(null)
+          setIsDialogOpen(true)
+        }}>
           <Plus className="mr-2 h-4 w-4" />
           Add Partner
         </Button>
@@ -139,6 +160,7 @@ export function PartnersTable({ data }: PartnersTableProps) {
         onOpenChange={setIsDialogOpen}
         onSubmit={handleSubmit}
         loading={loading}
+        partner={selectedPartner}
       />
 
       <div className="rounded-md border bg-background">

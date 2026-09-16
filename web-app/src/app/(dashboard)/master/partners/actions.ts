@@ -36,3 +36,37 @@ export async function createPartnerAction(formData: FormData) {
   revalidatePath("/master/partners")
   return { success: true }
 }
+
+export async function updatePartnerAction(formData: FormData) {
+  const supabase = await createClient()
+  
+  const id = formData.get("id")?.toString()
+  const name = formData.get("name")?.toString()
+  const type = formData.get("type")?.toString() || "BOTH"
+  const contact_person = formData.get("contact_person")?.toString() || null
+  const phone = formData.get("phone")?.toString() || null
+  const email = formData.get("email")?.toString() || null
+  const address = formData.get("address")?.toString() || null
+
+  if (!id || !name) {
+    return { error: "Partner ID and Name are required." }
+  }
+
+  const { error } = await (supabase as any).from("partners").update({
+    name,
+    type,
+    contact_person,
+    phone,
+    email,
+    address,
+    updated_at: new Date().toISOString()
+  }).eq("id", id)
+
+  if (error) {
+    console.error("Update Partner Error:", error)
+    return { error: "Failed to update partner: " + error.message }
+  }
+
+  revalidatePath("/master/partners")
+  return { success: true }
+}
