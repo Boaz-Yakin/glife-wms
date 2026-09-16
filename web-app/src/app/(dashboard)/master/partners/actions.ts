@@ -1,10 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
+
+const getAdminClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  return createClient(supabaseUrl, serviceKey)
+}
 
 export async function createPartnerAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = getAdminClient()
 
   const name = formData.get("name")?.toString()
   const type = formData.get("type")?.toString() || "BOTH"
@@ -38,7 +44,7 @@ export async function createPartnerAction(formData: FormData) {
 }
 
 export async function updatePartnerAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = getAdminClient()
   
   const id = formData.get("id")?.toString()
   const name = formData.get("name")?.toString()

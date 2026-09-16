@@ -1,10 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { createClient } from "@/lib/supabase/server"
+import { createClient } from "@supabase/supabase-js"
+
+const getAdminClient = () => {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  return createClient(supabaseUrl, serviceKey)
+}
 
 export async function createItemAction(formData: FormData) {
-  const supabase = await createClient()
+  const supabase = getAdminClient()
   
   const sku = formData.get("sku")?.toString()
   const name_en = formData.get("name_en")?.toString()
@@ -66,7 +72,7 @@ export async function createItemAction(formData: FormData) {
 }
 
 export async function bulkCreateItemsAction(items: any[]) {
-  const supabase = await createClient()
+  const supabase = getAdminClient()
 
   if (!items || items.length === 0) {
     return { error: "No items to register." }
