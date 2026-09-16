@@ -40,6 +40,21 @@ interface ItemFormDialogProps {
 }
 
 export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading }: ItemFormDialogProps) {
+  const [uom, setUom] = useState<string>("EA")
+  const [zoneType, setZoneType] = useState<string>("A")
+  const [manufacturerId, setManufacturerId] = useState<string>("none")
+  const [supplierId, setSupplierId] = useState<string>("none")
+
+  // Reset form state when dialog opens/closes
+  React.useEffect(() => {
+    if (open) {
+      setUom("EA")
+      setZoneType("A")
+      setManufacturerId("none")
+      setSupplierId("none")
+    }
+  }, [open])
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] top-[10%] translate-y-0">
@@ -85,9 +100,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
             <TabsContent value="pricing" className="space-y-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="uom" className="text-right">UOM <span className="text-red-500">*</span></Label>
-                <Select name="uom" defaultValue="EA" required>
+                <Select name="uom" value={uom} onValueChange={setUom} required>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select UOM" />
+                    <SelectValue placeholder="Select UOM">
+                      {uom === "EA" ? "EA (Each)" : uom === "PACK" ? "PACK" : uom === "BOX" ? "BOX" : "Select UOM"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="EA">EA (Each)</SelectItem>
@@ -118,9 +135,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
             <TabsContent value="settings" className="space-y-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="zone_type" className="text-right">Zone Type <span className="text-red-500">*</span></Label>
-                <Select name="zone_type" defaultValue="A" required>
+                <Select name="zone_type" value={zoneType} onValueChange={setZoneType} required>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Zone" />
+                    <SelectValue placeholder="Select Zone">
+                      {zoneType === "A" ? "Ambient" : zoneType === "F" ? "Frozen" : zoneType === "R" ? "Cold" : "Select Zone"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="A">Ambient</SelectItem>
@@ -143,9 +162,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer</Label>
-                <Select name="manufacturer_id">
+                <Select name="manufacturer_id" value={manufacturerId} onValueChange={setManufacturerId}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Manufacturer" />
+                    <SelectValue placeholder="Select Manufacturer">
+                      {manufacturerId === "none" ? "None" : (partners.find(p => p.id === manufacturerId)?.name || "Select Manufacturer")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
@@ -157,9 +178,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="supplier_id" className="text-right text-sm">Supplier</Label>
-                <Select name="supplier_id">
+                <Select name="supplier_id" value={supplierId} onValueChange={setSupplierId}>
                   <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Supplier" />
+                    <SelectValue placeholder="Select Supplier">
+                      {supplierId === "none" ? "None" : (partners.find(p => p.id === supplierId)?.name || "Select Supplier")}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
