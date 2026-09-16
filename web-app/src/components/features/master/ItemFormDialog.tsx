@@ -44,6 +44,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
   const [zoneType, setZoneType] = useState<string>("A")
   const [manufacturerId, setManufacturerId] = useState<string>("none")
   const [supplierId, setSupplierId] = useState<string>("none")
+  const [activeTab, setActiveTab] = useState<string>("basic")
 
   // Reset form state when dialog opens/closes
   React.useEffect(() => {
@@ -52,6 +53,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
       setZoneType("A")
       setManufacturerId("none")
       setSupplierId("none")
+      setActiveTab("basic")
     }
   }, [open])
 
@@ -65,15 +67,17 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
           </DialogDescription>
         </DialogHeader>
         <form action={onSubmit}>
-          <Tabs defaultValue="basic" className="w-full mt-4">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-4">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="basic">Basic Info</TabsTrigger>
               <TabsTrigger value="pricing">Pricing & UOM</TabsTrigger>
               <TabsTrigger value="settings">Settings & Details</TabsTrigger>
             </TabsList>
+          </Tabs>
 
+          <div className="mt-4">
             {/* Basic Info Tab */}
-            <TabsContent value="basic" className="space-y-4 py-4">
+            <div className={activeTab === "basic" ? "space-y-4 block" : "hidden"}>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="sku" className="text-right">SKU <span className="text-red-500">*</span></Label>
                 <Input id="sku" name="sku" className="col-span-3" required placeholder="e.g. SKU-1001" />
@@ -94,10 +98,10 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Label htmlFor="category" className="text-right">Category</Label>
                 <Input id="category" name="category" className="col-span-3" placeholder="e.g. FOOD, ELECTRONICS" />
               </div>
-            </TabsContent>
+            </div>
 
             {/* Pricing & UOM Tab */}
-            <TabsContent value="pricing" className="space-y-4 py-4">
+            <div className={activeTab === "pricing" ? "space-y-4 block" : "hidden"}>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="uom" className="text-right">UOM <span className="text-red-500">*</span></Label>
                 <Select name="uom" value={uom} onValueChange={(v) => setUom(v || "EA")} required>
@@ -129,10 +133,10 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Label htmlFor="box_price" className="text-right">Box Price</Label>
                 <Input id="box_price" name="box_price" type="number" step="0.01" defaultValue="0" className="col-span-3" />
               </div>
-            </TabsContent>
+            </div>
 
             {/* Settings & Details Tab */}
-            <TabsContent value="settings" className="space-y-4 py-4">
+            <div className={activeTab === "settings" ? "space-y-4 block" : "hidden"}>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="zone_type" className="text-right">Zone Type <span className="text-red-500">*</span></Label>
                 <Select name="zone_type" value={zoneType} onValueChange={(v) => setZoneType(v || "A")} required>
@@ -170,7 +174,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {partners.filter(p => p.type === 'MANUFACTURER' || p.type === 'BOTH').map(p => (
+                    {partners.filter(p => p.type === "MANUFACTURER" || p.type === "BOTH").map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -186,7 +190,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
-                    {partners.filter(p => p.type === 'SUPPLIER' || p.type === 'BOTH').map(p => (
+                    {partners.filter(p => p.type === "SUPPLIER" || p.type === "BOTH").map(p => (
                       <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -202,8 +206,8 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                   <Label htmlFor="is_active" className="cursor-pointer">Active (Available for picking)</Label>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
+            </div>
+          </div>
 
           <DialogFooter className="mt-6">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
