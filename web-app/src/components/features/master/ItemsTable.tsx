@@ -21,15 +21,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Loader2 } from "lucide-react"
 
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+// Dialog components moved to ItemFormDialog
 import { Label } from "@/components/ui/label"
 import {
   Select,
@@ -41,6 +33,7 @@ import {
 import { ItemData } from "@/services/master.service"
 import { createItemAction, bulkCreateItemsAction } from "@/app/(dashboard)/master/items/actions"
 import { BulkImportDialog } from "./BulkImportDialog"
+import { ItemFormDialog } from "./ItemFormDialog"
 import { Upload } from "lucide-react"
 
 const columns: ColumnDef<ItemData>[] = [
@@ -133,85 +126,20 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
             Bulk Import
           </Button>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            {/* @ts-ignore */}
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Register New Item
-              </Button>
-            </DialogTrigger>
-          <DialogContent className="sm:max-w-[450px]">
-            <DialogHeader>
-              <DialogTitle>Register New Item</DialogTitle>
-              <DialogDescription>
-                Add a new SKU. Please register the required fields first.
-              </DialogDescription>
-            </DialogHeader>
-            <form action={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="sku" className="text-right">SKU <span className="text-red-500">*</span></Label>
-                  <Input id="sku" name="sku" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name_en" className="text-right">Item Name <span className="text-red-500">*</span></Label>
-                  <Input id="name_en" name="name_en" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="uom" className="text-right">UOM <span className="text-red-500">*</span></Label>
-                  <Select name="uom" defaultValue="EA" required>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select UOM" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="EA">EA (Each)</SelectItem>
-                      <SelectItem value="BOX">BOX</SelectItem>
-                      <SelectItem value="KG">KG</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="unit_price" className="text-right">Unit Price <span className="text-red-500">*</span></Label>
-                  <Input id="unit_price" name="unit_price" type="number" step="0.01" className="col-span-3" required />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="zone_type" className="text-right">Zone Type <span className="text-red-500">*</span></Label>
-                  <Select name="zone_type" required>
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select Zone" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="A">Ambient</SelectItem>
-                      <SelectItem value="F">Frozen</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer (Optional)</Label>
-                  <Select name="manufacturer_id">
-                    <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select Manufacturer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partners.map(p => (
-                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Register
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Register New Item
+          </Button>
         </div>
       </div>
+      
+      <ItemFormDialog 
+        open={isDialogOpen} 
+        onOpenChange={setIsDialogOpen}
+        partners={partners}
+        onSubmit={handleSubmit}
+        loading={loading}
+      />
       
       <BulkImportDialog 
         open={isBulkDialogOpen} 

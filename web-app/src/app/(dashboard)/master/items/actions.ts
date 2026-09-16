@@ -8,26 +8,49 @@ export async function createItemAction(formData: FormData) {
   
   const sku = formData.get("sku")?.toString()
   const name_en = formData.get("name_en")?.toString()
-  const upc = formData.get("upc")?.toString() || null
+  const upc = formData.get("upc")?.toString() || `${sku}-upc`
   const uom = formData.get("uom")?.toString()
   const unit_price = parseFloat(formData.get("unit_price")?.toString() || "0")
   const zone_type = formData.get("zone_type")?.toString()
   const manufacturer_id = formData.get("manufacturer_id")?.toString() || null
+  
+  // New fields
+  const name_kr = formData.get("name_kr")?.toString() || null
+  const category = formData.get("category")?.toString() || null
+  const supplier_id = formData.get("supplier_id")?.toString() || null
+  const units_per_box = parseInt(formData.get("units_per_box")?.toString() || "1")
+  const pack_price = parseFloat(formData.get("pack_price")?.toString() || "0")
+  const box_price = parseFloat(formData.get("box_price")?.toString() || "0")
+  const min_stock_qty = parseInt(formData.get("min_stock_qty")?.toString() || "0")
+  const item_volume = formData.get("item_volume") ? parseFloat(formData.get("item_volume")!.toString()) : null
+  const shelf_life_days = formData.get("shelf_life_days") ? parseInt(formData.get("shelf_life_days")!.toString()) : null
+  const note = formData.get("note")?.toString() || null
+  const is_active = formData.get("is_active") === "true"
 
   if (!sku || !name_en || !uom || !zone_type) {
-    return { error: "Please enter all required fields." }
+    return { error: "Please enter all required fields (SKU, Name, UOM, Zone)." }
   }
 
   const { error } = await (supabase as any).from("items").insert([
     {
       sku,
       name_en,
+      name_kr,
+      category,
       upc,
       uom,
+      units_per_box,
       unit_price,
+      pack_price,
+      box_price,
       zone_type,
       manufacturer_id,
-      is_active: true
+      supplier_id,
+      min_stock_qty,
+      item_volume,
+      shelf_life_days,
+      note,
+      is_active
     }
   ])
 
