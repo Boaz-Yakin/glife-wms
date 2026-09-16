@@ -18,7 +18,11 @@ export interface ItemData {
   manufacturer?: { name: string } | null
   min_stock_qty: number
   item_volume?: number | null
+  volume_unit?: string | null
   shelf_life_days?: number | null
+  desc_en?: string | null
+  desc_kr?: string | null
+  image_url?: string | null
   note?: string | null
   is_active: boolean
   created_at: string

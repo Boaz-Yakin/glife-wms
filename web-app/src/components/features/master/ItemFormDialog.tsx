@@ -108,6 +108,18 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Label htmlFor="category" className="text-right">Category</Label>
                 <Input id="category" name="category" className="col-span-3" placeholder="e.g. FOOD, ELECTRONICS" defaultValue={initialData?.category || ""} />
               </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="desc_en" className="text-right pt-2">Desc (En)</Label>
+                <Input id="desc_en" name="desc_en" className="col-span-3" defaultValue={initialData?.desc_en || ""} />
+              </div>
+              <div className="grid grid-cols-4 items-start gap-4">
+                <Label htmlFor="desc_kr" className="text-right pt-2">Desc (Kr)</Label>
+                <Input id="desc_kr" name="desc_kr" className="col-span-3" defaultValue={initialData?.desc_kr || ""} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="image_url" className="text-right">Image URL</Label>
+                <Input id="image_url" name="image_url" className="col-span-3" placeholder="https://..." defaultValue={initialData?.image_url || ""} />
+              </div>
             </div>
 
             {/* Pricing & UOM Tab */}
@@ -167,8 +179,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Input id="min_stock_qty" name="min_stock_qty" type="number" defaultValue={initialData?.min_stock_qty ?? 0} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="item_volume" className="text-right">Volume (m³)</Label>
-                <Input id="item_volume" name="item_volume" type="number" step="0.001" defaultValue={initialData?.item_volume || ""} className="col-span-3" />
+                <Label htmlFor="item_volume" className="text-right">Volume / Size</Label>
+                <div className="col-span-3 flex gap-2">
+                  <Input id="item_volume" name="item_volume" type="number" step="0.001" defaultValue={initialData?.item_volume || ""} className="w-1/2" />
+                  <Input id="volume_unit" name="volume_unit" placeholder="Unit (e.g. m3, oz, ml)" defaultValue={initialData?.volume_unit || "m3"} className="w-1/2" />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="shelf_life_days" className="text-right text-sm">Shelf Life (Days)</Label>

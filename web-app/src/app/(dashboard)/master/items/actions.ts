@@ -32,7 +32,11 @@ export async function createItemAction(formData: FormData) {
   const box_price = parseFloat(formData.get("box_price")?.toString() || "0")
   const min_stock_qty = parseInt(formData.get("min_stock_qty")?.toString() || "0")
   const item_volume = formData.get("item_volume") ? parseFloat(formData.get("item_volume")!.toString()) : null
+  const volume_unit = formData.get("volume_unit")?.toString() || "m3"
   const shelf_life_days = formData.get("shelf_life_days") ? parseInt(formData.get("shelf_life_days")!.toString()) : null
+  const desc_en = formData.get("desc_en")?.toString() || null
+  const desc_kr = formData.get("desc_kr")?.toString() || null
+  const image_url = formData.get("image_url")?.toString() || null
   const note = formData.get("note")?.toString() || null
   const is_active = formData.get("is_active") === "true"
 
@@ -56,7 +60,11 @@ export async function createItemAction(formData: FormData) {
     supplier_id,
     min_stock_qty,
     item_volume,
+    volume_unit,
     shelf_life_days,
+    desc_en,
+    desc_kr,
+    image_url,
     note,
     is_active,
   }
