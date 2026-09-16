@@ -1,4 +1,1 @@
 sku,upc,name_en,name_kr,item_volume,desc_en,desc_kr,category,note,uom,box_price,pack_price,unit_price,units_per_box,zone_type,min_stock_qty,shelf_life_days,image_url,is_active,manufacturer_id,supplier_id
-SKU-1001,8801043014761,Nongshim Shin Ramyun Cup,농심 신라면 컵,0.01,Spicy noodle cup,맛있는 신라면 컵 용기면,RAMYUN,인기상품,BOX,24000,6000,1000,24,A,50,180,,true,11111111-1111-1111-1111-111111111111,22222222-2222-2222-2222-222222222222
-SKU-1002,8801043015000,CJ Bibigo Dumplings 400g,CJ 비비고 왕교자,0.02,Frozen dumplings,비비고 냉동 왕교자 만두,FROZEN,냉동보관,EA,4500,,4500,1,F,20,365,,true,11111111-1111-1111-1111-111111111111,33333333-3333-3333-3333-333333333333
-SKU-1003,8801043019999,Coca Cola 250ml,코카콜라 250ml 캔,0.005,Cola can,코카콜라 캔음료,BEVERAGE,,BOX,24000,4800,800,30,A,100,720,,true,44444444-4444-4444-4444-444444444444,22222222-2222-2222-2222-222222222222
