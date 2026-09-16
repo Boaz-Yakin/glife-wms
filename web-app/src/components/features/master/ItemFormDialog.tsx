@@ -116,8 +116,8 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="EA">EA (Each)</SelectItem>
+                    <SelectItem value="PACK">PACK</SelectItem>
                     <SelectItem value="BOX">BOX</SelectItem>
-                    <SelectItem value="KG">KG</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
