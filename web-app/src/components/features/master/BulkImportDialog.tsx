@@ -4,7 +4,7 @@ import * as React from "react"
 import { useState, useRef } from "react"
 import * as XLSX from "xlsx"
 import { toast } from "sonner"
-import { Upload, FileSpreadsheet, X, Loader2 } from "lucide-react"
+import { Upload, FileSpreadsheet, X, Loader2, Download } from "lucide-react"
 
 import {
   Dialog,
@@ -101,7 +101,15 @@ export function BulkImportDialog({ open, onOpenChange, onImport }: BulkImportDia
         <DialogHeader>
           <DialogTitle>Bulk Import Items</DialogTitle>
           <DialogDescription>
-            Upload an Excel or CSV file to register multiple items at once.
+            Upload an Excel or CSV file to register multiple items at once. 
+            <a 
+              href="/items_import_template.csv" 
+              download 
+              className="text-primary hover:underline font-medium inline-flex items-center ml-1"
+            >
+              <Download className="h-3 w-3 mr-1" />
+              Download Template
+            </a>
           </DialogDescription>
         </DialogHeader>
 
