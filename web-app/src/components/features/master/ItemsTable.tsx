@@ -34,7 +34,42 @@ import { ItemData } from "@/services/master.service"
 import { createItemAction, bulkCreateItemsAction } from "@/app/(dashboard)/master/items/actions"
 import { BulkImportDialog } from "./BulkImportDialog"
 import { ItemFormDialog } from "./ItemFormDialog"
-import { Upload } from "lucide-react"
+import { Upload, MoreHorizontal, Trash } from "lucide-react"
+import { deleteItemAction } from "@/app/(dashboard)/master/items/actions"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+const ActionCell = ({ id }: { id: string }) => {
+  const [isDeleting, setIsDeleting] = React.useState(false)
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this item?")) return
+    setIsDeleting(true)
+    const res = await deleteItemAction(id)
+    setIsDeleting(false)
+    if (res.error) toast.error(res.error)
+    else toast.success("Item deleted successfully")
+  }
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted focus:outline-none">
+        <span className="sr-only">Open menu</span>
+        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+        <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 cursor-pointer">
+          <Trash className="mr-2 h-4 w-4" />
+          Delete Item
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 const columns: ColumnDef<ItemData>[] = [
   {
@@ -71,6 +106,10 @@ const columns: ColumnDef<ItemData>[] = [
       const date = new Date(row.original.created_at)
       return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('ko-KR')}</div>
     }
+  },
+  {
+    id: "actions",
+    cell: ({ row }) => <ActionCell id={row.original.id} />,
   },
 ]
 

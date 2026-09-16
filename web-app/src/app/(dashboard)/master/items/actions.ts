@@ -112,3 +112,14 @@ export async function bulkCreateItemsAction(items: any[]) {
   revalidatePath("/master/items")
   return { success: true }
 }
+
+export async function deleteItemAction(id: string) {
+  const supabase = getAdminClient()
+  const { error } = await supabase.from('items').delete().eq('id', id)
+  if (error) {
+    console.error('Delete Item Error:', error)
+    return { error: 'Failed to delete item: ' + error.message }
+  }
+  revalidatePath('/master/items')
+  return { success: true }
+}
