@@ -27,7 +27,7 @@ export async function getItems({ page = 1, limit = 20, search = '' }) {
   const from = (page - 1) * limit
   const to = from + limit - 1
   
-  const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false })
+  const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false }).order('sku', { ascending: true })
   
   if (error) {
     console.error('getItems error:', error)
