@@ -28,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 interface Partner {
   id: string
   name: string
+  type?: string
 }
 
 interface ItemFormDialogProps {
@@ -165,6 +166,34 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="shelf_life_days" className="text-right text-sm">Shelf Life (Days)</Label>
                 <Input id="shelf_life_days" name="shelf_life_days" type="number" className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer</Label>
+                <Select name="manufacturer_id">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select Manufacturer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {partners.filter(p => p.type === 'MANUFACTURER' || p.type === 'BOTH').map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="supplier_id" className="text-right text-sm">Supplier</Label>
+                <Select name="supplier_id">
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Select Supplier" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    {partners.filter(p => p.type === 'SUPPLIER' || p.type === 'BOTH').map(p => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <Label htmlFor="note" className="text-right pt-2">Notes</Label>

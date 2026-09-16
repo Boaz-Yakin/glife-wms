@@ -12,12 +12,14 @@ export async function createItemAction(formData: FormData) {
   const uom = formData.get("uom")?.toString()
   const unit_price = parseFloat(formData.get("unit_price")?.toString() || "0")
   const zone_type = formData.get("zone_type")?.toString()
-  const manufacturer_id = formData.get("manufacturer_id")?.toString() || null
+  let manufacturer_id = formData.get("manufacturer_id")?.toString() || null
+  if (manufacturer_id === "none") manufacturer_id = null
   
   // New fields
   const name_kr = formData.get("name_kr")?.toString() || null
   const category = formData.get("category")?.toString() || null
-  const supplier_id = formData.get("supplier_id")?.toString() || null
+  let supplier_id = formData.get("supplier_id")?.toString() || null
+  if (supplier_id === "none") supplier_id = null
   const units_per_box = parseInt(formData.get("units_per_box")?.toString() || "1")
   const pack_price = parseFloat(formData.get("pack_price")?.toString() || "0")
   const box_price = parseFloat(formData.get("box_price")?.toString() || "0")
