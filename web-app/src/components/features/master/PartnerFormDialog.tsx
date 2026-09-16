@@ -54,9 +54,9 @@ export function PartnerFormDialog({ open, onOpenChange, onSubmit, loading }: Par
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MANUFACTURER">Manufacturer (제조사)</SelectItem>
-                  <SelectItem value="SUPPLIER">Supplier (공급사)</SelectItem>
-                  <SelectItem value="BOTH">Both (제조 및 공급)</SelectItem>
+                  <SelectItem value="MANUFACTURER">Manufacturer</SelectItem>
+                  <SelectItem value="SUPPLIER">Supplier</SelectItem>
+                  <SelectItem value="BOTH">Both</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -68,7 +68,7 @@ export function PartnerFormDialog({ open, onOpenChange, onSubmit, loading }: Par
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">Phone</Label>
-              <Input id="phone" name="phone" className="col-span-3" placeholder="e.g. 02-123-4567" />
+              <Input id="phone" name="phone" className="col-span-3" placeholder="e.g. (555) 123-4567" />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">
