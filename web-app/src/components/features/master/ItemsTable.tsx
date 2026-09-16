@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select"
 import { ItemData } from "@/services/master.service"
 import { createItemAction, bulkCreateItemsAction } from "@/app/(dashboard)/master/items/actions"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { BulkImportDialog } from "./BulkImportDialog"
 import { ItemFormDialog } from "./ItemFormDialog"
 import { Upload, MoreHorizontal, Trash } from "lucide-react"
@@ -139,6 +140,28 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
   const [loading, setLoading] = React.useState(false)
   const [editingItem, setEditingItem] = React.useState<ItemData | null>(null)
   
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  
+  const defaultSearch = searchParams.get("search") || ""
+  const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+  
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) {
+        params.set("search", searchTerm)
+        params.delete("page") // Reset to page 1 on search
+      } else {
+        params.delete("search")
+      }
+      router.replace(`${pathname}?${params.toString()}`)
+    }, 300)
+    
+    return () => clearTimeout(timeout)
+  }, [searchTerm, pathname, router, searchParams])
+  
   const handleEdit = (item: ItemData) => {
     setEditingItem(item)
     setIsDialogOpen(true)
@@ -177,7 +200,12 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="Search Item Name or SKU..." className="max-w-sm bg-background" />
+          <Input 
+            placeholder="Search Item Name or SKU..." 
+            className="max-w-sm bg-background" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         
         <div className="flex gap-2">
