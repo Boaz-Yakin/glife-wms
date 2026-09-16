@@ -96,8 +96,8 @@ const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => 
   },
   {
     accessorKey: "unit_price",
-    header: "Unit Price",
-    cell: ({ row }) => <div className="text-right tabular-nums">${row.original.unit_price?.toFixed(2)}</div>,
+    header: () => <div className="text-center">Unit Price</div>,
+    cell: ({ row }) => <div className="text-center tabular-nums">${row.original.unit_price?.toFixed(2)}</div>,
   },
   {
     accessorKey: "zone_type",
