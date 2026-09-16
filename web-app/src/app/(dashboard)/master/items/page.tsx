@@ -23,15 +23,15 @@ export default async function MasterItemsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">상품(SKU) 마스터 관리</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Item (SKU) Master</h2>
         <p className="text-muted-foreground mt-1">
-          물류 창고에 등록된 모든 상품 정보를 조회하고 관리합니다.
+          View and manage all product items registered in the warehouse.
         </p>
       </div>
 
       {error ? (
         <div className="rounded-md bg-destructive/15 p-4 text-destructive">
-          데이터를 불러오지 못했습니다. ({error})
+          Failed to load data. ({error})
         </div>
       ) : (
         <ItemsTable data={data || []} totalCount={count} partners={partners || []} />

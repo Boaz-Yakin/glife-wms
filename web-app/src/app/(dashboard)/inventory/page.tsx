@@ -23,15 +23,15 @@ export default async function InventoryPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">재고 현황</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Inventory Status</h2>
         <p className="text-muted-foreground mt-1">
-          현재 창고의 전체 재고 현황을 조회하고 관리합니다.
+          View and manage the overall inventory status of the warehouse.
         </p>
       </div>
 
       {error ? (
         <div className="rounded-md bg-destructive/15 p-4 text-destructive">
-          데이터를 불러오지 못했습니다. ({error})
+          Failed to load data. ({error})
         </div>
       ) : (
         <InventoryTable data={data || []} totalCount={count} />

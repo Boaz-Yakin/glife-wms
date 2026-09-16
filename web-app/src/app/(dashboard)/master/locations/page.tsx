@@ -15,15 +15,15 @@ export default async function MasterLocationsPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">로케이션 마스터 관리</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Location Master</h2>
         <p className="text-muted-foreground mt-1">
-          창고 내 구역 및 랙(Rack) 구조 데이터를 조회하고 추가합니다.
+          View and manage warehouse zones and rack structure data.
         </p>
       </div>
 
       {error ? (
         <div className="rounded-md bg-destructive/15 p-4 text-destructive">
-          데이터를 불러오지 못했습니다. ({error})
+          Failed to load data. ({error})
         </div>
       ) : (
         <LocationsTable data={data || []} />

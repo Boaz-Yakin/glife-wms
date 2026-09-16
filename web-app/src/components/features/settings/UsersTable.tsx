@@ -59,12 +59,12 @@ export function UsersTable({ data }: { data: UserData[] }) {
   const [loading, setLoading] = React.useState(false)
 
   const handleRoleChange = async (userId: string, newRole: string) => {
-    const toastId = toast.loading("권한을 변경하는 중...")
+    const toastId = toast.loading("Updating role...")
     const result = await updateUserRoleAction(userId, newRole)
     if (result?.error) {
       toast.error(result.error, { id: toastId })
     } else {
-      toast.success("권한이 성공적으로 변경되었습니다.", { id: toastId })
+      toast.success("Role updated successfully.", { id: toastId })
     }
   }
 
@@ -76,7 +76,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
   const columns: ColumnDef<UserData>[] = [
     {
       id: "name",
-      header: "이름",
+      header: "Name",
       cell: ({ row }) => (
         <div className="font-medium">
           {row.original.first_name} {row.original.last_name}
@@ -85,30 +85,30 @@ export function UsersTable({ data }: { data: UserData[] }) {
     },
     {
       accessorKey: "phone",
-      header: "전화번호",
+      header: "Phone",
       cell: ({ row }) => <div className="tabular-nums">{formatUSPhone(row.original.phone)}</div>
     },
     {
       accessorKey: "email",
-      header: "로그인 계정",
+      header: "Login Account",
       cell: ({ row }) => <div className="text-muted-foreground text-sm">{row.original.email}</div>,
     },
     {
       accessorKey: "role",
-      header: "역할(Role)",
+      header: "Role",
       cell: ({ row }) => {
         const role = row.original.role || "PICKER"
         const userId = row.original.id
         return (
           <Select defaultValue={role} onValueChange={(val) => handleRoleChange(userId as string, val as string)}>
             <SelectTrigger className="w-[140px] h-8">
-              <SelectValue placeholder="역할 선택" />
+              <SelectValue placeholder="Select Role" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ADMIN">관리자 (ADMIN)</SelectItem>
-              <SelectItem value="SUPERVISOR">감독자 (SUPERVISOR)</SelectItem>
-              <SelectItem value="PICKER">피커 (PICKER)</SelectItem>
-              <SelectItem value="INSPECTOR">검수자 (INSPECTOR)</SelectItem>
+              <SelectItem value="ADMIN">ADMIN</SelectItem>
+              <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
+              <SelectItem value="PICKER">PICKER</SelectItem>
+              <SelectItem value="INSPECTOR">INSPECTOR</SelectItem>
             </SelectContent>
           </Select>
         )
@@ -116,32 +116,32 @@ export function UsersTable({ data }: { data: UserData[] }) {
     },
     {
       accessorKey: "last_sign_in_at",
-      header: "최근 로그인",
+      header: "Last Login",
       cell: ({ row }) => {
         const dateStr = row.original.last_sign_in_at
         if (!dateStr) return <span className="text-muted-foreground">-</span>
-        return <div className="tabular-nums text-sm">{new Date(dateStr).toLocaleString('ko-KR')}</div>
+        return <div className="tabular-nums text-sm">{new Date(dateStr).toLocaleString('en-US')}</div>
       }
     },
     {
       id: "status",
-      header: "상태",
+      header: "Status",
       cell: ({ row }) => {
         const isActive = row.original.status === 'ACTIVE'
         return (
           <Badge variant={isActive ? "default" : "secondary"} className={isActive ? "bg-green-600" : ""}>
-            {isActive ? '활성' : '비활성'}
+            {isActive ? 'Active' : 'Inactive'}
           </Badge>
         )
       }
     },
     {
       id: "actions",
-      header: "관리",
+      header: "Manage",
       cell: ({ row }) => (
         <Button variant="outline" size="sm" onClick={() => openEdit(row.original)}>
           <Edit2 className="mr-2 h-4 w-4 text-muted-foreground" />
-          수정
+          Edit
         </Button>
       )
     }
@@ -161,7 +161,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("사용자가 성공적으로 등록되었습니다.")
+      toast.success("User successfully registered.")
       setIsCreateOpen(false)
     }
   }
@@ -174,14 +174,14 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("사용자 정보가 성공적으로 수정되었습니다.")
+      toast.success("User information successfully updated.")
       setIsEditOpen(false)
     }
   }
 
   const handleDelete = async () => {
     if (!editingUser) return
-    if (!confirm(`${editingUser.first_name} ${editingUser.last_name} 사용자를 정말 삭제하시겠습니까?`)) return
+    if (!confirm(`Are you sure you want to delete user ${editingUser.first_name} ${editingUser.last_name}?`)) return
 
     setLoading(true)
     const result = await deleteUserAction(editingUser.id)
@@ -190,14 +190,14 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("사용자가 삭제되었습니다.")
+      toast.success("User has been deleted.")
       setIsEditOpen(false)
     }
   }
 
   const handleResetPassword = async () => {
     if (!editingUser) return
-    if (!confirm(`${editingUser.first_name} ${editingUser.last_name} 사용자의 비밀번호를 초기화하시겠습니까?\n\n초기 비밀번호는 'password123'으로 설정되며, 다음 로그인 시 새 비밀번호로 변경해야 합니다.`)) return
+    if (!confirm(`Are you sure you want to reset the password for ${editingUser.first_name} ${editingUser.last_name}?\n\nThe initial password will be set to 'password123', and they must change it upon their next login.`)) return
 
     setLoading(true)
     const result = await resetUserPasswordAction(editingUser.id)
@@ -206,7 +206,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("비밀번호가 초기화되었습니다.")
+      toast.success("Password has been reset.")
       setIsEditOpen(false)
     }
   }
@@ -223,15 +223,15 @@ export function UsersTable({ data }: { data: UserData[] }) {
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              신규 사용자 등록
+              Register New User
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>신규 사용자 등록</DialogTitle>
+              <DialogTitle>Register New User</DialogTitle>
               <DialogDescription>
-                시스템에 접속할 새로운 작업자를 추가합니다.<br/>
-                초기 비밀번호는 <strong>password123</strong> 으로 일괄 설정됩니다.
+                Add a new worker or admin to access the system.<br/>
+                Initial password will be set to <strong>password123</strong>.
               </DialogDescription>
             </DialogHeader>
             <form action={handleCreateSubmit}>
@@ -245,20 +245,20 @@ export function UsersTable({ data }: { data: UserData[] }) {
                   <Input id="last_name" name="last_name" placeholder="Doe" className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="phone" className="text-right text-sm">전화번호 <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="phone" className="text-right text-sm">Phone <span className="text-red-500">*</span></Label>
                   <Input id="phone" name="phone" placeholder="4041234567" className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="role" className="text-right">역할 <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="role" className="text-right">Role <span className="text-red-500">*</span></Label>
                   <Select name="role" defaultValue="PICKER" required>
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="역할 선택" />
+                      <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN">관리자 (ADMIN)</SelectItem>
-                      <SelectItem value="SUPERVISOR">감독자 (SUPERVISOR)</SelectItem>
-                      <SelectItem value="PICKER">피커 (PICKER)</SelectItem>
-                      <SelectItem value="INSPECTOR">검수자 (INSPECTOR)</SelectItem>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
+                      <SelectItem value="PICKER">PICKER</SelectItem>
+                      <SelectItem value="INSPECTOR">INSPECTOR</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -266,7 +266,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
               <DialogFooter>
                 <Button type="submit" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  등록 완료
+                  Register
                 </Button>
               </DialogFooter>
             </form>
@@ -301,7 +301,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  조회된 사용자가 없습니다.
+                  No users found.
                 </TableCell>
               </TableRow>
             )}
@@ -309,13 +309,13 @@ export function UsersTable({ data }: { data: UserData[] }) {
         </Table>
       </div>
 
-      {/* 정보 수정 다이얼로그 */}
+      {/* Edit User Dialog */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>사용자 정보 수정</DialogTitle>
+            <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              사용자의 이름과 전화번호를 수정합니다. (전화번호 변경 시 로그인 아이디도 변경됩니다)
+              Modify user's name and phone number. (Changing phone number changes login ID)
             </DialogDescription>
           </DialogHeader>
           {editingUser && (
@@ -331,7 +331,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
                   <Input id="edit_last_name" name="last_name" defaultValue={editingUser.last_name === 'N/A' ? '' : editingUser.last_name} className="col-span-3" required />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="edit_phone" className="text-right text-sm">전화번호</Label>
+                  <Label htmlFor="edit_phone" className="text-right text-sm">Phone</Label>
                   <Input id="edit_phone" name="phone" defaultValue={editingUser.phone === 'N/A' ? '' : editingUser.phone} placeholder="4041234567" className="col-span-3" required />
                 </div>
               </div>
@@ -343,7 +343,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
                     onClick={handleDelete}
                     disabled={loading}
                   >
-                    삭제
+                    Delete
                   </Button>
                   <Button 
                     type="button" 
@@ -351,12 +351,12 @@ export function UsersTable({ data }: { data: UserData[] }) {
                     onClick={handleResetPassword}
                     disabled={loading}
                   >
-                    비밀번호 초기화
+                    Reset Password
                   </Button>
                 </div>
                 <Button type="submit" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  저장
+                  Save
                 </Button>
               </DialogFooter>
             </form>

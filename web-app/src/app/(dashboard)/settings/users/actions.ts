@@ -7,7 +7,7 @@ export async function createUserAction(formData: FormData) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server configuration error: Service Key missing" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -18,15 +18,15 @@ export async function createUserAction(formData: FormData) {
   const rawPhone = formData.get("phone")?.toString() || ""
   const role = formData.get("role")?.toString() || "PICKER"
 
-  if (!first_name || !last_name || !rawPhone) return { error: "필수 항목(이름, 핸드폰 번호)을 입력해주세요." }
+  if (!first_name || !last_name || !rawPhone) return { error: "Please enter required fields (name, phone number)." }
 
   const phone = rawPhone.replace(/[^0-9]/g, "")
-  if (phone.length < 10) return { error: "올바른 미국 전화번호 10자리를 입력해주세요." }
+  if (phone.length < 10) return { error: "Please enter a valid 10-digit US phone number." }
 
   const email = `${phone}@glife.com`
-  const password = "password123" // 공통 초기 비밀번호
+  const password = "password123" // Common initial password
 
-  // 1. auth.users 에 생성
+  // 1. Create in auth.users
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
     password: "password123",
@@ -36,15 +36,15 @@ export async function createUserAction(formData: FormData) {
 
   if (authError) {
     if (authError.message.includes('already registered')) {
-      return { error: "이미 등록된 핸드폰 번호입니다." }
+      return { error: "This phone number is already registered." }
     }
     console.error("createUser auth error:", authError)
-    return { error: "사용자 인증 계정 생성 실패: " + authError.message }
+    return { error: "Failed to create user auth account: " + authError.message }
   }
 
   const userId = authData.user.id
 
-  // 2. public.users 에 추가
+  // 2. Add to public.users
   const { error: publicError } = await adminClient.from("users").insert([
     {
       id: userId,
@@ -58,9 +58,9 @@ export async function createUserAction(formData: FormData) {
 
   if (publicError) {
     console.error("createUser public error:", publicError)
-    // 롤백 (auth user 삭제) - 생략해도 되지만 안정성을 위해 추가
+    // Rollback (delete auth user)
     await adminClient.auth.admin.deleteUser(userId)
-    return { error: "사용자 프로필 생성 실패: " + publicError.message }
+    return { error: "Failed to create user profile: " + publicError.message }
   }
 
   revalidatePath("/settings/users")
@@ -71,7 +71,7 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server configuration error: Service Key missing" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -85,7 +85,7 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
 
   if (publicError) {
     console.error("updateUserRole public error:", publicError)
-    return { error: "프로필 권한 수정 실패: " + publicError.message }
+    return { error: "Failed to update public role: " + publicError.message }
   }
 
   // 2. Update auth.users metadata
@@ -95,7 +95,7 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
 
   if (authError) {
     console.error("updateUserRole auth error:", authError)
-    return { error: "인증 권한 수정 실패: " + authError.message }
+    return { error: "Failed to update role: " + authError.message }
   }
 
   revalidatePath("/settings/users")
@@ -106,7 +106,7 @@ export async function updateUserAction(formData: FormData) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server configuration error: Missing Service Key" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -118,11 +118,11 @@ export async function updateUserAction(formData: FormData) {
   const rawPhone = formData.get("phone")?.toString() || ""
 
   if (!userId || !first_name || !last_name || !rawPhone) {
-    return { error: "필수 항목(이름, 번호)을 입력해주세요." }
+    return { error: "Please enter required fields (name, number)." }
   }
 
   const phone = rawPhone.replace(/[^0-9]/g, "")
-  if (phone.length < 10) return { error: "올바른 미국 전화번호 10자리를 입력해주세요." }
+  if (phone.length < 10) return { error: "Please enter a valid 10-digit US phone number." }
 
   // 1. Update public.users
   const { error: publicError } = await adminClient
@@ -132,7 +132,7 @@ export async function updateUserAction(formData: FormData) {
 
   if (publicError) {
     console.error("updateUser public error:", publicError)
-    return { error: "사용자 프로필 수정 실패: " + publicError.message }
+    return { error: "Failed to update user profile: " + publicError.message }
   }
 
   // 2. Update email in auth.users (Phone changes mean email changes)
@@ -144,10 +144,10 @@ export async function updateUserAction(formData: FormData) {
 
   if (authError) {
     if (authError.message.includes('already registered')) {
-      return { error: "이미 등록된 번호입니다." }
+      return { error: "Phone number already registered." }
     }
     console.error("updateUser auth error:", authError)
-    return { error: "사용자 로그인 계정 동기화 실패: " + authError.message }
+    return { error: "Failed to synchronize user login account: " + authError.message }
   }
 
   revalidatePath("/settings/users")
@@ -158,7 +158,7 @@ export async function deleteUserAction(userId: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server configuration error: Missing Service Key" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -169,7 +169,7 @@ export async function deleteUserAction(userId: string) {
 
   if (error) {
     console.error("deleteUser error:", error)
-    return { error: "사용자 삭제 실패: " + error.message }
+    return { error: "Failed to delete user: " + error.message }
   }
 
   revalidatePath("/settings/users")
@@ -180,7 +180,7 @@ export async function resetUserPasswordAction(userId: string) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server Configuration Error: Missing Service Key" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -194,7 +194,7 @@ export async function resetUserPasswordAction(userId: string) {
 
   if (error) {
     console.error("resetPassword error:", error)
-    return { error: "비밀번호 초기화 실패: " + error.message }
+    return { error: "Failed to reset password: " + error.message }
   }
 
   return { success: true }

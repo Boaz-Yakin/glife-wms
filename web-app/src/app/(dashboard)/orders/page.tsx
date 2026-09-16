@@ -21,15 +21,15 @@ export default async function OrdersPage({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">주문 현황</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Orders Status</h2>
         <p className="text-muted-foreground mt-1">
-          현재 처리 중인 주문의 피킹 및 출고 상태를 관리합니다.
+          Manage the picking and dispatch status of orders currently being processed.
         </p>
       </div>
 
       {error ? (
         <div className="rounded-md bg-destructive/15 p-4 text-destructive">
-          데이터를 불러오지 못했습니다. ({error})
+          Failed to load data. ({error})
         </div>
       ) : (
         <OrdersTable data={data || []} totalCount={count} />

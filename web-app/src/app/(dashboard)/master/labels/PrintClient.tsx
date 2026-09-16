@@ -15,11 +15,11 @@ export function PrintClient() {
 
   return (
     <div className="space-y-8">
-      {/* 화면 제어부 (인쇄 시 숨김 처리됨: print:hidden) */}
+      {/* Control panel (hidden when printing) */}
       <div className="print:hidden space-y-4 max-w-md border p-6 rounded-lg bg-card">
-        <h3 className="font-semibold text-lg">라벨 인쇄 설정</h3>
+        <h3 className="font-semibold text-lg">Label Print Settings</h3>
         <div className="space-y-2">
-          <Label htmlFor="code">바코드 텍스트 (SKU 또는 로케이션)</Label>
+          <Label htmlFor="code">Barcode Text (SKU or Location)</Label>
           <Input 
             id="code" 
             value={code} 
@@ -28,14 +28,14 @@ export function PrintClient() {
         </div>
         <Button onClick={handlePrint} className="w-full">
           <Printer className="mr-2 h-4 w-4" />
-          라벨 인쇄 (PDF 저장)
+          Print Label (Save to PDF)
         </Button>
       </div>
 
-      {/* 인쇄 영역 (화면에도 보이고 인쇄에도 렌더링됨) */}
+      {/* Print area (visible on screen and rendered when printing) */}
       <div className="print:block print:w-[50mm] print:h-[30mm] print:m-0 print:p-0">
         <div className="border-2 border-black w-64 h-32 p-4 flex flex-col items-center justify-center bg-white text-black print:border-none print:w-[50mm] print:h-[30mm]">
-          {/* 실제 바코드 대신 심볼릭 디자인 (추후 jsbarcode 등 연동) */}
+          {/* Symbolic design instead of real barcode (jsbarcode can be added later) */}
           <div className="flex gap-[2px] h-12 items-end justify-center w-full px-4 mb-2">
             {[...Array(30)].map((_, i) => (
               <div 
@@ -49,7 +49,7 @@ export function PrintClient() {
         </div>
         
         <p className="print:hidden text-sm text-muted-foreground mt-2">
-          ↑ 화면 미리보기 (실제 출력 크기와 다를 수 있습니다)
+          ↑ Screen Preview (May differ from actual print size)
         </p>
       </div>
     </div>

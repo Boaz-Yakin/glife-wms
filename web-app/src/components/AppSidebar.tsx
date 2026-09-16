@@ -16,36 +16,36 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-const navItems = [
-  {
-    title: "대시보드",
-    url: "/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "재고 현황",
-    url: "/inventory",
-    icon: PackageSearch,
-  },
-  {
-    title: "주문 현황",
-    url: "/orders",
-    icon: ClipboardList,
-  },
-  {
-    title: "마스터 관리",
-    url: "/master/items",
-    icon: Database,
-  },
-  {
-    title: "설정",
-    url: "/settings/users",
-    icon: Settings,
-  },
-]
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+
+  const navItems = [
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: "Inventory",
+      url: "/inventory",
+      icon: PackageSearch,
+    },
+    {
+      title: "Orders",
+      url: "/orders",
+      icon: ClipboardList,
+    },
+    {
+      title: "Master Data",
+      url: "/master/items",
+      icon: Database,
+    },
+    {
+      title: "Settings",
+      url: "/settings/users",
+      icon: Settings,
+    },
+  ]
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -83,7 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton render={<Link href="/login" />} className="text-muted-foreground hover:text-foreground">
               <LogOut className="size-4" />
-              <span>로그아웃</span>
+              <span>Logout</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

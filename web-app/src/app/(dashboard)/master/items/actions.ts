@@ -15,7 +15,7 @@ export async function createItemAction(formData: FormData) {
   const manufacturer_id = formData.get("manufacturer_id")?.toString() || null
 
   if (!sku || !name_en || !uom || !zone_type) {
-    return { error: "필수 항목을 모두 입력해주세요." }
+    return { error: "Please enter all required fields." }
   }
 
   const { error } = await (supabase as any).from("items").insert([
@@ -33,7 +33,7 @@ export async function createItemAction(formData: FormData) {
 
   if (error) {
     console.error("Create Item Error:", error)
-    return { error: "상품 등록에 실패했습니다: " + error.message }
+    return { error: "Failed to register item: " + error.message }
   }
 
   revalidatePath("/master/items")

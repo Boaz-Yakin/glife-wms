@@ -32,13 +32,13 @@ export type LocationData = {
 const columns: ColumnDef<LocationData>[] = [
   {
     accessorKey: "barcode",
-    header: "로케이션 바코드",
+    header: "Location Barcode",
     cell: ({ row }) => <div className="font-bold">{row.original.barcode}</div>,
   },
-  { accessorKey: "zone", header: "구역 (Zone)" },
-  { accessorKey: "aisle", header: "통로 (Aisle)" },
-  { accessorKey: "section", header: "섹션 (Section)" },
-  { accessorKey: "tier", header: "단 (Tier)" },
+  { accessorKey: "zone", header: "Zone" },
+  { accessorKey: "aisle", header: "Aisle" },
+  { accessorKey: "section", header: "Section" },
+  { accessorKey: "tier", header: "Tier" },
 ]
 
 interface LocationsTableProps {
@@ -56,11 +56,11 @@ export function LocationsTable({ data }: LocationsTableProps) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="로케이션 바코드 검색..." className="max-w-sm bg-background" />
+          <Input placeholder="Search location barcode..." className="max-w-sm bg-background" />
         </div>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
-          신규 로케이션 등록
+          Register New Location
         </Button>
       </div>
 
@@ -91,7 +91,7 @@ export function LocationsTable({ data }: LocationsTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  조회된 로케이션이 없습니다.
+                  No locations found.
                 </TableCell>
               </TableRow>
             )}
@@ -99,7 +99,7 @@ export function LocationsTable({ data }: LocationsTableProps) {
         </Table>
       </div>
       <div className="text-sm text-muted-foreground">
-        총 {data.length} 건의 로케이션
+        Total {data.length} locations
       </div>
     </div>
   )

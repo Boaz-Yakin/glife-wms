@@ -36,17 +36,17 @@ export type AuditData = {
 }
 
 const reasonLabels: Record<string, string> = {
-  COUNT_MISMATCH: "수량 불일치",
-  DAMAGED: "파손",
-  LOST: "분실",
-  FOUND: "발견",
-  EXPIRED: "유통기한 만료"
+  COUNT_MISMATCH: "Count Mismatch",
+  DAMAGED: "Damaged",
+  LOST: "Lost",
+  FOUND: "Found",
+  EXPIRED: "Expired"
 }
 
 const columns: ColumnDef<AuditData>[] = [
   {
     accessorKey: "created_at",
-    header: "발생 일시",
+    header: "Date/Time",
     cell: ({ row }) => {
       const date = new Date(row.original.created_at)
       return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
@@ -54,35 +54,35 @@ const columns: ColumnDef<AuditData>[] = [
   },
   {
     accessorKey: "inventory.location.barcode",
-    header: "로케이션",
+    header: "Location",
     cell: ({ row }) => <div className="font-medium">{row.original.inventory?.location?.barcode || 'N/A'}</div>,
   },
   {
     accessorKey: "inventory.item.name",
-    header: "상품명",
+    header: "Item Name",
     cell: ({ row }) => <div className="truncate max-w-[150px]">{row.original.inventory?.item?.name || 'N/A'}</div>,
   },
   {
     accessorKey: "reason",
-    header: "조정 사유",
+    header: "Reason",
     cell: ({ row }) => {
       const reason = row.original.reason
-      return <Badge variant={reason ? "outline" : "secondary"}>{reason ? reasonLabels[reason] || reason : "수동 조정"}</Badge>
+      return <Badge variant={reason ? "outline" : "secondary"}>{reason ? reasonLabels[reason] || reason : "Manual Adjustment"}</Badge>
     }
   },
   {
     accessorKey: "previous_qty",
-    header: () => <div className="text-right">이전 수량</div>,
+    header: () => <div className="text-right">Before Qty</div>,
     cell: ({ row }) => <div className="text-right tabular-nums text-muted-foreground">{row.original.previous_qty}</div>,
   },
   {
     accessorKey: "new_qty",
-    header: () => <div className="text-right">변경 수량</div>,
+    header: () => <div className="text-right">After Qty</div>,
     cell: ({ row }) => <div className="text-right tabular-nums font-medium">{row.original.new_qty}</div>,
   },
   {
     id: "diff",
-    header: () => <div className="text-right">차이</div>,
+    header: () => <div className="text-right">Diff</div>,
     cell: ({ row }) => {
       const diff = row.original.new_qty - row.original.previous_qty
       const isPositive = diff > 0
@@ -113,19 +113,19 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
         <div className="flex flex-1 items-center gap-2">
           <Select defaultValue="ALL">
             <SelectTrigger className="w-[150px] bg-background">
-              <SelectValue placeholder="조정 사유" />
+              <SelectValue placeholder="Reason" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">전체 사유</SelectItem>
-              <SelectItem value="COUNT_MISMATCH">수량 불일치</SelectItem>
-              <SelectItem value="DAMAGED">파손</SelectItem>
-              <SelectItem value="LOST">분실</SelectItem>
+              <SelectItem value="ALL">All Reasons</SelectItem>
+              <SelectItem value="COUNT_MISMATCH">Count Mismatch</SelectItem>
+              <SelectItem value="DAMAGED">Damaged</SelectItem>
+              <SelectItem value="LOST">Lost</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Button variant="outline" className="shrink-0 bg-background" onClick={() => exportToExcel(data, "Audit_Report")}>
           <Download className="mr-2 size-4" />
-          이력 다운로드
+          Download Audit
         </Button>
       </div>
 
@@ -161,7 +161,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  조정 이력이 없습니다.
+                  No audit history found.
                 </TableCell>
               </TableRow>
             )}

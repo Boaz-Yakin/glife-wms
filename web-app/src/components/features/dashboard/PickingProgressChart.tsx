@@ -18,8 +18,8 @@ export function PickingProgressChart() {
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold tracking-tight">시간대별 피킹 추이</h3>
-          <p className="text-sm text-muted-foreground">금일 시간별 누적 피킹 처리량</p>
+          <h3 className="text-lg font-semibold tracking-tight">Hourly Picking Progress</h3>
+          <p className="text-sm text-muted-foreground">Cumulative picking volume per hour today</p>
         </div>
       </div>
       <div className="h-[250px] w-full">
@@ -48,7 +48,7 @@ export function PickingProgressChart() {
                       <div className="grid grid-cols-2 gap-2">
                         <div className="flex flex-col">
                           <span className="text-[0.70rem] uppercase text-muted-foreground">
-                            실제
+                            Actual
                           </span>
                           <span className="font-bold text-blue-500">
                             {payload[0].value}
@@ -56,7 +56,7 @@ export function PickingProgressChart() {
                         </div>
                         <div className="flex flex-col">
                           <span className="text-[0.70rem] uppercase text-muted-foreground">
-                            목표
+                            Target
                           </span>
                           <span className="font-bold text-gray-400">
                             {payload[1].value}

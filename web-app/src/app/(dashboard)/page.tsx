@@ -10,40 +10,40 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">대시보드</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
         <p className="text-muted-foreground mt-1">
-          현재 창고의 주요 현황을 실시간으로 확인합니다.
+          View key warehouse metrics in real-time.
         </p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="금일 출고 완료"
-          value={`${kpis.dispatchedCount} 건`}
+          title="Dispatched Today"
+          value={`${kpis.dispatchedCount} orders`}
           icon={Truck}
-          description="오늘 처리된 총 출고 건수"
+          description="Total orders dispatched today"
         />
         <KpiCard
-          title="진행 중 피킹"
-          value={`${kpis.pickingCount} 건`}
+          title="Picking in Progress"
+          value={`${kpis.pickingCount} orders`}
           icon={Activity}
-          description="현재 창고 내 피킹 진행 중"
+          description="Currently picking in warehouse"
         />
         <KpiCard
-          title="긴급 실사 대기"
-          value={`${kpis.cycleCountPending} 건`}
+          title="Urgent Audit Pending"
+          value={`${kpis.cycleCountPending} requests`}
           icon={AlertTriangle}
-          description="현장에서 접수된 실사 요청"
+          description="Audit requests from the floor"
         />
         <KpiCard
-          title="재고 부족 품목"
-          value={`${kpis.lowStockCount} 개`}
+          title="Low Stock Items"
+          value={`${kpis.lowStockCount} items`}
           icon={Package}
-          description="가용 재고 10개 미만 품목"
+          description="Items with less than 10 available"
         />
       </div>
       
-      {/* 차트 섹션 (3-B) */}
+      {/* Chart Section */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7 mt-4">
         <div className="col-span-4 rounded-xl border bg-card text-card-foreground shadow-sm p-6">
           <PickingProgressChart />

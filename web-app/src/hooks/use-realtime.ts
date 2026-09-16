@@ -22,11 +22,11 @@ export function useRealtimeNotifications() {
         },
         (payload: any) => {
           const newRequest = payload.new
-          toast.error("긴급 실사 요청 접수!", {
-            description: `로케이션: ${newRequest.location_id || 'N/A'}에서 실사가 요청되었습니다.`,
+          toast.error("Urgent Cycle Count Requested!", {
+            description: `A cycle count was requested at location: ${newRequest.location_id || 'N/A'}.`,
             action: {
-              label: "확인",
-              onClick: () => console.log("실사 내역 이동")
+              label: "View",
+              onClick: () => console.log("Navigate to audit")
             }
           })
           setUnreadCount((prev) => prev + 1)

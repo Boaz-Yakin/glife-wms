@@ -4,9 +4,9 @@ import * as React from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
 const data = [
-  { name: "가용 재고", value: 450, color: "#10b981" },
-  { name: "할당(출고대기)", value: 200, color: "#f59e0b" },
-  { name: "부족/파손", value: 35, color: "#ef4444" },
+  { name: "Available", value: 450, color: "#10b981" },
+  { name: "Allocated", value: 200, color: "#f59e0b" },
+  { name: "Shortage/Damaged", value: 35, color: "#ef4444" },
 ]
 
 export function InventoryStatusChart() {
@@ -14,8 +14,8 @@ export function InventoryStatusChart() {
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold tracking-tight">재고 건전성 지표</h3>
-          <p className="text-sm text-muted-foreground">현재 창고 내 전체 재고 상태 비율</p>
+          <h3 className="text-lg font-semibold tracking-tight">Inventory Health Index</h3>
+          <p className="text-sm text-muted-foreground">Ratio of overall inventory status in the warehouse</p>
         </div>
       </div>
       <div className="h-[250px] w-full flex items-center justify-center">
@@ -44,7 +44,7 @@ export function InventoryStatusChart() {
                           {payload[0].name}
                         </span>
                         <span className="font-bold tabular-nums" style={{ color: payload[0].payload.color }}>
-                          {payload[0].value} 개
+                          {payload[0].value} units
                         </span>
                       </div>
                     </div>

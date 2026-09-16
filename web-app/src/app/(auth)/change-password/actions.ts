@@ -7,7 +7,7 @@ export async function changePasswordAction(formData: FormData) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
-  if (!serviceKey) return { error: "서버 설정 오류: Service Key 누락" }
+  if (!serviceKey) return { error: "Server Configuration Error: Missing Service Key" }
 
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { autoRefreshToken: false, persistSession: false }
@@ -18,15 +18,15 @@ export async function changePasswordAction(formData: FormData) {
   const confirmPassword = formData.get("confirm_password")?.toString()
 
   if (!userId) {
-    return { error: "인증 정보가 없습니다." }
+    return { error: "Authentication information is missing." }
   }
 
   if (!password || password.length < 6) {
-    return { error: "비밀번호는 최소 6자 이상이어야 합니다." }
+    return { error: "Password must be at least 6 characters long." }
   }
 
   if (password !== confirmPassword) {
-    return { error: "비밀번호가 일치하지 않습니다." }
+    return { error: "Passwords do not match." }
   }
 
   // Update password and clear requires_password_change flag
@@ -37,7 +37,7 @@ export async function changePasswordAction(formData: FormData) {
 
   if (error) {
     console.error("changePassword error:", error)
-    return { error: "비밀번호 변경 실패: " + error.message }
+    return { error: "Failed to change password: " + error.message }
   }
 
   return { success: true }

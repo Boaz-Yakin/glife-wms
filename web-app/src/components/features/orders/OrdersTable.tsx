@@ -40,23 +40,23 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 }
 
 const statusLabels: Record<string, string> = {
-  PENDING: "대기",
-  ALLOCATED: "할당됨",
-  PICKING: "피킹 중",
-  PICKED: "피킹 완료",
-  DISPATCHED: "출고 완료",
-  CANCELED: "취소됨",
+  PENDING: "Pending",
+  ALLOCATED: "Allocated",
+  PICKING: "Picking",
+  PICKED: "Picked",
+  DISPATCHED: "Dispatched",
+  CANCELED: "Canceled",
 }
 
 const columns: ColumnDef<OrderData>[] = [
   {
     accessorKey: "id",
-    header: "주문 번호",
+    header: "Order No.",
     cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.id.slice(0, 8).toUpperCase()}</div>,
   },
   {
     accessorKey: "created_at",
-    header: "주문 일시",
+    header: "Order Date",
     cell: ({ row }) => {
       const date = new Date(row.original.created_at)
       return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
@@ -64,7 +64,7 @@ const columns: ColumnDef<OrderData>[] = [
   },
   {
     accessorKey: "status",
-    header: "주문 상태",
+    header: "Order Status",
     cell: ({ row }) => {
       const status = row.original.status
       const variant = statusColors[status] || "secondary"
@@ -74,7 +74,7 @@ const columns: ColumnDef<OrderData>[] = [
   },
   {
     accessorKey: "updated_at",
-    header: "최근 변경",
+    header: "Last Changed",
     cell: ({ row }) => {
       const date = new Date(row.original.updated_at)
       return <div className="text-muted-foreground tabular-nums">{date.toLocaleString('ko-KR')}</div>
@@ -98,25 +98,25 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="주문 번호 검색..." className="max-w-sm bg-background" />
+          <Input placeholder="Search Order No..." className="max-w-sm bg-background" />
           <Select defaultValue="ALL">
-            <SelectTrigger className="w-[150px] bg-background">
-              <SelectValue placeholder="주문 상태" />
+            <SelectTrigger className="w-[140px] bg-background">
+              <SelectValue placeholder="Order Status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">전체 상태</SelectItem>
-              <SelectItem value="PENDING">대기</SelectItem>
-              <SelectItem value="ALLOCATED">할당됨</SelectItem>
-              <SelectItem value="PICKING">피킹 중</SelectItem>
-              <SelectItem value="PICKED">피킹 완료</SelectItem>
-              <SelectItem value="DISPATCHED">출고 완료</SelectItem>
-              <SelectItem value="CANCELED">취소됨</SelectItem>
+              <SelectItem value="ALL">All Status</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="ALLOCATED">Allocated</SelectItem>
+              <SelectItem value="PICKING">Picking</SelectItem>
+              <SelectItem value="PICKED">Picked</SelectItem>
+              <SelectItem value="DISPATCHED">Dispatched</SelectItem>
+              <SelectItem value="CANCELED">Canceled</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Button variant="outline" className="shrink-0 bg-background" onClick={() => exportToExcel(data, "Orders_Report")}>
           <Download className="mr-2 size-4" />
-          엑셀 다운로드
+          Download Excel
         </Button>
       </div>
 
@@ -152,7 +152,7 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  주문 내역이 없습니다.
+                  No orders found.
                 </TableCell>
               </TableRow>
             )}
@@ -161,7 +161,7 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
       </div>
       
       <div className="text-sm text-muted-foreground">
-        총 {totalCount} 건의 데이터
+        Total {totalCount} orders
       </div>
     </div>
   )

@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AlertCircle, Loader2, Eye, EyeOff } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { changePasswordAction } from "@/app/(auth)/change-password/actions"
+import { toast } from "sonner"
 
 export default function ChangePasswordPage() {
   const [loading, setLoading] = useState(false)
@@ -43,40 +44,46 @@ export default function ChangePasswordPage() {
       setLoading(false)
     } else {
       await supabase.auth.signOut()
+      toast.success("Password changed successfully. Please log in with your new password.")
       router.push("/login")
     }
   }
 
   if (!userId) {
-    return null // or a loading spinner
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
+      </div>
+    )
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center p-4 bg-muted/30">
-      <Card className="w-full max-w-md shadow-lg border-primary/10">
-        <CardHeader className="space-y-1 text-center pb-8 pt-6">
-          <CardTitle className="text-2xl font-bold tracking-tight">초기 비밀번호 변경</CardTitle>
-          <CardDescription className="text-base mt-2">
-            보안을 위해 발급받은 초기 비밀번호를<br/>새로운 비밀번호로 변경해주세요.
+    <div className="flex h-screen w-full items-center justify-center bg-slate-50 p-4">
+      <Card className="w-full max-w-md shadow-lg border-slate-200">
+        <CardHeader className="space-y-2 text-center pb-6">
+          <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">Change Initial Password</CardTitle>
+          <CardDescription className="text-slate-500 text-base">
+            For security, you must change your initial password before accessing the system.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={handleSubmit} className="space-y-6">
+          <form action={handleSubmit}>
             {error && (
-              <Alert variant="destructive" className="py-2.5">
+              <Alert variant="destructive" className="mb-6 bg-red-50 border-red-200 text-red-800">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription className="ml-2 text-sm">{error}</AlertDescription>
+                <AlertDescription className="ml-2 font-medium">{error}</AlertDescription>
               </Alert>
             )}
+            
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">새 비밀번호</Label>
+                <Label htmlFor="password">New Password</Label>
                 <div className="relative">
                   <Input
                     id="password"
                     name="password"
                     type={showPassword ? "text" : "password"}
-                    placeholder="새로운 비밀번호 입력"
+                    placeholder="Enter new password"
                     required
                     disabled={loading}
                     className="pr-10"
@@ -92,13 +99,13 @@ export default function ChangePasswordPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm_password">새 비밀번호 확인</Label>
+                <Label htmlFor="confirm_password">Confirm New Password</Label>
                 <div className="relative">
                   <Input
                     id="confirm_password"
                     name="confirm_password"
                     type={showConfirmPassword ? "text" : "password"}
-                    placeholder="새로운 비밀번호 다시 입력"
+                    placeholder="Re-enter new password"
                     required
                     disabled={loading}
                     className="pr-10"
@@ -117,11 +124,11 @@ export default function ChangePasswordPage() {
             <Button type="submit" className="w-full h-11 text-base font-medium mt-6" disabled={loading}>
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  변경 중...
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Changing Password...
                 </>
               ) : (
-                "비밀번호 변경 완료"
+                "Complete Password Change"
               )}
             </Button>
           </form>

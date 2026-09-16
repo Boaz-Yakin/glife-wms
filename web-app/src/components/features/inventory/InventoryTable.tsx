@@ -36,7 +36,7 @@ export type InventoryData = {
 const columns: ColumnDef<InventoryData>[] = [
   {
     accessorKey: "location.barcode",
-    header: "로케이션",
+    header: "Location",
     cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.barcode || 'N/A'}</div>,
   },
   {
@@ -46,22 +46,22 @@ const columns: ColumnDef<InventoryData>[] = [
   },
   {
     accessorKey: "item.name",
-    header: "상품명",
+    header: "Item Name",
     cell: ({ row }) => <div className="font-semibold truncate max-w-[200px]" title={row.original.item?.name}>{row.original.item?.name || 'N/A'}</div>,
   },
   {
     accessorKey: "on_hand_qty",
-    header: () => <div className="text-right">실재고</div>,
+    header: () => <div className="text-right">On Hand</div>,
     cell: ({ row }) => <div className="text-right font-medium tabular-nums">{row.original.on_hand_qty}</div>,
   },
   {
     accessorKey: "allocated_qty",
-    header: () => <div className="text-right">할당재고</div>,
+    header: () => <div className="text-right">Allocated</div>,
     cell: ({ row }) => <div className="text-right text-muted-foreground tabular-nums">{row.original.allocated_qty}</div>,
   },
   {
     id: "available_qty",
-    header: () => <div className="text-right">가용재고</div>,
+    header: () => <div className="text-right">Available</div>,
     cell: ({ row }) => {
       const available = row.original.on_hand_qty - row.original.allocated_qty
       return (
@@ -92,21 +92,21 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       {/* Filters (Client Side placeholder for now) */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="상품명 또는 SKU 검색..." className="max-w-sm bg-background" />
+          <Input placeholder="Search Item Name or SKU..." className="max-w-sm bg-background" />
           <Select defaultValue="ALL">
             <SelectTrigger className="w-[120px] bg-background">
-              <SelectValue placeholder="구역(Zone)" />
+              <SelectValue placeholder="Zone" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">전체 구역</SelectItem>
-              <SelectItem value="A">A 구역</SelectItem>
-              <SelectItem value="F">F 구역</SelectItem>
+              <SelectItem value="ALL">All Zones</SelectItem>
+              <SelectItem value="A">Zone A</SelectItem>
+              <SelectItem value="F">Zone F</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <Button variant="outline" className="shrink-0 bg-background" onClick={() => exportToExcel(data, "Inventory_Report")}>
           <Download className="mr-2 size-4" />
-          엑셀 다운로드
+          Download Excel
         </Button>
       </div>
 
@@ -153,7 +153,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  데이터가 없습니다.
+                  No data available.
                 </TableCell>
               </TableRow>
             )}
@@ -162,7 +162,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       </div>
       
       <div className="text-sm text-muted-foreground">
-        총 {totalCount} 건의 데이터
+        Total {totalCount} records
       </div>
     </div>
   )
