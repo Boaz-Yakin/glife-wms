@@ -2,6 +2,8 @@ import * as React from "react"
 import { getUsers } from "@/services/users.service"
 import { UsersTable } from "@/components/features/settings/UsersTable"
 
+export const dynamic = "force-dynamic"
+
 export default async function SettingsUsersPage() {
   const { data, error } = await getUsers()
 
