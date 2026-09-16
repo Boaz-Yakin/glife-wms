@@ -4,13 +4,23 @@ export interface ItemData {
   id: string
   sku: string
   name_en: string
+  name_kr?: string | null
+  category?: string | null
   upc: string | null
-  desc_en?: string | null
   uom: string
+  units_per_box: number
   unit_price: number
-  zone_type: 'A' | 'F'
+  pack_price: number
+  box_price: number
+  zone_type: 'A' | 'F' | 'R'
   manufacturer_id?: string | null
+  supplier_id?: string | null
   manufacturer?: { name: string } | null
+  min_stock_qty: number
+  item_volume?: number | null
+  shelf_life_days?: number | null
+  note?: string | null
+  is_active: boolean
   created_at: string
 }
 

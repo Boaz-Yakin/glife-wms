@@ -12,6 +12,7 @@ const getAdminClient = () => {
 export async function createItemAction(formData: FormData) {
   const supabase = getAdminClient()
   
+  const id = formData.get("id")?.toString()
   const sku = formData.get("sku")?.toString()
   const name_en = formData.get("name_en")?.toString()
   const upc = formData.get("upc")?.toString() || `${sku}-upc`
@@ -39,28 +40,35 @@ export async function createItemAction(formData: FormData) {
     return { error: "Please enter all required fields (SKU, Name, UOM, Zone)." }
   }
 
-  const { error } = await (supabase as any).from("items").insert([
-    {
-      sku,
-      name_en,
-      name_kr,
-      category,
-      upc,
-      uom,
-      units_per_box,
-      unit_price,
-      pack_price,
-      box_price,
-      zone_type,
-      manufacturer_id,
-      supplier_id,
-      min_stock_qty,
-      item_volume,
-      shelf_life_days,
-      note,
-      is_active
-    }
-  ])
+  const payload = {
+    sku,
+    name_en,
+    name_kr,
+    category,
+    upc,
+    uom,
+    units_per_box,
+    unit_price,
+    pack_price,
+    box_price,
+    zone_type,
+    manufacturer_id,
+    supplier_id,
+    min_stock_qty,
+    item_volume,
+    shelf_life_days,
+    note,
+    is_active,
+  }
+
+  let error;
+  if (id) {
+    const { error: updateError } = await (supabase as any).from("items").update(payload).eq("id", id)
+    error = updateError
+  } else {
+    const { error: insertError } = await (supabase as any).from("items").insert([payload])
+    error = insertError
+  }
 
   if (error) {
     console.error("Create Item Error:", error)

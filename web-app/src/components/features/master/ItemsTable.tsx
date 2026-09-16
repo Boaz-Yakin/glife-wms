@@ -45,12 +45,14 @@ import {
   DropdownMenuGroup,
 } from "@/components/ui/dropdown-menu"
 
-const ActionCell = ({ id }: { id: string }) => {
+import { Edit2 } from "lucide-react"
+
+const ActionCell = ({ item, onEdit }: { item: ItemData, onEdit: (item: ItemData) => void }) => {
   const [isDeleting, setIsDeleting] = React.useState(false)
   const handleDelete = async () => {
     if (!confirm("Are you sure you want to delete this item?")) return
     setIsDeleting(true)
-    const res = await deleteItemAction(id)
+    const res = await deleteItemAction(item.id)
     setIsDeleting(false)
     if (res.error) toast.error(res.error)
     else toast.success("Item deleted successfully")
@@ -64,6 +66,10 @@ const ActionCell = ({ id }: { id: string }) => {
       <DropdownMenuContent align="end">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
+            <Edit2 className="mr-2 h-4 w-4" />
+            Edit Item
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 cursor-pointer">
             <Trash className="mr-2 h-4 w-4" />
             Delete Item
@@ -74,7 +80,7 @@ const ActionCell = ({ id }: { id: string }) => {
   )
 }
 
-const columns: ColumnDef<ItemData>[] = [
+const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => [
   {
     accessorKey: "sku",
     header: "SKU",
@@ -112,7 +118,7 @@ const columns: ColumnDef<ItemData>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => <ActionCell id={row.original.id} />,
+    cell: ({ row }) => <ActionCell item={row.original} onEdit={onEdit} />,
   },
 ]
 
@@ -131,22 +137,34 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const [isBulkDialogOpen, setIsBulkDialogOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
+  const [editingItem, setEditingItem] = React.useState<ItemData | null>(null)
   
+  const handleEdit = (item: ItemData) => {
+    setEditingItem(item)
+    setIsDialogOpen(true)
+  }
+
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(handleEdit),
     getCoreRowModel: getCoreRowModel(),
   })
 
   const handleSubmit = async (formData: FormData) => {
     setLoading(true)
-    const result = await createItemAction(formData)
+    let result;
+    if (editingItem) {
+      formData.append("id", editingItem.id)
+      result = await createItemAction(formData) // we will update createItemAction to handle updates
+    } else {
+      result = await createItemAction(formData)
+    }
     setLoading(false)
 
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("Item successfully registered.")
+      toast.success(editingItem ? "Item successfully updated." : "Item successfully registered.")
       setIsDialogOpen(false)
     }
   }
@@ -168,7 +186,10 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
             Bulk Import
           </Button>
 
-          <Button onClick={() => setIsDialogOpen(true)}>
+          <Button onClick={() => {
+            setEditingItem(null)
+            setIsDialogOpen(true)
+          }}>
             <Plus className="mr-2 h-4 w-4" />
             Register New Item
           </Button>
@@ -177,10 +198,14 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
       
       <ItemFormDialog 
         open={isDialogOpen} 
-        onOpenChange={setIsDialogOpen}
+        onOpenChange={(open) => {
+          setIsDialogOpen(open)
+          if (!open) setTimeout(() => setEditingItem(null), 200) // Clear after animation
+        }}
         partners={partners}
         onSubmit={handleSubmit}
         loading={loading}
+        initialData={editingItem}
       />
       
       <BulkImportDialog 
@@ -215,7 +240,7 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={table.getAllColumns().length} className="h-24 text-center">
                   No items found.
                 </TableCell>
               </TableRow>
