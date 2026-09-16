@@ -41,7 +41,7 @@ interface ItemFormDialogProps {
 export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading }: ItemFormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px] top-[10%] translate-y-0">
         <DialogHeader>
           <DialogTitle>Register New Item</DialogTitle>
           <DialogDescription>
