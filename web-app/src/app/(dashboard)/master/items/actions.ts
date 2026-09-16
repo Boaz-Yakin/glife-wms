@@ -101,6 +101,7 @@ export async function bulkCreateItemsAction(items: any[]) {
     name_en: item.name_en?.toString() || item.sku?.toString(),
     name_kr: item.name_kr?.toString() || null,
     item_volume: item.item_volume ? parseFloat(item.item_volume) : null,
+    volume_unit: item.volume_unit?.toString() || "m3",
     desc_en: item.desc_en?.toString() || null,
     desc_kr: item.desc_kr?.toString() || null,
     category: item.category?.toString() || null,
