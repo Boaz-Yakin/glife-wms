@@ -31,6 +31,27 @@ export interface PartnerFormDialogProps {
 }
 
 export function PartnerFormDialog({ open, onOpenChange, onSubmit, loading }: PartnerFormDialogProps) {
+  const [phone, setPhone] = useState("")
+
+  React.useEffect(() => {
+    if (!open) setPhone("")
+  }, [open])
+
+  const formatPhoneNumber = (value: string) => {
+    if (!value) return value;
+    const phoneNumber = value.replace(/[^\d]/g, '');
+    const phoneNumberLength = phoneNumber.length;
+    if (phoneNumberLength < 4) return phoneNumber;
+    if (phoneNumberLength < 7) {
+      return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3)}`;
+    }
+    return `(${phoneNumber.slice(0, 3)}) ${phoneNumber.slice(3, 6)}-${phoneNumber.slice(6, 10)}`;
+  }
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(formatPhoneNumber(e.target.value))
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] top-[10%] translate-y-0">
@@ -68,7 +89,15 @@ export function PartnerFormDialog({ open, onOpenChange, onSubmit, loading }: Par
 
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="phone" className="text-right">Phone</Label>
-              <Input id="phone" name="phone" className="col-span-3" placeholder="e.g. (555) 123-4567" />
+              <Input 
+                id="phone" 
+                name="phone" 
+                className="col-span-3" 
+                placeholder="e.g. (555) 123-4567" 
+                value={phone}
+                onChange={handlePhoneChange}
+                maxLength={14}
+              />
             </div>
 
             <div className="grid grid-cols-4 items-center gap-4">

@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server"
 
 export async function createPartnerAction(formData: FormData) {
   const supabase = await createClient()
-  
+
   const name = formData.get("name")?.toString()
   const type = formData.get("type")?.toString() || "BOTH"
   const contact_person = formData.get("contact_person")?.toString() || null
