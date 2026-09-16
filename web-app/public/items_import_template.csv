@@ -1,1 +1,3 @@
 sku,upc,name_en,name_kr,item_volume,desc_en,desc_kr,category,note,uom,box_price,pack_price,unit_price,units_per_box,zone_type,min_stock_qty,shelf_life_days,image_url,is_active,manufacturer_id,supplier_id
+NONG-SHIN-001,8801043014830,Shin Ramyun Noodle Soup 120g,신라면 120g,0.005,Spicy beef broth instant noodles,소고기 육수 매운맛 라면,Ramen,Best seller,BOX,30.00,0,1.20,40,A,50,365,,true,,
+CJ-HET-002,8801007054659,CJ Hetbahn Cooked White Rice 210g,CJ 햇반 210g,0.002,Microwavable cooked white rice,전자레인지용 즉석밥,Rice,,BOX,25.00,0,2.00,24,A,100,270,,true,,
