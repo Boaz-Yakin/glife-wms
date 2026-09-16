@@ -63,7 +63,8 @@
 |:---|:---|:---|:---|
 | `id` | UUID | PRIMARY KEY | 작업자 고유 ID (`gen_random_uuid()`) |
 | `phone` | VARCHAR(20) | UNIQUE, NOT NULL | 로그인 계정용 핸드폰 번호 |
-| `name` | VARCHAR(50) | NOT NULL | 사용자 성명 |
+| `first_name` | VARCHAR(100) | NOT NULL | 사용자 이름 (First Name) |
+| `last_name` | VARCHAR(100) | NOT NULL | 사용자 성 (Last Name) |
 | `password_hash` | VARCHAR(255) | NOT NULL | 비밀번호 해시 |
 | `role` | VARCHAR(20) | NOT NULL, DEFAULT 'PICKER' | **역할 권한**: `'ADMIN'`, `'INSPECTOR'`, `'PICKER'`, `'STORE'` |
 | `status` | VARCHAR(20) | DEFAULT 'ACTIVE' | 계정 상태 (`'ACTIVE'`, `'INACTIVE'`) |

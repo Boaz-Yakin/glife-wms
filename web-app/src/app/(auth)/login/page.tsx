@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Package2, ArrowRight, Loader2, ShieldCheck } from "lucide-react"
+import { Package2, ArrowRight, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { createClient } from "@/lib/supabase/client"
 export default function LoginPage() {
   const [phone, setPhone] = React.useState("")
   const [password, setPassword] = React.useState("")
+  const [showPassword, setShowPassword] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   
   const router = useRouter()
@@ -35,7 +36,7 @@ export default function LoginPage() {
     
     try {
       // 핸드폰 번호를 가상 이메일로 변환 (Option A 적용)
-      const virtualEmail = `${phone.replace(/-/g, "")}@wms.com`
+      const virtualEmail = `${phone.replace(/[^0-9]/g, "")}@glife.com`
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: virtualEmail,
@@ -132,15 +133,29 @@ export default function LoginPage() {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password" className="text-slate-700">비밀번호</Label>
                 </div>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="h-11 transition-all focus-visible:ring-blue-600"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  disabled={loading}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className="h-11 pr-10 transition-all focus-visible:ring-blue-600"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                    disabled={loading}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
             

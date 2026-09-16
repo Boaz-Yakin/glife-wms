@@ -48,6 +48,17 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (user) {
+    const requiresPasswordChange = user.user_metadata?.requires_password_change === true
+
+    if (requiresPasswordChange && request.nextUrl.pathname !== '/change-password') {
+      url.pathname = '/change-password'
+      return NextResponse.redirect(url)
+    }
+
+    if (!requiresPasswordChange && request.nextUrl.pathname === '/change-password') {
+      url.pathname = '/dashboard'
+      return NextResponse.redirect(url)
+    }
     const role = user.user_metadata?.role as string | undefined
 
     if (role === 'PICKER' || role === 'INSPECTOR') {

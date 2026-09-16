@@ -15,7 +15,8 @@ CREATE TYPE partner_type AS ENUM ('MANUFACTURER', 'SUPPLIER', 'BOTH');
 CREATE TABLE public.users (
     id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     phone VARCHAR(20) UNIQUE,
-    name VARCHAR(100) NOT NULL,
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
     role user_role NOT NULL DEFAULT 'STORE',
     status VARCHAR(20) DEFAULT 'ACTIVE',
     created_at TIMESTAMPTZ DEFAULT NOW(),
