@@ -49,7 +49,7 @@ export function BulkImportDialog({ open, onOpenChange, onImport }: BulkImportDia
     reader.onload = (e) => {
       try {
         const data = e.target?.result
-        const workbook = XLSX.read(data, { type: "binary" })
+        const workbook = XLSX.read(data, { type: "array" })
         const firstSheetName = workbook.SheetNames[0]
         const worksheet = workbook.Sheets[firstSheetName]
         const json = XLSX.utils.sheet_to_json(worksheet)
@@ -59,7 +59,7 @@ export function BulkImportDialog({ open, onOpenChange, onImport }: BulkImportDia
         clearFile()
       }
     }
-    reader.readAsBinaryString(file)
+    reader.readAsArrayBuffer(file)
   }
 
   const clearFile = () => {
