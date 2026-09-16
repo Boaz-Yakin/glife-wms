@@ -2,8 +2,9 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 import {
   Sidebar,
@@ -18,6 +19,13 @@ import {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
+  const router = useRouter()
+  const supabase = createClient()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
 
   const navItems = [
     {
@@ -81,7 +89,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton render={<Link href="/login" />} className="text-muted-foreground hover:text-foreground">
+            <SidebarMenuButton onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
               <LogOut className="size-4" />
               <span>Logout</span>
             </SidebarMenuButton>
