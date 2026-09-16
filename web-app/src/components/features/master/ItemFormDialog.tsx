@@ -100,7 +100,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
             <TabsContent value="pricing" className="space-y-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="uom" className="text-right">UOM <span className="text-red-500">*</span></Label>
-                <Select name="uom" value={uom} onValueChange={setUom} required>
+                <Select name="uom" value={uom} onValueChange={(v) => setUom(v || "EA")} required>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select UOM">
                       {uom === "EA" ? "EA (Each)" : uom === "PACK" ? "PACK" : uom === "BOX" ? "BOX" : "Select UOM"}
@@ -135,7 +135,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
             <TabsContent value="settings" className="space-y-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="zone_type" className="text-right">Zone Type <span className="text-red-500">*</span></Label>
-                <Select name="zone_type" value={zoneType} onValueChange={setZoneType} required>
+                <Select name="zone_type" value={zoneType} onValueChange={(v) => setZoneType(v || "A")} required>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select Zone">
                       {zoneType === "A" ? "Ambient" : zoneType === "F" ? "Frozen" : zoneType === "R" ? "Cold" : "Select Zone"}
@@ -162,7 +162,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer</Label>
-                <Select name="manufacturer_id" value={manufacturerId} onValueChange={setManufacturerId}>
+                <Select name="manufacturer_id" value={manufacturerId} onValueChange={(v) => setManufacturerId(v || "none")}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select Manufacturer">
                       {manufacturerId === "none" ? "None" : (partners.find(p => p.id === manufacturerId)?.name || "Select Manufacturer")}
@@ -178,7 +178,7 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="supplier_id" className="text-right text-sm">Supplier</Label>
-                <Select name="supplier_id" value={supplierId} onValueChange={setSupplierId}>
+                <Select name="supplier_id" value={supplierId} onValueChange={(v) => setSupplierId(v || "none")}>
                   <SelectTrigger className="col-span-3">
                     <SelectValue placeholder="Select Supplier">
                       {supplierId === "none" ? "None" : (partners.find(p => p.id === supplierId)?.name || "Select Supplier")}
