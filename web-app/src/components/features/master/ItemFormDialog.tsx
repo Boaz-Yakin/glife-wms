@@ -148,9 +148,9 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                     <SelectValue placeholder="Select Zone" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="A">Ambient (상온)</SelectItem>
-                    <SelectItem value="F">Frozen (냉동)</SelectItem>
-                    <SelectItem value="R">Cold (냉장)</SelectItem>
+                    <SelectItem value="A">Ambient</SelectItem>
+                    <SelectItem value="F">Frozen</SelectItem>
+                    <SelectItem value="R">Cold</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
