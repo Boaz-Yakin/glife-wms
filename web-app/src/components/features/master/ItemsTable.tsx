@@ -39,7 +39,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { ItemData } from "@/services/master.service"
-import { createItemAction } from "@/app/(dashboard)/master/items/actions"
+import { createItemAction, bulkCreateItemsAction } from "@/app/(dashboard)/master/items/actions"
+import { BulkImportDialog } from "./BulkImportDialog"
+import { Upload } from "lucide-react"
 
 const columns: ColumnDef<ItemData>[] = [
   {
@@ -92,6 +94,7 @@ interface ItemsTableProps {
 
 export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [isBulkDialogOpen, setIsBulkDialogOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
   
   const table = useReactTable({
@@ -113,6 +116,10 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
     }
   }
 
+  const handleBulkImport = async (items: any[]) => {
+    return await bulkCreateItemsAction(items)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -120,14 +127,20 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
           <Input placeholder="Search Item Name or SKU..." className="max-w-sm bg-background" />
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          {/* @ts-ignore */}
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Register New Item
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsBulkDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Bulk Import
+          </Button>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            {/* @ts-ignore */}
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Register New Item
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <DialogTitle>Register New Item</DialogTitle>
@@ -197,7 +210,14 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
+      
+      <BulkImportDialog 
+        open={isBulkDialogOpen} 
+        onOpenChange={setIsBulkDialogOpen} 
+        onImport={handleBulkImport} 
+      />
 
       <div className="rounded-md border bg-background">
         <Table>
