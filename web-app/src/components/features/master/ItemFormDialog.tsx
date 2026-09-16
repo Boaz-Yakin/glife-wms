@@ -79,32 +79,6 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Label htmlFor="category" className="text-right">Category</Label>
                 <Input id="category" name="category" className="col-span-3" placeholder="e.g. FOOD, ELECTRONICS" />
               </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer</Label>
-                <Select name="manufacturer_id">
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Manufacturer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {partners.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="supplier_id" className="text-right text-sm">Supplier</Label>
-                <Select name="supplier_id">
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select Supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {partners.map(p => (
-                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </TabsContent>
 
             {/* Pricing & UOM Tab */}
