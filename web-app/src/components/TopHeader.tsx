@@ -9,8 +9,14 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
+import { ClientSwitcher } from "@/components/ClientSwitcher"
 
-export function TopHeader() {
+interface TopHeaderProps {
+  clients: any[]
+  activeClientId: string | null
+}
+
+export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
   const { unreadCount } = useRealtimeNotifications()
 
   return (
@@ -21,6 +27,10 @@ export function TopHeader() {
         <h1 className="text-sm font-medium">Dashboard</h1>
       </div>
       
+      <div className="flex flex-1 items-center justify-center">
+        <ClientSwitcher clients={clients} activeClientId={activeClientId} />
+      </div>
+
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="size-5 text-muted-foreground" />

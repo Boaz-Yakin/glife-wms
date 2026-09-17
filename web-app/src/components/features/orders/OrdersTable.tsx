@@ -1,12 +1,14 @@
 "use client"
 
 import * as React from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
+import { Eye } from "lucide-react"
 
 import {
   Table,
@@ -22,16 +24,11 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Download } from "lucide-react"
 import { exportToExcel } from "@/lib/export"
-
-export type OrderData = {
-  id: string
-  status: string
-  created_at: string
-  updated_at: string
-}
+import { OrderData } from "@/services/orders.service"
+import { OrderDetailsDialog } from "./OrderDetailsDialog"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "secondary",
+  RECEIVED: "secondary",
   ALLOCATED: "outline",
   PICKING: "default",
   PICKED: "default",
@@ -40,7 +37,7 @@ const statusColors: Record<string, "default" | "secondary" | "destructive" | "ou
 }
 
 const statusLabels: Record<string, string> = {
-  PENDING: "Pending",
+  RECEIVED: "Received",
   ALLOCATED: "Allocated",
   PICKING: "Picking",
   PICKED: "Picked",
@@ -48,46 +45,98 @@ const statusLabels: Record<string, string> = {
   CANCELED: "Canceled",
 }
 
-const columns: ColumnDef<OrderData>[] = [
-  {
-    accessorKey: "id",
-    header: "Order No.",
-    cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.id.slice(0, 8).toUpperCase()}</div>,
-  },
-  {
-    accessorKey: "created_at",
-    header: "Order Date",
-    cell: ({ row }) => {
-      const date = new Date(row.original.created_at)
-      return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
-    }
-  },
-  {
-    accessorKey: "status",
-    header: "Order Status",
-    cell: ({ row }) => {
-      const status = row.original.status
-      const variant = statusColors[status] || "secondary"
-      const label = statusLabels[status] || status
-      return <Badge variant={variant as any}>{label}</Badge>
-    }
-  },
-  {
-    accessorKey: "updated_at",
-    header: "Last Changed",
-    cell: ({ row }) => {
-      const date = new Date(row.original.updated_at)
-      return <div className="text-muted-foreground tabular-nums">{date.toLocaleString('ko-KR')}</div>
-    }
-  },
-]
-
 interface OrdersTableProps {
   data: OrderData[]
   totalCount: number
 }
 
 export function OrdersTable({ data, totalCount }: OrdersTableProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  
+  const defaultSearch = searchParams.get("search") || ""
+  const defaultStatus = searchParams.get("status") || "ALL"
+  
+  const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+  const [selectedOrder, setSelectedOrder] = React.useState<OrderData | null>(null)
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) {
+        params.set("search", searchTerm)
+        params.delete("page")
+      } else {
+        params.delete("search")
+      }
+      router.replace(`${pathname}?${params.toString()}`)
+    }, 300)
+    
+    return () => clearTimeout(timeout)
+  }, [searchTerm, pathname, router, searchParams])
+
+  const handleStatusChange = (val: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (val && val !== 'ALL') {
+      params.set("status", val)
+    } else {
+      params.delete("status")
+    }
+    params.delete("page")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const columns: ColumnDef<OrderData>[] = [
+    {
+      accessorKey: "id",
+      header: "Order No.",
+      cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.id}</div>,
+    },
+    {
+      accessorKey: "invoice_number",
+      header: "Invoice No.",
+      cell: ({ row }) => <div className="tabular-nums text-muted-foreground">{row.original.invoice_number || '-'}</div>,
+    },
+    {
+      id: "store_name",
+      header: "Store",
+      cell: ({ row }) => <div>{row.original.store?.name || '-'}</div>,
+    },
+    {
+      accessorKey: "created_at",
+      header: "Order Date",
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at)
+        return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
+      }
+    },
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status
+        const variant = statusColors[status] || "secondary"
+        const label = statusLabels[status] || status
+        return <Badge variant={variant as any}>{label}</Badge>
+      }
+    },
+    {
+      accessorKey: "invoice_amount",
+      header: () => <div className="text-right">Total Amount</div>,
+      cell: ({ row }) => <div className="text-right tabular-nums">${row.original.invoice_amount?.toFixed(2)}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(row.original)}>
+          <Eye className="size-4 mr-2" />
+          Details
+        </Button>
+      ),
+    },
+  ]
+
   const table = useReactTable({
     data,
     columns,
@@ -98,14 +147,19 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="Search Order No..." className="max-w-sm bg-background" />
-          <Select defaultValue="ALL">
+          <Input 
+            placeholder="Search Order No or Invoice..." 
+            className="max-w-sm bg-background" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <Select value={defaultStatus} onValueChange={handleStatusChange}>
             <SelectTrigger className="w-[140px] bg-background">
               <SelectValue placeholder="Order Status" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
+              <SelectItem value="RECEIVED">Received</SelectItem>
               <SelectItem value="ALLOCATED">Allocated</SelectItem>
               <SelectItem value="PICKING">Picking</SelectItem>
               <SelectItem value="PICKED">Picked</SelectItem>
@@ -163,6 +217,14 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
       <div className="text-sm text-muted-foreground">
         Total {totalCount} orders
       </div>
+      
+      {selectedOrder && (
+        <OrderDetailsDialog 
+          order={selectedOrder} 
+          open={!!selectedOrder} 
+          onOpenChange={(val) => !val && setSelectedOrder(null)} 
+        />
+      )}
     </div>
   )
 }

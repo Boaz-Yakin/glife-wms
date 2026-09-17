@@ -1,4 +1,5 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from "@/lib/supabase/server"
+import { getActiveClientAction } from "@/app/actions/client.actions"
 
 export interface ItemData {
   id: string
@@ -34,6 +35,12 @@ export async function getItems({ page = 1, limit = 20, search = '' }) {
     *,
     manufacturer:manufacturer_id(name)
   `, { count: 'exact' })
+  
+  const activeClientId = await getActiveClientAction()
+  if (activeClientId) {
+    query = query.eq('client_id', activeClientId)
+  }
+
   if (search) {
     query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%`)
   }
@@ -94,4 +101,10 @@ export async function getLocations({ search = '' }) {
   }
   
   return { data, error: null }
+}
+
+export async function getClients() {
+  const supabase = await createClient()
+  const { data } = await supabase.from('clients').select('*').order('name')
+  return { data }
 }

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { getOrdersList } from "@/services/orders.service"
+import { getOrders } from "@/services/orders.service"
 import { OrdersTable } from "@/components/features/orders/OrdersTable"
 
 export default async function OrdersPage({
@@ -10,9 +10,9 @@ export default async function OrdersPage({
   const params = await searchParams
   
   const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1
-  const status = typeof params.status === 'string' ? params.status : 'ALL'
+  const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
   
-  const { data, count, error } = await getOrdersList({
+  const { data, count, error } = await getOrders({
     page,
     limit: 20,
     status
