@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Loader2 } from "lucide-react"
+import { Plus, Loader2, Download } from "lucide-react"
 
 // Dialog components moved to ItemFormDialog
 import { Label } from "@/components/ui/label"
@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select"
 import { ItemData } from "@/services/master.service"
 import { createItemAction, bulkCreateItemsAction } from "@/app/(dashboard)/master/items/actions"
+import { exportToExcel } from "@/lib/export"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { BulkImportDialog } from "./BulkImportDialog"
 import { ItemFormDialog } from "./ItemFormDialog"
@@ -209,6 +210,11 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
         </div>
         
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => exportToExcel(data, "Items_Master_Report")}>
+            <Download className="mr-2 h-4 w-4" />
+            Download Excel
+          </Button>
+
           <Button variant="outline" onClick={() => setIsBulkDialogOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Bulk Import

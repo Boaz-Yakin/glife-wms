@@ -136,14 +136,24 @@ export function BulkImportDialog({ open, onOpenChange, onImport }: BulkImportDia
           <DialogTitle>Bulk Import Items</DialogTitle>
           <DialogDescription>
             Upload an Excel or CSV file to register multiple items at once. 
-            <a 
-              href="/items_import_template.csv" 
-              download 
-              className="text-primary hover:underline font-medium inline-flex items-center ml-1"
-            >
-              <Download className="h-3 w-3 mr-1" />
-              Download Template
-            </a>
+            <div className="mt-2 flex gap-4">
+              <a 
+                href="/items_import_template.csv" 
+                download 
+                className="text-primary hover:underline font-medium inline-flex items-center"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Template (.csv)
+              </a>
+              <a 
+                href="/items_import_template.xlsx" 
+                download 
+                className="text-primary hover:underline font-medium inline-flex items-center"
+              >
+                <Download className="h-3 w-3 mr-1" />
+                Template (.xlsx)
+              </a>
+            </div>
           </DialogDescription>
         </DialogHeader>
 
