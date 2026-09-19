@@ -212,7 +212,7 @@ export function ItemsTable({ data, totalCount, partners }: ItemsTableProps) {
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => exportToExcel(data, "Items_Master_Report")}>
             <Download className="mr-2 h-4 w-4" />
-            Download Excel
+            Items List
           </Button>
 
           <Button variant="outline" onClick={() => setIsBulkDialogOpen(true)}>
