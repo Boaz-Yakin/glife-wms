@@ -153,3 +153,23 @@ export async function deleteItemAction(id: string) {
   revalidatePath('/master/items')
   return { success: true }
 }
+
+export async function getAllItemsForExportAction() {
+  const supabase = getAdminClient()
+  const activeClientId = await getActiveClientAction()
+  let query = supabase.from("items").select(`
+    *,
+    manufacturer:manufacturer_id(name)
+  `).order("sku", { ascending: true })
+
+  if (activeClientId) {
+    query = query.eq("client_id", activeClientId)
+  }
+
+  const { data, error } = await query
+  if (error) {
+    console.error("getAllItemsForExportAction error:", error)
+    return []
+  }
+  return data || []
+}

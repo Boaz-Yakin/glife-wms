@@ -2,6 +2,8 @@ import * as React from "react"
 import { getItems, getPartners } from "@/services/master.service"
 import { ItemsTable } from "@/components/features/master/ItemsTable"
 
+export const dynamic = "force-dynamic"
+
 export default async function MasterItemsPage({
   searchParams,
 }: {
@@ -9,12 +11,13 @@ export default async function MasterItemsPage({
 }) {
   const params = await searchParams
   
-  const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1
+  const page = typeof params.page === 'string' ? Math.max(1, parseInt(params.page, 10)) : 1
+  const limit = typeof params.limit === 'string' ? Math.max(10, parseInt(params.limit, 10)) : 50
   const search = typeof params.search === 'string' ? params.search : ''
   
   const { data, count, error } = await getItems({
     page,
-    limit: 20,
+    limit,
     search
   })
 
@@ -34,7 +37,13 @@ export default async function MasterItemsPage({
           Failed to load data. ({error})
         </div>
       ) : (
-        <ItemsTable data={data || []} totalCount={count} partners={partners || []} />
+        <ItemsTable 
+          data={data || []} 
+          totalCount={count} 
+          partners={partners || []} 
+          currentPage={page}
+          pageSize={limit}
+        />
       )}
     </div>
   )
