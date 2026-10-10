@@ -95,6 +95,7 @@ export function StoreFormDialog({
         <form action={onSubmit} className="space-y-4">
           {store && <input type="hidden" name="id" value={store.id} />}
           <input type="hidden" name="is_active" value={isActive ? "true" : "false"} />
+          <input type="hidden" name="client_id" value={selectedClientId} />
 
           <div className="space-y-4 py-2">
             {/* Client Selection */}

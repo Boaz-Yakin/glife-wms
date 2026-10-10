@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   ColumnDef,
   flexRender,
@@ -58,6 +59,7 @@ interface StoresTableProps {
 }
 
 export function StoresTable({ data, clients, activeClientId }: StoresTableProps) {
+  const router = useRouter()
   const [formDialogOpen, setFormDialogOpen] = React.useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false)
   const [loading, setLoading] = React.useState(false)
@@ -89,8 +91,9 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
       toast.success(
         `Store '${store.name}' has been ${nextStatus ? "activated" : "deactivated"}.`
       )
+      router.refresh()
     }
-  }, [])
+  }, [router])
 
   const columns = React.useMemo<ColumnDef<StoreData>[]>(() => [
     {
@@ -299,6 +302,7 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
         `Store successfully ${selectedStore ? "updated" : "registered"}.`
       )
       setFormDialogOpen(false)
+      router.refresh()
     }
   }
 
@@ -313,6 +317,7 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
     } else {
       toast.success(`Store '${selectedStore.name}' successfully deleted.`)
       setDeleteDialogOpen(false)
+      router.refresh()
     }
   }
 
@@ -327,6 +332,7 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
     } else {
       toast.success(`Store '${selectedStore.name}' has been deactivated.`)
       setDeleteDialogOpen(false)
+      router.refresh()
     }
   }
 

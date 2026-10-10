@@ -4,6 +4,8 @@ import { getClients } from "@/services/master.service"
 import { getActiveClientAction } from "@/app/actions/client.actions"
 import { StoresTable } from "@/components/features/master/StoresTable"
 
+export const dynamic = "force-dynamic"
+
 export default async function MasterStoresPage() {
   const [storesRes, clientsRes, activeClientId] = await Promise.all([
     getStores({ limit: 100 }),
