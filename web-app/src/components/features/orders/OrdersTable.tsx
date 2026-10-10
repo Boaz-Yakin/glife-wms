@@ -89,9 +89,13 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
 
   const columns: ColumnDef<OrderData>[] = [
     {
-      accessorKey: "id",
+      accessorKey: "order_no",
       header: "Order No.",
-      cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.id}</div>,
+      cell: ({ row }) => (
+        <div className="font-semibold tabular-nums text-primary font-mono text-xs">
+          {row.original.order_no || row.original.id}
+        </div>
+      ),
     },
     {
       accessorKey: "invoice_number",
@@ -101,14 +105,24 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     {
       id: "store_name",
       header: "Store",
-      cell: ({ row }) => <div>{row.original.store?.name || '-'}</div>,
+      cell: ({ row }) => <div className="font-medium text-sm">{row.original.store?.name || '-'}</div>,
     },
     {
       accessorKey: "created_at",
       header: "Order Date",
       cell: ({ row }) => {
         const date = new Date(row.original.created_at)
-        return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
+        return (
+          <div className="tabular-nums text-xs text-muted-foreground">
+            {date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </div>
+        )
       }
     },
     {

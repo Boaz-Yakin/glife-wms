@@ -1,10 +1,23 @@
 "use server"
 
-import { createClient } from "@/lib/supabase/server"
+import { createClient as createServerClient } from "@/lib/supabase/server"
+import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+
+const getClient = async () => {
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (serviceKey && supabaseUrl) {
+    return createAdminClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+  }
+  return await createServerClient()
+}
 
 export interface OrderData {
   id: string
+  order_no?: string | null
   invoice_number: string | null
   store_id: number | null
   client_id: string | null
@@ -37,7 +50,7 @@ export interface OrderItemData {
 }
 
 export async function getOrders({ page = 1, limit = 20, search = '', status = '' }) {
-  const supabase = await createClient()
+  const supabase = await getClient()
   let query = supabase.from('orders').select(`
     *,
     store:stores(name)
@@ -49,7 +62,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   }
 
   if (search) {
-    query = query.or(`id.ilike.%${search}%,invoice_number.ilike.%${search}%`)
+    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,invoice_number.ilike.%${search}%`)
   }
   
   if (status) {
@@ -70,7 +83,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
 }
 
 export async function getOrderDetails(orderId: string) {
-  const supabase = await createClient()
+  const supabase = await getClient()
   const { data, error } = await supabase.from('order_items').select(`
     *,
     item:items(name_en, sku),

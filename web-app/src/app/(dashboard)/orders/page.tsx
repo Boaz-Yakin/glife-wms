@@ -2,6 +2,8 @@ import * as React from "react"
 import { getOrders } from "@/services/orders.service"
 import { OrdersTable } from "@/components/features/orders/OrdersTable"
 
+export const dynamic = "force-dynamic"
+
 export default async function OrdersPage({
   searchParams,
 }: {
@@ -10,11 +12,13 @@ export default async function OrdersPage({
   const params = await searchParams
   
   const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1
+  const search = typeof params.search === 'string' ? params.search : ''
   const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
   
   const { data, count, error } = await getOrders({
     page,
     limit: 20,
+    search,
     status
   })
 
