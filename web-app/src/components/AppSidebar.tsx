@@ -53,6 +53,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       isActive: true,
       items: [
         { title: "Items (SKU)", url: "/master/items" },
+        { title: "Stores", url: "/master/stores" },
         { title: "Locations", url: "/master/locations" },
         { title: "Labels", url: "/master/labels" },
         { title: "Partners", url: "/master/partners" },

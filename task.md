@@ -51,3 +51,13 @@
 - [ ] 4.2 핑거 링 스캐너 연속 스캔 및 50ms 이내 반응성 검증
 - [x] 4.3 동시 실사/피킹 시 마이너스 재고 차단 원자성 검증
 - [x] 4.4 오프라인 서비스 워커 캐싱 및 IndexedDB 큐 테스트
+
+---
+
+## 🏬 Phase 5: web-app 3PL 멀티테넌트 매장 관리 (Store Master)
+- [x] 5.1 `stores` 테이블 스키마 확장 (`client_id` FK, `is_active`, `phone`, `contact_person`, `note`, `(client_id, store_no)` 복합 유니크 마이그레이션 적용)
+- [x] 5.2 `stores.service.ts` 서비스 레이어 및 주문 참조 검사 (`checkStoreOrderCount`) 구현
+- [x] 5.3 Server Actions (`createStoreAction`, `updateStoreAction`, `toggleStoreStatusAction`, `deleteStoreAction`) 안전 처리 구현
+- [x] 5.4 매장 UI 컴포넌트 (`StoresTable`, `StoreFormDialog`, `StoreDeleteDialog`) 및 `/master/stores` 페이지 구현
+- [x] 5.5 AppSidebar `Master Data` 하위 메뉴에 `Stores` 연동 및 프로덕션 빌드 검증 완료
+

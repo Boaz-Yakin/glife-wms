@@ -31,3 +31,17 @@ src/
 - `role === 'PICKER'` 또는 `role === 'INSPECTOR'`: `web-app`의 모든 경로(`/`) 접근 불가 (403 Forbidden).
 - `role === 'SUPERVISOR'`: 마스터 데이터 생성/수정 라우트 접근 차단 (조회만 허용).
 - API Route에서도 `auth.getUser()` 검증을 통해 관리자 권한 확인 후 DB 트랜잭션 수행.
+
+## 5. Master Data - Stores Management (매장 마스터 관리)
+### 5.1 데이터 모델 및 스키마 확장 (`public.stores`)
+- `client_id` (UUID, FK to `public.clients.id`, ON DELETE CASCADE): 화주사 1:N 관계
+- `is_active` (BOOLEAN, 기본값 `true`): 소프트 딜리트 및 발주 가능 상태 제어
+- `store_no` (VARCHAR(50)): 클라이언트별 매장 고유 코드 (`UNIQUE(client_id, store_no)`)
+- `contact_person` (VARCHAR(100)): 매장 담당자명
+- `phone` (VARCHAR(50)): 매장 연락처
+- `note` (TEXT): 배송 시 주의사항 및 비고
+
+### 5.2 CRUD & 데이터 무결성 정책
+- **열람**: 상단 글로벌 `ClientSwitcher`와 자동 연동되어 선택된 화주사 매장만 필터링하거나, 'All Clients' 상태에서는 전체 매장 및 소속 화주사 뱃지 노출.
+- **등록/수정**: Server Action (`createStoreAction`, `updateStoreAction`)을 통해 처리되며 `(client_id, store_no)` 중복 에러 핸들링.
+- **삭제/비활성화**: `orders` 테이블과의 무결성 제약으로 인해 이미 주문 이력이 존재하는 매장은 삭제 차단 후 비활성화(`is_active = false`) 유도. 미사용 매장은 영구 삭제 지원.

@@ -104,7 +104,13 @@ CREATE TABLE public.orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     order_no VARCHAR(50) UNIQUE NOT NULL, -- e.g., ORD-20260908-001
     user_id UUID REFERENCES public.users(id),
-    store_id UUID NOT NULL REFERENCES public.stores(id),
+    store_id UUID NOT NULL REFERENCES public.stores(id), -- Acts as Client ID
+    shipping_address TEXT,
+    billing_address TEXT,
+    requested_delivery_date DATE,
+    shipping_method VARCHAR(100),
+    tax_amount DECIMAL(10, 2) DEFAULT 0,
+    discount_amount DECIMAL(10, 2) DEFAULT 0,
     status order_status NOT NULL DEFAULT 'PENDING',
     order_date TIMESTAMPTZ DEFAULT NOW(),
     note TEXT,
@@ -119,7 +125,10 @@ CREATE TABLE public.order_items (
     item_id UUID NOT NULL REFERENCES public.items(id),
     qty INT NOT NULL CHECK (qty > 0),
     uom VARCHAR(20) NOT NULL,
+    requested_uom VARCHAR(20),
     price DECIMAL(10, 2) NOT NULL, -- Unit price at the time of order
+    discount_rate DECIMAL(5, 2) DEFAULT 0,
+    is_taxable BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

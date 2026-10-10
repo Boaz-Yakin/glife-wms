@@ -87,6 +87,44 @@ export type Database = {
           created_at: string;
         };
       };
+      orders: {
+        Row: {
+          id: string;
+          order_no: string;
+          user_id: string | null;
+          store_id: string;
+          shipping_address: string | null;
+          billing_address: string | null;
+          requested_delivery_date: string | null;
+          shipping_method: string | null;
+          tax_amount: number;
+          discount_amount: number;
+          status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'DISPATCHED' | 'CANCELED';
+          order_date: string;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: any;
+        Update: any;
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          item_id: string;
+          qty: number;
+          uom: string;
+          requested_uom: string | null;
+          price: number;
+          discount_rate: number;
+          is_taxable: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: any;
+        Update: any;
+      };
     };
   };
 };

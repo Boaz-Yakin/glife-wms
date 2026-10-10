@@ -22,12 +22,15 @@ export default function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    const cleanPhone = phone.trim().replace(/[^0-9]/g, "")
+    const cleanPassword = password.trim()
+
     // Simple validation
-    if (!phone || phone.length < 10) {
+    if (!cleanPhone || cleanPhone.length < 10) {
       toast.error("Please enter a valid phone number. (e.g. 01012345678)")
       return
     }
-    if (!password) {
+    if (!cleanPassword) {
       toast.error("Please enter your password.")
       return
     }
@@ -35,16 +38,24 @@ export default function LoginPage() {
     setLoading(true)
     
     try {
+      // Clean up any stale/broken auth session/cookies first
+      try {
+        await supabase.auth.signOut()
+      } catch (err) {
+        // ignore sign out error
+      }
+
       // 핸드폰 번호를 가상 이메일로 변환 (Option A 적용)
-      const virtualEmail = `${phone.replace(/[^0-9]/g, "")}@glife.com`
+      const virtualEmail = `${cleanPhone}@glife.com`
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email: virtualEmail,
-        password,
+        password: cleanPassword,
       })
       
       if (error) {
-        toast.error("Invalid phone number or password.")
+        console.error("Login attempt failed:", error)
+        toast.error(`Login Failed: ${error.message}`)
         setLoading(false)
         return
       }
@@ -172,6 +183,20 @@ export default function LoginPage() {
                   <ArrowRight className="h-4 w-4" />
                 </>
               )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+              onClick={() => {
+                setPhone("01012345678")
+                setPassword("admin0153")
+                toast.info("Admin credentials filled.")
+              }}
+            >
+              Fill Admin Credentials (01012345678 / admin0153)
             </Button>
           </form>
           
