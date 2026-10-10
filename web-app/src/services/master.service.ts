@@ -5,7 +5,6 @@ export interface ItemData {
   id: string
   sku: string
   name_en: string
-  name_kr?: string | null
   category?: string | null
   upc: string | null
   uom: string
@@ -22,7 +21,6 @@ export interface ItemData {
   volume_unit?: string | null
   shelf_life_days?: number | null
   desc_en?: string | null
-  desc_kr?: string | null
   image_url?: string | null
   note?: string | null
   is_active: boolean

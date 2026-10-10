@@ -97,24 +97,16 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Input id="upc" name="upc" className="col-span-3" placeholder="Leave blank to auto-generate" defaultValue={initialData?.upc || ""} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name_en" className="text-right">Name (En) <span className="text-red-500">*</span></Label>
+                <Label htmlFor="name_en" className="text-right">Item Name <span className="text-red-500">*</span></Label>
                 <Input id="name_en" name="name_en" className="col-span-3" required defaultValue={initialData?.name_en} />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name_kr" className="text-right">Name (Kr)</Label>
-                <Input id="name_kr" name="name_kr" className="col-span-3" defaultValue={initialData?.name_kr || ""} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">Category</Label>
                 <Input id="category" name="category" className="col-span-3" placeholder="e.g. FOOD, ELECTRONICS" defaultValue={initialData?.category || ""} />
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="desc_en" className="text-right pt-2">Desc (En)</Label>
+                <Label htmlFor="desc_en" className="text-right pt-2">Description</Label>
                 <Input id="desc_en" name="desc_en" className="col-span-3" defaultValue={initialData?.desc_en || ""} />
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <Label htmlFor="desc_kr" className="text-right pt-2">Desc (Kr)</Label>
-                <Input id="desc_kr" name="desc_kr" className="col-span-3" defaultValue={initialData?.desc_kr || ""} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="image_url" className="text-right">Image URL</Label>

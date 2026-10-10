@@ -77,10 +77,8 @@ export type Database = {
           sku: string;
           upc: string | null;
           name_en: string;
-          name_kr: string | null;
           item_volume: number | null;
           desc_en: string | null;
-          desc_kr: string | null;
           category: string | null;
           note: string | null;
           uom: string;

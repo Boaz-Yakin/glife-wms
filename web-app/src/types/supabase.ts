@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -190,7 +190,6 @@ export type Database = {
           client_id: string
           created_at: string | null
           desc_en: string | null
-          desc_kr: string | null
           id: string
           image_url: string | null
           is_active: boolean | null
@@ -198,7 +197,6 @@ export type Database = {
           manufacturer_id: string | null
           min_stock_qty: number | null
           name_en: string
-          name_kr: string | null
           note: string | null
           pack_price: number | null
           shelf_life_days: number | null
@@ -218,7 +216,6 @@ export type Database = {
           client_id: string
           created_at?: string | null
           desc_en?: string | null
-          desc_kr?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -226,7 +223,6 @@ export type Database = {
           manufacturer_id?: string | null
           min_stock_qty?: number | null
           name_en: string
-          name_kr?: string | null
           note?: string | null
           pack_price?: number | null
           shelf_life_days?: number | null
@@ -246,7 +242,6 @@ export type Database = {
           client_id?: string
           created_at?: string | null
           desc_en?: string | null
-          desc_kr?: string | null
           id?: string
           image_url?: string | null
           is_active?: boolean | null
@@ -254,7 +249,6 @@ export type Database = {
           manufacturer_id?: string | null
           min_stock_qty?: number | null
           name_en?: string
-          name_kr?: string | null
           note?: string | null
           pack_price?: number | null
           shelf_life_days?: number | null

@@ -24,7 +24,6 @@ export async function createItemAction(formData: FormData) {
   if (manufacturer_id === "none") manufacturer_id = null
   
   // New fields
-  const name_kr = formData.get("name_kr")?.toString() || null
   const category = formData.get("category")?.toString() || null
   let supplier_id = formData.get("supplier_id")?.toString() || null
   if (supplier_id === "none") supplier_id = null
@@ -36,7 +35,6 @@ export async function createItemAction(formData: FormData) {
   const volume_unit = formData.get("volume_unit")?.toString() || "m3"
   const shelf_life_days = formData.get("shelf_life_days") ? parseInt(formData.get("shelf_life_days")!.toString()) : null
   const desc_en = formData.get("desc_en")?.toString() || null
-  const desc_kr = formData.get("desc_kr")?.toString() || null
   const image_url = formData.get("image_url")?.toString() || null
   const note = formData.get("note")?.toString() || null
   const is_active = formData.get("is_active") === "true"
@@ -54,7 +52,6 @@ export async function createItemAction(formData: FormData) {
     client_id: activeClientId,
     sku,
     name_en,
-    name_kr,
     category,
     upc,
     uom,
@@ -70,7 +67,6 @@ export async function createItemAction(formData: FormData) {
     volume_unit,
     shelf_life_days,
     desc_en,
-    desc_kr,
     image_url,
     note,
     is_active,
@@ -112,11 +108,9 @@ export async function bulkCreateItemsAction(items: any[]) {
     sku: item.sku?.toString(),
     upc: item.upc?.toString() || `${item.sku}-upc`, // UPC is required and UNIQUE
     name_en: item.name_en?.toString() || item.sku?.toString(),
-    name_kr: item.name_kr?.toString() || null,
     item_volume: item.item_volume ? parseFloat(item.item_volume) : null,
     volume_unit: item.volume_unit?.toString() || "m3",
     desc_en: item.desc_en?.toString() || null,
-    desc_kr: item.desc_kr?.toString() || null,
     category: item.category?.toString() || null,
     uom: item.uom?.toString() || "EA",
     box_price: item.box_price ? parseFloat(item.box_price) : 0,
