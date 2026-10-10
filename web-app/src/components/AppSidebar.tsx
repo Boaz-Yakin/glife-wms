@@ -32,14 +32,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     "Settings": pathname.startsWith("/settings"),
   }))
 
-  // Auto-expand active section on route change
+  // Auto-sync active section on route change:
+  // Automatically expands the active section and collapses inactive sections
   React.useEffect(() => {
-    if (pathname.startsWith("/master")) {
-      setOpenGroups((prev) => ({ ...prev, "Master Data": true }))
-    }
-    if (pathname.startsWith("/settings")) {
-      setOpenGroups((prev) => ({ ...prev, "Settings": true }))
-    }
+    setOpenGroups({
+      "Master Data": pathname.startsWith("/master"),
+      "Settings": pathname.startsWith("/settings"),
+    })
   }, [pathname])
 
   const toggleGroup = (title: string) => {
