@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2 } from "lucide-react"
+import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 import {
@@ -61,8 +61,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
     {
       title: "Settings",
-      url: "/settings/users",
+      url: "/settings",
       icon: Settings,
+      items: [
+        { title: "Account Information", url: "/settings/profile" },
+        { title: "Security & Google OTP", url: "/settings/security" },
+        { title: "Users", url: "/settings/users" },
+      ]
     },
   ]
 
@@ -127,7 +132,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="text-muted-foreground hover:text-foreground">
+            <SidebarMenuButton 
+              render={<Link href="/settings/profile" />}
+              isActive={pathname === "/settings/profile"}
+              className="text-slate-700 hover:text-primary hover:bg-primary/5"
+            >
+              <UserCog className="size-4" />
+              <span>Account Information</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton onClick={handleLogout} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
               <LogOut className="size-4" />
               <span>Logout</span>
             </SidebarMenuButton>

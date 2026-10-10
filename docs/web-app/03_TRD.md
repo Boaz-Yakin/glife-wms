@@ -27,10 +27,19 @@ src/
 - **Realtime Subscription**: `/dashboard` 진입 시 `orders` 및 `inventory_adjustments` 테이블의 INSERT/UPDATE 이벤트를 구독하여 실시간 배너 갱신 및 차트 리렌더링을 유도합니다.
 
 ## 4. Security & Role-Based Access (보안 및 권한 제어)
-모바일 앱과 동일한 Auth 스키마를 사용하되, 미들웨어(`middleware.ts`)에서 강력한 차단 정책을 적용합니다.
+모바일 앱과 동일한 Auth 스키마를 사용하되, 프록시 미들웨어(`proxy.ts` / `middleware.ts`)에서 강력한 차단 정책을 적용합니다.
 - `role === 'PICKER'` 또는 `role === 'INSPECTOR'`: `web-app`의 모든 경로(`/`) 접근 불가 (403 Forbidden).
-- `role === 'SUPERVISOR'`: 마스터 데이터 생성/수정 라우트 접근 차단 (조회만 허용).
+- `role === 'SUPERVISOR'`: 마스터 데이터 생성/수정 라우트 접근 차단 (조회만 허용), 사용자 관리(`settings/users`) 접근 차단.
 - API Route에서도 `auth.getUser()` 검증을 통해 관리자 권한 확인 후 DB 트랜잭션 수행.
+
+### 4.1 무과금 2단계 인증: Google OTP (TOTP)
+- **비용 0원 MFA**: 통신사 SMS 과금 없이 스마트폰 Google Authenticator / MS Authenticator 앱을 이용한 시간 기반 일회용 비밀번호(TOTP) 사용.
+- **인증 보증 레벨 (AAL - Authenticator Assurance Level)**:
+  - 1단계: 전화번호(가상 이메일 `${cleanPhone}@glife.com`) + 비밀번호 로그인 (`AAL1`).
+  - 2단계: TOTP Factor가 등록된 계정은 Supabase Auth의 `aal2` 챌린지 수행. 미들웨어에서 `currentLevel === 'aal1' && nextLevel === 'aal2'`인 경우 대시보드 진입을 차단하고 OTP 검증 완료 유도.
+- **Factor 관리 UI (`/settings/security`)**:
+  - `supabase.auth.mfa.enroll({ factorType: 'totp' })`로 SVG QR 코드 및 Base32 Secret Key 발급.
+  - 6자리 인증코드 검증 완료 시 Factor를 활성화(`verified`). 언제든지 해제(`unenroll`) 가능.
 
 ## 5. Master Data - Stores Management (매장 마스터 관리)
 ### 5.1 데이터 모델 및 스키마 확장 (`public.stores`)

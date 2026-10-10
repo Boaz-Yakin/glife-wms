@@ -100,7 +100,7 @@ export function StoreFormDialog({
             {/* Client Selection */}
             <div className="space-y-1.5">
               <Label htmlFor="client_id">
-                Client (화주사) <span className="text-destructive">*</span>
+                Client <span className="text-destructive">*</span>
               </Label>
               <Select
                 name="client_id"
@@ -210,7 +210,7 @@ export function StoreFormDialog({
                 onCheckedChange={(checked) => setIsActive(checked === true)}
               />
               <Label htmlFor="is_active_checkbox" className="font-normal cursor-pointer">
-                Store is currently <span className="font-semibold">{isActive ? "Active (활성)" : "Inactive (비활성)"}</span>
+                Store is currently <span className="font-semibold">{isActive ? "Active" : "Inactive"}</span>
               </Label>
             </div>
           </div>

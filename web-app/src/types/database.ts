@@ -11,6 +11,55 @@ export type Database = {
       partner_type: 'MANUFACTURER' | 'SUPPLIER' | 'BOTH';
     };
     Tables: {
+      users: {
+        Row: {
+          id: string;
+          phone: string | null;
+          first_name: string;
+          last_name: string;
+          role: string;
+          status: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          phone?: string | null;
+          first_name: string;
+          last_name: string;
+          role?: string;
+          status?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          phone?: string | null;
+          first_name?: string;
+          last_name?: string;
+          role?: string;
+          status?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      stores: {
+        Row: {
+          id: string;
+          client_id: string | null;
+          store_no: string;
+          name: string;
+          address: string | null;
+          contact_person: string | null;
+          phone: string | null;
+          note: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: any;
+        Update: any;
+      };
       inventory: {
         Row: {
           id: string;

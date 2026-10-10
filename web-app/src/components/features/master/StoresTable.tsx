@@ -124,7 +124,7 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
     },
     {
       accessorKey: "client",
-      header: "Client (화주사)",
+      header: "Client",
       cell: ({ row }) => {
         const client = row.original.client
         if (!client) return <span className="text-muted-foreground text-xs">-</span>

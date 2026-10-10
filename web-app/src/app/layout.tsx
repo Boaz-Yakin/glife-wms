@@ -6,6 +6,9 @@ import "./globals.css"
 export const metadata = {
   title: "Glife WMS Admin Portal",
   description: "Web dashboard for managing WMS data",
+  other: {
+    google: "notranslate",
+  },
 }
 
 export default function RootLayout({
@@ -14,8 +17,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="ko">
-      <body className="antialiased min-h-screen">
+    <html lang="en" translate="no" className="notranslate">
+      <head>
+        <meta name="google" content="notranslate" />
+      </head>
+      <body className="antialiased min-h-screen notranslate">
         <TooltipProvider>
           {children}
           <Toaster position="top-right" />

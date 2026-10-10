@@ -69,10 +69,23 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url)
     }
 
+    // MFA Level Check (Google Authenticator / TOTP)
+    const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel()
+    const isMfaPending = aalData?.nextLevel === 'aal2' && aalData?.currentLevel !== 'aal2'
+
+    if (isMfaPending) {
+      // User must verify OTP before accessing any protected pages
+      if (request.nextUrl.pathname !== '/login') {
+        url.pathname = '/login'
+        return NextResponse.redirect(url)
+      }
+      return supabaseResponse
+    }
+
     if (role === 'SUPERVISOR') {
       if (
         request.nextUrl.pathname.startsWith('/master') ||
-        request.nextUrl.pathname.startsWith('/settings')
+        request.nextUrl.pathname.startsWith('/settings/users')
       ) {
         url.pathname = '/dashboard'
         return NextResponse.redirect(url)

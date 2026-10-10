@@ -219,12 +219,9 @@ export function UsersTable({ data }: { data: UserData[] }) {
         </div>
         
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          {/* @ts-ignore */}
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              Register New User
-            </Button>
+          <DialogTrigger render={<Button />}>
+            <Plus className="mr-2 h-4 w-4" />
+            Register New User
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
