@@ -51,7 +51,8 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   const supabase = await getClient()
   let query = supabase.from('orders').select(`
     *,
-    store:stores(name)
+    store:stores(name),
+    order_items(qty, price)
   `, { count: 'exact' })
   
   const activeClientId = await getActiveClientAction()
@@ -60,7 +61,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   }
 
   if (search) {
-    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,invoice_number.ilike.%${search}%`)
+    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,shipping_address.ilike.%${search}%`)
   }
   
   if (status) {
@@ -76,8 +77,22 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
     console.error('getOrders error:', error)
     return { data: [], count: 0, error: error.message }
   }
+
+  const formattedData = (data || []).map((order: any) => {
+    const itemsTotal = (order.order_items || []).reduce(
+      (sum: number, item: any) => sum + (Number(item.qty || 0) * Number(item.price || 0)),
+      0
+    )
+    const tax = Number(order.tax_amount || 0)
+    const discount = Number(order.discount_amount || 0)
+    const total = Math.max(0, itemsTotal + tax - discount)
+    return {
+      ...order,
+      invoice_amount: total,
+    }
+  })
   
-  return { data, count: count || 0, error: null }
+  return { data: formattedData, count: count || 0, error: null }
 }
 
 export async function getOrderDetails(orderId: string) {

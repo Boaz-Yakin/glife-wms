@@ -137,8 +137,12 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     },
     {
       accessorKey: "invoice_amount",
-      header: () => <div className="text-right">Total Amount</div>,
-      cell: ({ row }) => <div className="text-right tabular-nums">${row.original.invoice_amount?.toFixed(2)}</div>,
+      header: () => <div className="text-right font-medium">Total Amount</div>,
+      cell: ({ row }) => (
+        <div className="text-right tabular-nums font-semibold text-foreground">
+          ${Number(row.original.invoice_amount || 0).toFixed(2)}
+        </div>
+      ),
     },
     {
       id: "actions",
