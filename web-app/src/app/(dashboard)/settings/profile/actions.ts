@@ -24,14 +24,20 @@ export async function getMyProfileAction(): Promise<{ data: MyProfileData | null
       return { data: null, error: "Authentication session not found. Please sign in again." }
     }
 
-    const { data: rawProfile, error: profileError } = await (supabase as any)
-      .from("users")
-      .select("*")
-      .eq("id", user.id)
-      .maybeSingle()
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 
-    if (profileError) {
-      console.error("getMyProfileAction error:", profileError)
+    let rawProfile: any = null
+    if (serviceKey) {
+      const adminClient = createAdminClient(supabaseUrl, serviceKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+      })
+      const { data } = await adminClient
+        .from("users")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle()
+      rawProfile = data
     }
 
     const profile = rawProfile as {
