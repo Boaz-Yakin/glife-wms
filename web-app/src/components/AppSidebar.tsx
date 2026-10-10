@@ -3,8 +3,9 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog } from "lucide-react"
+import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog, ChevronDown } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { cn } from "cn"
 
 import {
   Sidebar,
@@ -24,6 +25,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
+
+  // State for collapsible menus
+  const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => ({
+    "Master Data": pathname.startsWith("/master"),
+    "Settings": pathname.startsWith("/settings"),
+  }))
+
+  // Auto-expand active section on route change
+  React.useEffect(() => {
+    if (pathname.startsWith("/master")) {
+      setOpenGroups((prev) => ({ ...prev, "Master Data": true }))
+    }
+    if (pathname.startsWith("/settings")) {
+      setOpenGroups((prev) => ({ ...prev, "Settings": true }))
+    }
+  }, [pathname])
+
+  const toggleGroup = (title: string) => {
+    setOpenGroups((prev) => ({
+      ...prev,
+      [title]: !prev[title],
+    }))
+  }
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -50,7 +74,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Master Data",
       url: "/master",
       icon: Database,
-      isActive: true,
       items: [
         { title: "Items (SKU)", url: "/master/items" },
         { title: "Stores", url: "/master/stores" },
@@ -91,41 +114,59 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       
       <SidebarContent>
         <SidebarMenu className="px-2 mt-4">
-          {navItems.map((item) => (
-            <SidebarMenuItem key={item.title} className="mt-1">
-              <SidebarMenuButton 
-                render={!item.items ? <Link href={item.url} /> : undefined}
-                isActive={pathname.startsWith(item.url) && !item.items} 
-                tooltip={item.title}
-              >
-                {!item.items ? (
-                  <>
-                    <item.icon className="size-4" />
-                    <span>{item.title}</span>
-                  </>
-                ) : (
-                  <div className="flex items-center w-full">
-                    <item.icon className="size-4 mr-2" />
-                    <span className="font-semibold">{item.title}</span>
-                  </div>
+          {navItems.map((item) => {
+            const hasSubItems = !!item.items
+            const isOpen = openGroups[item.title] ?? false
+            const isParentActive = item.items
+              ? item.items.some((sub) => pathname === sub.url)
+              : pathname.startsWith(item.url)
+
+            return (
+              <SidebarMenuItem key={item.title} className="mt-1">
+                <SidebarMenuButton 
+                  onClick={hasSubItems ? () => toggleGroup(item.title) : undefined}
+                  render={!hasSubItems ? <Link href={item.url} /> : undefined}
+                  isActive={!hasSubItems && isParentActive} 
+                  tooltip={item.title}
+                  className="cursor-pointer select-none"
+                >
+                  {!hasSubItems ? (
+                    <>
+                      <item.icon className="size-4" />
+                      <span>{item.title}</span>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between w-full">
+                      <div className="flex items-center">
+                        <item.icon className="size-4 mr-2" />
+                        <span className="font-semibold">{item.title}</span>
+                      </div>
+                      <ChevronDown 
+                        className={cn(
+                          "size-4 text-muted-foreground transition-transform duration-200",
+                          isOpen ? "rotate-180" : "rotate-0"
+                        )} 
+                      />
+                    </div>
+                  )}
+                </SidebarMenuButton>
+                {hasSubItems && isOpen && (
+                  <SidebarMenuSub className="transition-all duration-200 animate-in fade-in-50 slide-in-from-top-1">
+                    {item.items.map((subItem) => (
+                      <SidebarMenuSubItem key={subItem.title}>
+                        <SidebarMenuSubButton 
+                          render={<Link href={subItem.url} />}
+                          isActive={pathname === subItem.url}
+                        >
+                          <span>{subItem.title}</span>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
                 )}
-              </SidebarMenuButton>
-              {item.items && (
-                <SidebarMenuSub>
-                  {item.items.map((subItem) => (
-                    <SidebarMenuSubItem key={subItem.title}>
-                      <SidebarMenuSubButton 
-                        render={<Link href={subItem.url} />}
-                        isActive={pathname === subItem.url}
-                      >
-                        <span>{subItem.title}</span>
-                      </SidebarMenuSubButton>
-                    </SidebarMenuSubItem>
-                  ))}
-                </SidebarMenuSub>
-              )}
-            </SidebarMenuItem>
-          ))}
+              </SidebarMenuItem>
+            )
+          })}
         </SidebarMenu>
       </SidebarContent>
 
