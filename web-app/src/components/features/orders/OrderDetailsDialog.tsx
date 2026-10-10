@@ -52,7 +52,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Order Details: {order.id}</DialogTitle>
+          <DialogTitle>Order Details: {order.order_no || order.id}</DialogTitle>
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4 text-sm">
@@ -83,12 +83,11 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Item / SKU</TableHead>
+                  <TableHead>Item Name / SKU</TableHead>
                   <TableHead>UOM</TableHead>
-                  <TableHead className="text-right">Ordered</TableHead>
-                  <TableHead className="text-right">Picked</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Picker</TableHead>
+                  <TableHead className="text-right">Unit Price</TableHead>
+                  <TableHead className="text-right">Qty</TableHead>
+                  <TableHead className="text-right">Subtotal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -96,23 +95,35 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   items.map((item) => (
                     <TableRow key={item.id}>
                       <TableCell>
-                        <div className="font-medium">{item.item?.name_en}</div>
-                        <div className="text-xs text-muted-foreground">{item.item?.sku}</div>
+                        <div className="font-semibold text-foreground">
+                          {item.item?.name_en || "Unknown Item"}
+                          {item.item?.desc_en && (
+                            <span className="text-muted-foreground font-normal ml-1">
+                              ({item.item.desc_en})
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                          SKU: {item.item?.sku || item.item_id}
+                        </div>
                       </TableCell>
-                      <TableCell>{item.uom}</TableCell>
-                      <TableCell className="text-right tabular-nums font-medium">{item.qty}</TableCell>
-                      <TableCell className="text-right tabular-nums text-primary">{item.picked_qty}</TableCell>
                       <TableCell>
-                        <Badge variant={statusColors[item.status] || "secondary"}>{item.status}</Badge>
+                        <Badge variant="outline">{item.uom}</Badge>
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">
-                        {item.picker?.email || '-'}
+                      <TableCell className="text-right tabular-nums">
+                        ${Number(item.price || 0).toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold">
+                        {item.qty}
+                      </TableCell>
+                      <TableCell className="text-right tabular-nums font-semibold text-primary">
+                        ${(Number(item.qty || 0) * Number(item.price || 0)).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                       No line items found.
                     </TableCell>
                   </TableRow>

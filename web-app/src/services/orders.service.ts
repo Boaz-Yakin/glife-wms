@@ -35,18 +35,16 @@ export interface OrderItemData {
   id: string
   order_id: string
   item_id: string
-  location_id: string | null
+  location_id?: string | null
   uom: string
   price: number
   qty: number
-  picked_qty: number
-  picker_id: string | null
-  picked_at: string | null
-  status: string
+  discount_rate?: number
+  is_taxable?: boolean
+  created_at?: string
   
   // joined fields
-  item?: { name_en: string; sku: string } | null
-  picker?: { email: string } | null
+  item?: { name_en: string; desc_en?: string | null; sku: string } | null
 }
 
 export async function getOrders({ page = 1, limit = 20, search = '', status = '' }) {
@@ -86,8 +84,7 @@ export async function getOrderDetails(orderId: string) {
   const supabase = await getClient()
   const { data, error } = await supabase.from('order_items').select(`
     *,
-    item:items(name_en, sku),
-    picker:users!picker_id(email)
+    item:items(name_en, desc_en, sku)
   `).eq('order_id', orderId)
   
   if (error) {
