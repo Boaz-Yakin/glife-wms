@@ -6,6 +6,11 @@ import "./globals.css"
 export const metadata = {
   title: "Glife WMS Admin Portal",
   description: "Web dashboard for managing WMS data",
+  icons: {
+    icon: '/G-WMS.png',
+    shortcut: '/G-WMS.png',
+    apple: '/G-WMS.png',
+  },
   other: {
     google: "notranslate",
   },
