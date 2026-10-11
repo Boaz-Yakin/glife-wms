@@ -4,6 +4,7 @@ import {
   getInventoryHealth,
   getHourlyPickingProgress,
   getStorageCapacity,
+  getLogistixFlowMetrics,
   DashboardPeriod,
 } from "@/services/dashboard.service"
 import { KpiCard } from "@/components/features/dashboard/KpiCard"
@@ -11,6 +12,8 @@ import { PickingProgressChart } from "@/components/features/dashboard/PickingPro
 import { InventoryStatusChart } from "@/components/features/dashboard/InventoryStatusChart"
 import { StorageCapacityChart } from "@/components/features/dashboard/StorageCapacityChart"
 import { DashboardPeriodSelector } from "@/components/features/dashboard/DashboardPeriodSelector"
+import { WarehouseSelector } from "@/components/features/dashboard/WarehouseSelector"
+import { LogistixFlowPanel } from "@/components/features/dashboard/LogistixFlowPanel"
 import { Card } from "@/components/ui/card"
 import {
   PackageCheck,
@@ -24,31 +27,37 @@ import {
 interface DashboardPageProps {
   searchParams: Promise<{
     period?: string
+    warehouse?: string
   }>
 }
 
 export default async function DashboardPage({ searchParams }: DashboardPageProps) {
   const resolvedParams = await searchParams
   const period = (resolvedParams?.period as DashboardPeriod) || "today"
+  const warehouse = resolvedParams?.warehouse || "all"
 
-  const [kpis, inventoryHealth, pickingProgress, storageCapacity] = await Promise.all([
+  const [kpis, inventoryHealth, pickingProgress, storageCapacity, logistixFlow] = await Promise.all([
     getDashboardKpis(period),
     getInventoryHealth(),
     getHourlyPickingProgress(period),
     getStorageCapacity(),
+    getLogistixFlowMetrics(warehouse),
   ])
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Header with Title and Period Filter */}
+      {/* Header with Title and Filter Controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Dashboard</h2>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm">
             Real-time operations overview and warehouse KPI monitoring.
           </p>
         </div>
-        <DashboardPeriodSelector />
+        <div className="flex flex-wrap items-center gap-2">
+          <WarehouseSelector />
+          <DashboardPeriodSelector />
+        </div>
       </div>
 
       {/* 6 Core KPI Metric Cards */}
@@ -97,6 +106,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           icon={AlertTriangle}
         />
       </div>
+
+      {/* Phase 2: LogistiX Flow™ End-to-End Operational Gateways */}
+      <LogistixFlowPanel metrics={logistixFlow} />
 
       {/* Core Operational Charts Grid */}
       <div className="grid gap-4 lg:grid-cols-12">

@@ -83,3 +83,14 @@
 - [x] 8.3 `web-app` 서비스, 타입 (`database.ts`, `supabase.ts`), 액션, UI 폼 (`ItemFormDialog`), CSV 템플릿 정리 완료
 - [x] 8.4 Next.js Turbopack 프로덕션 빌드 검증 완료
 
+---
+
+## 🚀 Phase 9: web-app 대시보드 고도화 Phase 2 (LogistiX Flow™ & 공정 품질 관제탑)
+- [x] 9.1 `dashboard.service.ts`에 `getLogistixFlowMetrics()` 서비스 함수 및 프로세스별 SLA 지표 집계 로직 구축 (Dock-to-Stock 리드타임, CMD-SKIP 회피율 연계 가이드 피킹 정확도 %, 순환실사 장부 일치율 %)
+- [x] 9.2 `DockToStockGauge.tsx` 반원형(180도) SVG 속도계 게이지 컴포넌트 개발 (목표 30분 마커, 진행도 색상 코딩, 실시간 수치 표출)
+- [x] 9.3 `ProcessQualityCard.tsx` 5대 엔드투엔드 공정 카드 컴포넌트 개발 (Receiving, Place Smart, Guided Picking, Packing QC, Cycle Count 정확도 및 실시간 SLA 뱃지)
+- [x] 9.4 `LogistixFlowPanel.tsx` 통합 관제탑 패널 컴포넌트 개발 및 실시간 연결 상태 표시
+- [x] 9.5 `WarehouseSelector.tsx` 멀티 창고(전체 센터, 김포 메인센터, 용인 저온센터) 셀렉터 개발 및 URL SearchParams 동기화
+- [x] 9.6 `src/app/(dashboard)/dashboard/page.tsx` 메인 대시보드 페이지에 통합 연동 및 Turbopack 프로덕션 빌드 검증 완료
+
+

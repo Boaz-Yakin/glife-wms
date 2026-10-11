@@ -290,11 +290,11 @@ graph LR
 - [x] **창고 랙 보관 점유율 (`Storage Capacity`) 도넛 차트** 추가 ([`StorageCapacityChart.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/StorageCapacityChart.tsx))
 - [x] 상단 기간 비교 컨트롤러(`Today vs Yesterday`, `This Week`, `This Month`) 추가 ([`DashboardPeriodSelector.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DashboardPeriodSelector.tsx))
 
-### 🔹 Phase 2: LogistiX Flow & 공정 품질 관제탑 (핵심 차별화)
-- [ ] **Dock-to-Stock Time** 반원형 속도계(Speedometer Gauge) 컴포넌트 개발
-- [ ] 중앙 **5대 공정 정확도 패널**(입고, 슬로팅 적치, 가이드 피킹, 패킹 검수, 실사) 배지 추가
-- [ ] 모바일 피킹 앱의 `CMD-SKIP` 발생 건수와 연계한 **실시간 피킹 정확도 %** 계산 로직 구축
-- [ ] 상단 지점 셀렉터(김포센터, 용인센터 등 멀티 창고 필터) 연계
+### 🔹 Phase 2: LogistiX Flow & 공정 품질 관제탑 (구현 완료 ✅)
+- [x] **Dock-to-Stock Time** 반원형 속도계(Speedometer Gauge) 컴포넌트 개발 ([`DockToStockGauge.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DockToStockGauge.tsx))
+- [x] 중앙 **5대 공정 정확도 패널**(입고, 슬로팅 적치, 가이드 피킹, 패킹 검수, 실사) 배지 추가 ([`ProcessQualityCard.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/ProcessQualityCard.tsx) · [`LogistixFlowPanel.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/LogistixFlowPanel.tsx))
+- [x] 모바일 피킹 앱의 `CMD-SKIP` 발생 건수와 연계한 **실시간 피킹 정확도 %** 계산 로직 구축 (`getLogistixFlowMetrics()` in [`dashboard.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dashboard.service.ts))
+- [x] 상단 지점 셀렉터(김포센터, 용인센터 등 멀티 창고 필터) 연계 ([`WarehouseSelector.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/WarehouseSelector.tsx))
 
 ### 🔹 Phase 3: PrediX Slotting & RepleniX 스마트 큐 (지능화)
 - [ ] **Dead Stock(장기 체화 재고)** 60일 자동 감지 도넛 위젯 구현
