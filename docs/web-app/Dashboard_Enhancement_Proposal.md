@@ -287,9 +287,9 @@ graph LR
 - [x] 대시보드 4대 기본 KPI 실데이터 쿼리 연동 완결 ([`dashboard.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dashboard.service.ts))
 - [x] KPI 폰트 크기 확대 및 카드 중앙 배치 ([`KpiCard.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/KpiCard.tsx))
 - [x] 피킹 진행률 차트 X/Y축 점선 모눈 그리드 구현 ([`PickingProgressChart.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/PickingProgressChart.tsx))
-- [ ] **총 재고 자산 가치 (`Total Inventory Value`) 카드** 추가 (`items.unit_price` 연동)
-- [ ] **창고 랙 보관 점유율 (`Storage Capacity`) 도넛 차트** 추가 (`locations` 총수 대비 점유 랙)
-- [ ] 상단 기간 비교 컨트롤러(`Today vs Yesterday`, `This Week vs Last Week`) 추가
+- [x] **총 재고 자산 가치 (`Total Inventory Value`) 카드** 추가 (`items.unit_price` 연동)
+- [x] **창고 랙 보관 점유율 (`Storage Capacity`) 도넛 차트** 추가 (`locations` 총수 대비 점유 랙)
+- [x] 상단 기간 비교 컨트롤러(`Today vs Yesterday`, `This Week vs Last Week`, `This Month vs Last Month`) 추가
 
 ### 🔹 Phase 2: LogistiX Flow & 공정 품질 관제탑 (핵심 차별화)
 - [ ] **Dock-to-Stock Time** 반원형 속도계(Speedometer Gauge) 컴포넌트 개발
