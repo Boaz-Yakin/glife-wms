@@ -3,12 +3,6 @@
 import * as React from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-const defaultData = [
-  { name: "Available", value: 450, color: "#10b981" },
-  { name: "Allocated", value: 200, color: "#f59e0b" },
-  { name: "Shortage/Damaged", value: 35, color: "#ef4444" },
-]
-
 export interface InventoryStatusItem {
   name: string
   value: number
@@ -19,8 +13,8 @@ interface InventoryStatusChartProps {
   data?: InventoryStatusItem[]
 }
 
-export function InventoryStatusChart({ data: propData }: InventoryStatusChartProps) {
-  const chartData = propData && propData.some(d => d.value > 0) ? propData : defaultData
+export function InventoryStatusChart({ data = [] }: InventoryStatusChartProps) {
+  const totalUnits = data.reduce((sum, item) => sum + (item.value || 0), 0)
 
   return (
     <div className="flex flex-col space-y-4">
@@ -31,44 +25,57 @@ export function InventoryStatusChart({ data: propData }: InventoryStatusChartPro
         </div>
       </div>
       <div className="h-[250px] w-full flex items-center justify-center">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={60}
-              outerRadius={80}
-              paddingAngle={2}
-              dataKey="value"
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip
-              content={({ active, payload }) => {
-                if (active && payload && payload.length) {
-                  return (
-                    <div className="rounded-lg border bg-background p-2 shadow-sm">
-                      <div className="flex flex-col">
-                        <span className="text-[0.70rem] uppercase text-muted-foreground">
-                          {payload[0].name}
-                        </span>
-                        <span className="font-bold tabular-nums" style={{ color: payload[0].payload.color }}>
-                          {payload[0].value} units
-                        </span>
+        {totalUnits === 0 ? (
+          <div className="flex flex-col items-center justify-center text-center p-6 text-muted-foreground">
+            <div className="size-14 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center mb-2">
+              <span className="text-sm font-semibold text-muted-foreground">0</span>
+            </div>
+            <p className="font-medium text-sm text-foreground">No inventory recorded yet</p>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+              Available, allocated, and shortage counts will appear here once inventory is registered.
+            </p>
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={2}
+                dataKey="value"
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+              <Tooltip
+                content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="flex flex-col">
+                          <span className="text-[0.70rem] uppercase text-muted-foreground">
+                            {payload[0].name}
+                          </span>
+                          <span className="font-bold tabular-nums" style={{ color: payload[0].payload.color }}>
+                            {payload[0].value} units
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )
-                }
-                return null
-              }}
-            />
-            <Legend verticalAlign="bottom" height={36} iconType="circle" />
-          </PieChart>
-        </ResponsiveContainer>
+                    )
+                  }
+                  return null
+                }}
+              />
+              <Legend verticalAlign="bottom" height={36} iconType="circle" />
+            </PieChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   )
 }
+

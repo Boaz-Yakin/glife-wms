@@ -1,5 +1,5 @@
 import * as React from "react"
-import { getDashboardKpis, getInventoryHealth } from "@/services/dashboard.service"
+import { getDashboardKpis, getInventoryHealth, getHourlyPickingProgress } from "@/services/dashboard.service"
 import { KpiCard } from "@/components/features/dashboard/KpiCard"
 import { PickingProgressChart } from "@/components/features/dashboard/PickingProgressChart"
 import { InventoryStatusChart } from "@/components/features/dashboard/InventoryStatusChart"
@@ -7,9 +7,10 @@ import { Card } from "@/components/ui/card"
 import { PackageCheck, Clock, AlertTriangle, Boxes } from "lucide-react"
 
 export default async function DashboardPage() {
-  const [kpis, inventoryHealth] = await Promise.all([
+  const [kpis, inventoryHealth, pickingProgress] = await Promise.all([
     getDashboardKpis(),
     getInventoryHealth(),
+    getHourlyPickingProgress(),
   ])
 
   return (
@@ -50,7 +51,7 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="lg:col-span-4 p-6">
-          <PickingProgressChart />
+          <PickingProgressChart data={pickingProgress} />
         </Card>
         <Card className="lg:col-span-3 p-6">
           <InventoryStatusChart data={inventoryHealth} />
