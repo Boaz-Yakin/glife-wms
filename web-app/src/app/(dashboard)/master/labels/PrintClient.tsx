@@ -91,13 +91,13 @@ export function PrintClient() {
           <div 
             key={index} 
             className={`
-              flex flex-col items-center justify-center bg-white text-black
+              flex flex-col items-center justify-center bg-white text-black mx-auto w-full
               ${paperSize === 'label' 
-                ? ('w-[50mm] h-[30mm] ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
+                ? ('h-[30mm] ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
                 : 'p-4 print:border print:border-dashed print:border-gray-400'}
             `}
           >
-            <Barcode value={code} width={1.5} height={50} fontSize={14} displayValue={true} background="#ffffff" lineColor="#000000" />
+            <Barcode value={code} width={1.5} height={50} fontSize={14} displayValue={true} margin={0} background="#ffffff" lineColor="#000000" />
           </div>
         ))}
       </div>
