@@ -24,10 +24,15 @@ const STAGE_ICONS: Record<string, LucideIcon> = {
 
 interface ProcessQualityCardProps {
   stage: ProcessStageQuality
-  isLast?: boolean
+  showArrow?: boolean
+  trackBadge?: string
 }
 
-export function ProcessQualityCard({ stage, isLast = false }: ProcessQualityCardProps) {
+export function ProcessQualityCard({
+  stage,
+  showArrow = false,
+  trackBadge,
+}: ProcessQualityCardProps) {
   const StageIcon = STAGE_ICONS[stage.id] || ScanBarcode
 
   // 상태별 테마
@@ -54,9 +59,16 @@ export function ProcessQualityCard({ stage, isLast = false }: ProcessQualityCard
       {/* Step Header */}
       <div>
         <div className="flex items-center justify-between gap-1 mb-1.5">
-          <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-            STEP {stage.stepNumber}
-          </span>
+          <div className="flex items-center gap-1">
+            {trackBadge && (
+              <span className="text-[9px] font-mono font-bold tracking-wider px-1 py-0.5 rounded bg-foreground/5 text-muted-foreground uppercase border border-border/40">
+                {trackBadge}
+              </span>
+            )}
+            <span className="text-[10px] font-mono font-bold text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+              #{stage.stepNumber}
+            </span>
+          </div>
           <span
             className={`text-[10px] font-semibold px-1.5 py-0.5 rounded border inline-flex items-center ${statusTheme.badge}`}
           >
@@ -108,9 +120,9 @@ export function ProcessQualityCard({ stage, isLast = false }: ProcessQualityCard
         </div>
       </div>
 
-      {/* Connecting Flow Arrow for desktop */}
-      {!isLast && (
-        <div className="hidden 2xl:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-muted-foreground/40 group-hover:text-foreground/70 transition-colors pointer-events-none">
+      {/* Connecting Flow Arrow within same operational track */}
+      {showArrow && (
+        <div className="hidden xl:flex absolute -right-3 top-1/2 -translate-y-1/2 z-10 text-muted-foreground/60 group-hover:text-foreground/90 transition-colors pointer-events-none">
           <ChevronRight className="h-4 w-4" />
         </div>
       )}
