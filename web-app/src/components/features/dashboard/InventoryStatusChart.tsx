@@ -3,13 +3,25 @@
 import * as React from "react"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 
-const data = [
+const defaultData = [
   { name: "Available", value: 450, color: "#10b981" },
   { name: "Allocated", value: 200, color: "#f59e0b" },
   { name: "Shortage/Damaged", value: 35, color: "#ef4444" },
 ]
 
-export function InventoryStatusChart() {
+export interface InventoryStatusItem {
+  name: string
+  value: number
+  color: string
+}
+
+interface InventoryStatusChartProps {
+  data?: InventoryStatusItem[]
+}
+
+export function InventoryStatusChart({ data: propData }: InventoryStatusChartProps) {
+  const chartData = propData && propData.some(d => d.value > 0) ? propData : defaultData
+
   return (
     <div className="flex flex-col space-y-4">
       <div className="flex items-center justify-between">
@@ -22,7 +34,7 @@ export function InventoryStatusChart() {
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
-              data={data}
+              data={chartData}
               cx="50%"
               cy="50%"
               innerRadius={60}
@@ -30,7 +42,7 @@ export function InventoryStatusChart() {
               paddingAngle={2}
               dataKey="value"
             >
-              {data.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell key={`cell-${index}`} fill={entry.color} />
               ))}
             </Pie>
