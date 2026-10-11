@@ -53,7 +53,7 @@ export function PrintClient() {
           <div className="space-y-2">
             <Label htmlFor="paper-size">Paper Size</Label>
             <Select value={paperSize} onValueChange={(value) => setPaperSize(value as PaperSize)}>
-              <SelectTrigger id="paper-size">
+              <SelectTrigger id="paper-size" className="w-full">
                 <SelectValue placeholder="Select paper size" />
               </SelectTrigger>
               <SelectContent>
