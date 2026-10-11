@@ -94,7 +94,7 @@ export function PrintClient() {
               flex flex-col items-center justify-center bg-white text-black
               ${paperSize === 'label' 
                 ? 'w-[50mm] h-[30mm] print:break-after-page' 
-                : 'p-4'}
+                : 'p-4 print:border print:border-dashed print:border-gray-400'}
             `}
           >
             <Barcode value={code} width={1.5} height={50} fontSize={14} displayValue={true} background="#ffffff" lineColor="#000000" />
@@ -113,8 +113,8 @@ export function PrintClient() {
             <div 
               key={`preview-${index}`} 
               className={`
-                flex flex-col items-center justify-center bg-white text-black border shadow-sm mx-auto w-full
-                ${paperSize === 'label' ? 'max-w-[200px] h-[120px]' : 'py-6'}
+                flex flex-col items-center justify-center bg-white text-black mx-auto w-full
+                ${paperSize === 'label' ? 'border shadow-sm w-[50mm] h-[30mm]' : 'border border-dashed border-gray-400 py-6'}
               `}
             >
               <Barcode value={code} width={1.2} height={40} fontSize={12} displayValue={true} />
