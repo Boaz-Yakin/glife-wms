@@ -19,6 +19,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus } from "lucide-react"
+import { toast } from "sonner"
 
 export type LocationData = {
   id: string
@@ -58,9 +59,9 @@ export function LocationsTable({ data }: LocationsTableProps) {
         <div className="flex flex-1 items-center gap-2">
           <Input placeholder="Search location barcode..." className="max-w-sm bg-background" />
         </div>
-        <Button>
+        <Button onClick={() => toast.info('Location registration is coming soon.')}>
           <Plus className="mr-2 h-4 w-4" />
-          Register New Location
+          New Location
         </Button>
       </div>
 
