@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Printer } from "lucide-react"
+import Barcode from "react-barcode"
 
 export function PrintClient() {
   const [code, setCode] = React.useState("SKU-123456")
@@ -35,17 +36,7 @@ export function PrintClient() {
       {/* Print area (visible on screen and rendered when printing) */}
       <div className="print:block print:w-[50mm] print:h-[30mm] print:m-0 print:p-0">
         <div className="border-2 border-black w-64 h-32 p-4 flex flex-col items-center justify-center bg-white text-black print:border-none print:w-[50mm] print:h-[30mm]">
-          {/* Symbolic design instead of real barcode (jsbarcode can be added later) */}
-          <div className="flex gap-[2px] h-12 items-end justify-center w-full px-4 mb-2">
-            {[...Array(30)].map((_, i) => (
-              <div 
-                key={i} 
-                className="bg-black h-full" 
-                style={{ width: `${Math.max(1, Math.random() * 4)}px` }}
-              />
-            ))}
-          </div>
-          <p className="font-mono text-sm tracking-widest">{code}</p>
+          <Barcode value={code} width={1.5} height={50} fontSize={14} displayValue={true} />
         </div>
         
         <p className="print:hidden text-sm text-muted-foreground mt-2">
