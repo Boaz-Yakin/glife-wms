@@ -33,7 +33,7 @@ export function PickingProgressChart({ data = [] }: PickingProgressChartProps) {
         ) : (
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground)/0.2)" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={true} stroke="hsl(var(--muted-foreground)/0.25)" />
               <XAxis
                 dataKey="time"
                 stroke="hsl(var(--muted-foreground))"
