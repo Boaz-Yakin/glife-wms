@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   ColumnDef,
   flexRender,
@@ -30,8 +31,8 @@ export type AuditData = {
   created_at: string
   adjusted_by: string
   inventory: {
-    item: { sku: string; name: string } | any
-    location: { barcode: string } | any
+    item: { sku: string; name_en: string } | any
+    location: { code: string } | any
   } | any
 }
 
@@ -53,14 +54,14 @@ const columns: ColumnDef<AuditData>[] = [
     }
   },
   {
-    accessorKey: "inventory.location.barcode",
+    accessorKey: "inventory.location.code",
     header: "Location",
-    cell: ({ row }) => <div className="font-medium">{row.original.inventory?.location?.barcode || 'N/A'}</div>,
+    cell: ({ row }) => <div className="font-medium">{row.original.inventory?.location?.code || 'N/A'}</div>,
   },
   {
-    accessorKey: "inventory.item.name",
+    accessorKey: "inventory.item.name_en",
     header: "Item Name",
-    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.original.inventory?.item?.name || 'N/A'}</div>,
+    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.original.inventory?.item?.name_en || 'N/A'}</div>,
   },
   {
     accessorKey: "reason",
@@ -101,6 +102,37 @@ interface AuditTableProps {
 }
 
 export function AuditTable({ data, totalCount }: AuditTableProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const defaultReason = searchParams.get("reason") || "ALL"
+
+  const handleReasonChange = (val: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (val && val !== "ALL") {
+      params.set("reason", val)
+    } else {
+      params.delete("reason")
+    }
+    params.delete("page")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const handleExport = () => {
+    const flattened = data.map((d) => ({
+      "Date/Time": d.created_at ? new Date(d.created_at).toLocaleString('ko-KR') : '',
+      Location: d.inventory?.location?.code || 'N/A',
+      SKU: d.inventory?.item?.sku || 'N/A',
+      "Item Name": d.inventory?.item?.name_en || 'N/A',
+      Reason: d.reason ? reasonLabels[d.reason] || d.reason : "Manual Adjustment",
+      "Before Qty": d.previous_qty,
+      "After Qty": d.new_qty,
+      Diff: d.new_qty - d.previous_qty,
+    }))
+    exportToExcel(flattened, "Audit_Report")
+  }
+
   const table = useReactTable({
     data,
     columns,
@@ -111,7 +143,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Select defaultValue="ALL">
+          <Select defaultValue={defaultReason} onValueChange={handleReasonChange}>
             <SelectTrigger className="w-[150px] bg-background">
               <SelectValue placeholder="Reason" />
             </SelectTrigger>
@@ -123,7 +155,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" className="shrink-0 bg-background" onClick={() => exportToExcel(data, "Audit_Report")}>
+        <Button variant="outline" className="shrink-0 bg-background" onClick={handleExport}>
           <Download className="mr-2 size-4" />
           Download Audit
         </Button>

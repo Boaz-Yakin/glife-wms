@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   ColumnDef,
   flexRender,
@@ -29,15 +30,15 @@ export type InventoryData = {
   on_hand_qty: number
   allocated_qty: number
   updated_at: string
-  item: { sku: string; name: string } | any
-  location: { barcode: string; zone_type: string } | any
+  item: { sku: string; name_en: string } | any
+  location: { code: string; zone_type: string } | any
 }
 
 const columns: ColumnDef<InventoryData>[] = [
   {
-    accessorKey: "location.barcode",
+    accessorKey: "location.code",
     header: "Location",
-    cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.barcode || 'N/A'}</div>,
+    cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.code || 'N/A'}</div>,
   },
   {
     accessorKey: "item.sku",
@@ -45,9 +46,9 @@ const columns: ColumnDef<InventoryData>[] = [
     cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.item?.sku || 'N/A'}</div>,
   },
   {
-    accessorKey: "item.name",
+    accessorKey: "item.name_en",
     header: "Item Name",
-    cell: ({ row }) => <div className="font-semibold truncate max-w-[200px]" title={row.original.item?.name}>{row.original.item?.name || 'N/A'}</div>,
+    cell: ({ row }) => <div className="font-semibold truncate max-w-[200px]" title={row.original.item?.name_en}>{row.original.item?.name_en || 'N/A'}</div>,
   },
   {
     accessorKey: "on_hand_qty",
@@ -81,6 +82,55 @@ interface InventoryTableProps {
 }
 
 export function InventoryTable({ data, totalCount }: InventoryTableProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const defaultSearch = searchParams.get("search") || ""
+  const defaultZone = searchParams.get("zone") || "ALL"
+
+  const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+
+  React.useEffect(() => {
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (searchTerm) {
+        params.set("search", searchTerm)
+        params.delete("page")
+      } else {
+        params.delete("search")
+      }
+      router.replace(`${pathname}?${params.toString()}`)
+    }, 300)
+
+    return () => clearTimeout(timeout)
+  }, [searchTerm, pathname, router, searchParams])
+
+  const handleZoneChange = (val: string | null) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (val && val !== "ALL") {
+      params.set("zone", val)
+    } else {
+      params.delete("zone")
+    }
+    params.delete("page")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const handleExport = () => {
+    const flattened = data.map((d) => ({
+      Location: d.location?.code || 'N/A',
+      Zone: d.location?.zone_type || 'N/A',
+      SKU: d.item?.sku || 'N/A',
+      "Item Name": d.item?.name_en || 'N/A',
+      "On Hand": d.on_hand_qty,
+      Allocated: d.allocated_qty,
+      Available: d.on_hand_qty - d.allocated_qty,
+      "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString() : '',
+    }))
+    exportToExcel(flattened, "Inventory_Report")
+  }
+
   const table = useReactTable({
     data,
     columns,
@@ -89,11 +139,16 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters (Client Side placeholder for now) */}
+      {/* Filters */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
-          <Input placeholder="Search Item Name or SKU..." className="max-w-sm bg-background" />
-          <Select defaultValue="ALL">
+          <Input 
+            placeholder="Search Item Name or SKU..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="max-w-sm bg-background" 
+          />
+          <Select defaultValue={defaultZone} onValueChange={handleZoneChange}>
             <SelectTrigger className="w-[120px] bg-background">
               <SelectValue placeholder="Zone" />
             </SelectTrigger>
@@ -104,7 +159,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" className="shrink-0 bg-background" onClick={() => exportToExcel(data, "Inventory_Report")}>
+        <Button variant="outline" className="shrink-0 bg-background" onClick={handleExport}>
           <Download className="mr-2 size-4" />
           Download Excel
         </Button>
@@ -167,3 +222,4 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
     </div>
   )
 }
+
