@@ -31,10 +31,10 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm font-bold tracking-tight text-foreground">
-                LogistiX Flow™
+                Operations Flow
               </h3>
               <span className="text-xs text-muted-foreground font-normal">
-                End-to-End Operational Control Center (Dock to Dispatch)
+                End-to-End Fulfillment Control (Dock to Dispatch)
               </span>
               <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 <ShieldCheck className="h-3 w-3" />
@@ -87,11 +87,11 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
             <span className="flex items-center gap-1">
               <Zap className="h-3 w-3 text-amber-500" />
               <span>
-                <strong>Zero-Paper 2D Guidance & Scan Verification:</strong> Live tracking of pick skips (`CMD-SKIP`) and cycle count audits.
+                <strong>Scan Verification & SLA Tracking:</strong> Live tracking of pick skips (`CMD-SKIP`) and cycle count audits.
               </span>
             </span>
             <span className="font-medium text-foreground">
-              WERC & 3DLogistiX Standard Compliant
+              Warehouse Operations SLA Compliant
             </span>
           </div>
         </div>

@@ -107,7 +107,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         />
       </div>
 
-      {/* Phase 2: LogistiX Flow™ End-to-End Operational Gateways */}
+      {/* Phase 2: Operations Flow End-to-End Operational Gateways */}
       <LogistixFlowPanel metrics={logistixFlow} />
 
       {/* Core Operational Charts Grid */}
