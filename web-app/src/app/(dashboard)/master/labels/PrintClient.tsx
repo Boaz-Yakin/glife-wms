@@ -32,6 +32,14 @@ export function PrintClient() {
           body {
             -webkit-print-color-adjust: exact;
           }
+          /* Hide App UI elements when printing */
+          header, aside, [data-sidebar="sidebar"] {
+            display: none !important;
+          }
+          main {
+            padding: 0 !important;
+            margin: 0 !important;
+          }
         }
       `}} />
 
