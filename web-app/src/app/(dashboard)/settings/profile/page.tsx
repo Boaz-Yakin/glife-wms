@@ -164,23 +164,23 @@ export default function MyProfilePage() {
             <form onSubmit={handleSaveProfile} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="last_name" className="text-xs font-medium">Last Name</Label>
-                  <Input
-                    id="last_name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    placeholder="Doe"
-                    disabled={savingProfile}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="first_name" className="text-xs font-medium">First Name</Label>
                   <Input
                     id="first_name"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     placeholder="John"
+                    disabled={savingProfile}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last_name" className="text-xs font-medium">Last Name</Label>
+                  <Input
+                    id="last_name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    placeholder="Doe"
                     disabled={savingProfile}
                     required
                   />
