@@ -10,9 +10,9 @@ export function WarehouseSelector() {
   const currentWarehouse = searchParams.get("warehouse") || "all"
 
   const warehouses = [
-    { id: "all", label: "전체 센터 (All Centers)", shortLabel: "전체 센터" },
-    { id: "gimpo", label: "김포 메인센터 (Gimpo Main Hub)", shortLabel: "김포 센터" },
-    { id: "yongin", label: "용인 저온센터 (Yongin Cold Hub)", shortLabel: "용인 센터" },
+    { id: "all", label: "All Zones & Racks" },
+    { id: "zone_a", label: "Zone A (Ambient Storage)" },
+    { id: "zone_f", label: "Zone F (Cold Storage)" },
   ]
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {

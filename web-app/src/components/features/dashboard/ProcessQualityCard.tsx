@@ -94,7 +94,7 @@ export function ProcessQualityCard({ stage, isLast = false }: ProcessQualityCard
           >
             {stage.rate}%
           </span>
-          <span className="text-[9.5px] font-medium text-muted-foreground" title="벤치마크 기준">
+          <span className="text-[9.5px] font-medium text-muted-foreground" title="Industry Benchmark">
             {stage.benchmark}
           </span>
         </div>

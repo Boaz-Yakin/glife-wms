@@ -190,7 +190,7 @@ export async function getDashboardKpis(period: DashboardPeriod = 'today'): Promi
   return {
     totalInventoryValue,
     inventoryValueFormatted,
-    inventoryValueTrend: totalInventoryValue > 0 ? { value: '+2.4% vs last mo', isPositive: true } : undefined,
+    inventoryValueTrend: undefined,
     storageUtilisationRate,
     storageUtilisationFormatted,
     storageOccupiedBins,
@@ -320,7 +320,6 @@ export async function getHourlyPickingProgress(period: DashboardPeriod = 'today'
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-  // 오늘 완료된 피킹/출고 주문들
   let pickedQuery = (supabase as any)
     .from('orders')
     .select('id, status, updated_at')
@@ -334,7 +333,6 @@ export async function getHourlyPickingProgress(period: DashboardPeriod = 'today'
 
   const { data: pickedOrders } = await pickedQuery
 
-  // 당일 활성 주문 수 (목표치 계산용)
   let todayOrdersQuery = (supabase as any)
     .from('orders')
     .select('*', { count: 'exact', head: true })
@@ -392,6 +390,7 @@ export interface LogistixFlowMetrics {
     status: QualityStatus
     badgeText: string
     benchmarkText: string
+    hasRealData: boolean
   }
   stages: {
     receiving: ProcessStageQuality
@@ -407,14 +406,15 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
   const supabase = await createClient()
   const activeClientId = await getActiveClientAction()
 
-  // 1. Dock-to-Stock 리드타임 산출 (최근 7일 inventory 생성-수정 간격 평균 분)
-  let leadTimeMinutes = 17.4 // 기본 표준 벤치마크치
+  // 1. Dock-to-Stock Actual Lead Time from inventory (created_at vs updated_at delta)
+  let leadTimeMinutes = 0
+  let hasValidLeadTimes = false
   try {
     let invLeadQuery = (supabase as any)
       .from('inventory')
-      .select('created_at, updated_at')
+      .select('created_at, updated_at, location:location_id(zone_type)')
       .order('updated_at', { ascending: false })
-      .limit(50)
+      .limit(100)
 
     if (activeClientId) {
       invLeadQuery = invLeadQuery.eq('client_id', activeClientId)
@@ -422,99 +422,182 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
 
     const { data: invRows } = await invLeadQuery
     if (invRows && invRows.length > 0) {
-      const validDeltas = invRows
+      const filteredRows = warehouse !== 'all'
+        ? invRows.filter((r: any) => r.location?.zone_type === warehouse.replace('zone_', '').toUpperCase())
+        : invRows
+
+      const deltas = filteredRows
         .map((r: any) => {
           const start = new Date(r.created_at).getTime()
           const end = new Date(r.updated_at).getTime()
-          return (end - start) / (1000 * 60) // 분 단위
+          return (end - start) / (1000 * 60)
         })
-        .filter((mins: number) => mins > 0 && mins < 300) // 비정상 이상치 제외
+        .filter((mins: number) => mins > 0)
 
-      if (validDeltas.length >= 3) {
-        const avg = validDeltas.reduce((acc: number, curr: number) => acc + curr, 0) / validDeltas.length
-        leadTimeMinutes = Number(avg.toFixed(1))
+      if (deltas.length > 0) {
+        const sum = deltas.reduce((acc: number, val: number) => acc + val, 0)
+        leadTimeMinutes = Number((sum / deltas.length).toFixed(1))
+        hasValidLeadTimes = true
       }
     }
   } catch {
-    // 폴백 기본값 유지
+    leadTimeMinutes = 0
   }
 
-  // 2. 피킹 정확도 (Guided Picking - CMD-SKIP 회피율 연계)
-  let guidedPickRate = 96.4
-  try {
-    // 최근 주문 아이템 수 vs 결품(SKIP) 건수
-    let skipCountQuery = (supabase as any)
-      .from('cycle_count_requests')
-      .select('*', { count: 'exact', head: true })
-
-    const { count: skipCount } = await skipCountQuery
-
-    let orderCountQuery = (supabase as any)
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .in('status', ['PICKED', 'DISPATCHED'])
-
-    if (activeClientId) {
-      orderCountQuery = orderCountQuery.eq('client_id', activeClientId)
-    }
-
-    const { count: orderCount } = await orderCountQuery
-    const safeOrders = orderCount || 0
-    const safeSkips = skipCount || 0
-
-    if (safeOrders > 0) {
-      const calculatedRate = 100 - (safeSkips / (safeOrders * 2)) * 100
-      guidedPickRate = Number(Math.max(88, Math.min(99.8, calculatedRate)).toFixed(1))
-    }
-  } catch {
-    // 폴백 기본값 유지
-  }
-
-  // 3. 재고 장부 일치율 (Cycle Count - adjustments 오차율 연계)
-  let cycleCountRate = 92.1
+  // 2. Receiving Quality (%): Inventory records without damaged/lost adjustments
+  let receivingRate = 100
   try {
     const { count: totalInvCount } = await (supabase as any)
       .from('inventory')
       .select('*', { count: 'exact', head: true })
 
-    const { count: adjCount } = await (supabase as any)
+    const { count: damagedCount } = await (supabase as any)
+      .from('inventory_adjustments')
+      .select('*', { count: 'exact', head: true })
+      .in('reason', ['DAMAGED', 'LOST'])
+
+    const total = totalInvCount || 0
+    const damaged = damagedCount || 0
+    if (total > 0) {
+      receivingRate = Number((Math.max(0, 100 - (damaged / total) * 100)).toFixed(1))
+    }
+  } catch {
+    receivingRate = 100
+  }
+
+  // 3. Place Smart (%): Item recommended zone_type matched with location zone_type
+  let placeSmartRate = 100
+  try {
+    let slottingQuery = (supabase as any)
+      .from('inventory')
+      .select('item:item_id (zone_type), location:location_id (zone_type)')
+
+    if (activeClientId) {
+      slottingQuery = slottingQuery.eq('client_id', activeClientId)
+    }
+
+    const { data: slottingRows } = await slottingQuery
+    if (slottingRows && slottingRows.length > 0) {
+      const filteredSlots = warehouse !== 'all'
+        ? slottingRows.filter((r: any) => r.location?.zone_type === warehouse.replace('zone_', '').toUpperCase())
+        : slottingRows
+
+      if (filteredSlots.length > 0) {
+        const matched = filteredSlots.filter((r: any) => r.item?.zone_type === r.location?.zone_type).length
+        placeSmartRate = Number(((matched / filteredSlots.length) * 100).toFixed(1))
+      }
+    }
+  } catch {
+    placeSmartRate = 100
+  }
+
+  // 4. Guided Pick Zero-Skip Rate (%): Completed orders vs skip requests in cycle_count_requests
+  let guidedPickRate = 100
+  try {
+    let pickedQuery = (supabase as any)
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .in('status', ['PICKED', 'DISPATCHED'])
+
+    if (activeClientId) {
+      pickedQuery = pickedQuery.eq('client_id', activeClientId)
+    }
+
+    const { count: pickedCount } = await pickedQuery
+
+    let skipQuery = (supabase as any)
+      .from('cycle_count_requests')
+      .select('*', { count: 'exact', head: true })
+
+    const { count: skipCount } = await skipQuery
+
+    const totalPicked = pickedCount || 0
+    const skips = skipCount || 0
+    if (totalPicked > 0) {
+      guidedPickRate = Number((Math.max(0, 100 - (skips / totalPicked) * 100)).toFixed(1))
+    }
+  } catch {
+    guidedPickRate = 100
+  }
+
+  // 5. Packing QC Pass Rate (%): Dispatched orders vs total finalized orders (Dispatched + Canceled)
+  let packingQcRate = 100
+  try {
+    let dispatchedQuery = (supabase as any)
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'DISPATCHED')
+
+    let canceledQuery = (supabase as any)
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .eq('status', 'CANCELED')
+
+    if (activeClientId) {
+      dispatchedQuery = dispatchedQuery.eq('client_id', activeClientId)
+      canceledQuery = canceledQuery.eq('client_id', activeClientId)
+    }
+
+    const { count: dispatchedCount } = await dispatchedQuery
+    const { count: canceledCount } = await canceledQuery
+
+    const dCount = dispatchedCount || 0
+    const cCount = canceledCount || 0
+    const totalFinal = dCount + cCount
+
+    if (totalFinal > 0) {
+      packingQcRate = Number(((dCount / totalFinal) * 100).toFixed(1))
+    }
+  } catch {
+    packingQcRate = 100
+  }
+
+  // 6. Cycle Count Accuracy (%): Inventory without adjustments
+  let cycleCountRate = 100
+  try {
+    const { count: totalInv } = await (supabase as any)
+      .from('inventory')
+      .select('*', { count: 'exact', head: true })
+
+    const { count: totalAdj } = await (supabase as any)
       .from('inventory_adjustments')
       .select('*', { count: 'exact', head: true })
 
-    const totalInv = totalInvCount || 100
-    const adj = adjCount || 0
-    if (totalInv > 0) {
-      const matchRate = 100 - (adj / totalInv) * 100
-      cycleCountRate = Number(Math.max(85, Math.min(99.5, matchRate)).toFixed(1))
+    const inv = totalInv || 0
+    const adj = totalAdj || 0
+    if (inv > 0) {
+      cycleCountRate = Number((Math.max(0, 100 - (adj / inv) * 100)).toFixed(1))
     }
   } catch {
-    // 폴백 기본값 유지
+    cycleCountRate = 100
   }
-
-  // 창고(warehouse) 필터에 따른 미세 지표 튜닝 (UI 체험성)
-  if (warehouse === 'yongin') {
-    leadTimeMinutes = Number((leadTimeMinutes * 1.15).toFixed(1))
-    guidedPickRate = Number((guidedPickRate * 0.98).toFixed(1))
-  } else if (warehouse === 'gimpo') {
-    leadTimeMinutes = Number((leadTimeMinutes * 0.92).toFixed(1))
-    guidedPickRate = Number(Math.min(99.9, guidedPickRate * 1.01).toFixed(1))
-  }
-
-  const dockStatus: QualityStatus =
-    leadTimeMinutes <= 30 ? 'optimal' : leadTimeMinutes <= 60 ? 'warning' : 'critical'
-  const dockBadgeText =
-    dockStatus === 'optimal' ? '정상 🟢' : dockStatus === 'warning' ? '주의 🟡' : '지연 🔴'
 
   const getStatusFromRate = (rate: number, optThreshold: number, warnThreshold: number): { status: QualityStatus; badgeText: string } => {
-    if (rate >= optThreshold) return { status: 'optimal', badgeText: '우수 🟢' }
-    if (rate >= warnThreshold) return { status: 'warning', badgeText: '주의 🟡' }
-    return { status: 'critical', badgeText: '위험 🔴' }
+    if (rate >= optThreshold) return { status: 'optimal', badgeText: 'Optimal 🟢' }
+    if (rate >= warnThreshold) return { status: 'warning', badgeText: 'Warning 🟡' }
+    return { status: 'critical', badgeText: 'Critical 🔴' }
   }
 
-  const receivingQuality = getStatusFromRate(99.2, 98.0, 95.0)
-  const placeSmartQuality = getStatusFromRate(88.5, 92.0, 85.0)
+  const dockStatus: QualityStatus = !hasValidLeadTimes
+    ? 'optimal'
+    : leadTimeMinutes <= 30
+    ? 'optimal'
+    : leadTimeMinutes <= 60
+    ? 'warning'
+    : 'critical'
+
+  const dockBadgeText = !hasValidLeadTimes
+    ? 'No Data ⚪'
+    : dockStatus === 'optimal'
+    ? 'Optimal 🟢'
+    : dockStatus === 'warning'
+    ? 'Warning 🟡'
+    : 'Delayed 🔴'
+
+  const receivingQuality = getStatusFromRate(receivingRate, 98.0, 95.0)
+  const placeSmartQuality = getStatusFromRate(placeSmartRate, 90.0, 80.0)
   const guidedPickQuality = getStatusFromRate(guidedPickRate, 95.0, 90.0)
-  const packingQcQuality = getStatusFromRate(99.8, 98.5, 95.0)
+  const packingQcQuality = getStatusFromRate(packingQcRate, 98.0, 90.0)
   const cycleCountQuality = getStatusFromRate(cycleCountRate, 95.0, 90.0)
 
   return {
@@ -523,29 +606,30 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
       targetMinutes: 30,
       status: dockStatus,
       badgeText: dockBadgeText,
-      benchmarkText: '목표 30분 이내 (Target: <30m)',
+      benchmarkText: 'Target: <30m',
+      hasRealData: hasValidLeadTimes,
     },
     stages: {
       receiving: {
         id: 'receiving',
         stepNumber: '01',
         name: 'Receiving',
-        rate: 99.2,
+        rate: receivingRate,
         status: receivingQuality.status,
         badgeText: receivingQuality.badgeText,
-        label: '1차 스캔검수',
-        description: 'QR/바코드 일치율',
+        label: 'Inbound Verification',
+        description: 'Barcode & SKU verification',
         benchmark: '≥ 98.0%',
       },
       placeSmart: {
         id: 'placeSmart',
         stepNumber: '02',
         name: 'Place Smart',
-        rate: 88.5,
+        rate: placeSmartRate,
         status: placeSmartQuality.status,
         badgeText: placeSmartQuality.badgeText,
-        label: '슬로팅 준수율',
-        description: '추천 로케이션 적치율',
+        label: 'Slotting Compliance',
+        description: 'Zone & temperature match',
         benchmark: '≥ 90.0%',
       },
       guidedPick: {
@@ -555,19 +639,19 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
         rate: guidedPickRate,
         status: guidedPickQuality.status,
         badgeText: guidedPickQuality.badgeText,
-        label: '노스킵 피킹률',
-        description: 'CMD-SKIP 회피율',
+        label: 'Zero-Skip Pick Rate',
+        description: 'CMD-SKIP avoidance rate',
         benchmark: '≥ 95.0%',
       },
       packingQc: {
         id: 'packingQc',
         stepNumber: '04',
         name: 'Packing QC',
-        rate: 99.8,
+        rate: packingQcRate,
         status: packingQcQuality.status,
         badgeText: packingQcQuality.badgeText,
-        label: '오출고 검수율',
-        description: '중량·바코드 최종통과',
+        label: 'Dispatch QC Pass',
+        description: 'Final inspection pass rate',
         benchmark: '≥ 99.5%',
       },
       cycleCount: {
@@ -577,12 +661,13 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
         rate: cycleCountRate,
         status: cycleCountQuality.status,
         badgeText: cycleCountQuality.badgeText,
-        label: '장부 일치율',
-        description: '순환실사 원장 일치율',
+        label: 'Inventory Accuracy',
+        description: 'Audit & ledger match rate',
         benchmark: '≥ 95.0%',
       },
     },
-    lastUpdated: new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+    lastUpdated: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
   }
 }
+
 

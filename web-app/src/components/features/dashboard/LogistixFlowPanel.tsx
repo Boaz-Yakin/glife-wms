@@ -34,7 +34,7 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
                 LogistiX Flow™
               </h3>
               <span className="text-xs text-muted-foreground font-normal">
-                엔드투엔드 공정 실시간 관제탑 (Dock to Dispatch)
+                End-to-End Operational Control Center (Dock to Dispatch)
               </span>
               <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.2 rounded text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20">
                 <ShieldCheck className="h-3 w-3" />
@@ -53,7 +53,7 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
             Real-time Connected
           </span>
           <span className="text-border">|</span>
-          <span>동기화: {metrics.lastUpdated}</span>
+          <span>Synced: {metrics.lastUpdated}</span>
         </div>
       </div>
 
@@ -67,6 +67,7 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
             status={metrics.dockToStock.status}
             badgeText={metrics.dockToStock.badgeText}
             benchmarkText={metrics.dockToStock.benchmarkText}
+            hasRealData={metrics.dockToStock.hasRealData}
           />
         </div>
 
@@ -86,11 +87,11 @@ export function LogistixFlowPanel({ metrics }: LogistixFlowPanelProps) {
             <span className="flex items-center gap-1">
               <Zap className="h-3 w-3 text-amber-500" />
               <span>
-                <strong>무종이 2D 가이드 및 실시간 스캔 검수:</strong> 현장 결품(`CMD-SKIP`) 및 실사 오차 자동 감지 적용 중
+                <strong>Zero-Paper 2D Guidance & Scan Verification:</strong> Live tracking of pick skips (`CMD-SKIP`) and cycle count audits.
               </span>
             </span>
             <span className="font-medium text-foreground">
-              산업 상위 10% 벤치마크 (WERC/3DLogistiX) 준수
+              WERC & 3DLogistiX Standard Compliant
             </span>
           </div>
         </div>

@@ -10,6 +10,7 @@ interface DockToStockGaugeProps {
   status: QualityStatus
   badgeText: string
   benchmarkText: string
+  hasRealData?: boolean
 }
 
 export function DockToStockGauge({
@@ -18,20 +19,19 @@ export function DockToStockGauge({
   status,
   badgeText,
   benchmarkText,
+  hasRealData = true,
 }: DockToStockGaugeProps) {
-  // 0 ~ 60분 범위로 게이지 각도 정규화 (180도 반원)
+  // Normalize angle to 0 - 60 min range (180 deg semi-circle)
   const maxMinutes = 60
   const clampedMinutes = Math.min(Math.max(minutes, 0), maxMinutes)
-  const progressRatio = clampedMinutes / maxMinutes // 0 ~ 1
-  const targetRatio = targetMinutes / maxMinutes // 0.5 (30분)
+  const progressRatio = hasRealData ? clampedMinutes / maxMinutes : 0
 
-  // 반원 호 둘레 계산 (반지름 r = 75)
-  // 반원 호 길이 = PI * r ≈ 235.619
+  // Semi-circle arc length (r = 75) => PI * r ≈ 235.619
   const radius = 75
   const arcLength = Math.PI * radius
   const strokeDashoffset = arcLength * (1 - progressRatio)
 
-  // 상태별 색상
+  // Status-based color mapping
   const statusColors = {
     optimal: {
       stroke: "#10b981", // emerald-500
@@ -87,7 +87,7 @@ export function DockToStockGauge({
           <path
             d="M 25 95 A 75 75 0 0 1 175 95"
             fill="none"
-            stroke={statusColors.stroke}
+            stroke={hasRealData ? statusColors.stroke : "#94a3b8"}
             strokeWidth="14"
             strokeLinecap="round"
             strokeDasharray={arcLength}
@@ -115,10 +115,18 @@ export function DockToStockGauge({
             className="fill-foreground text-3xl font-black tracking-tight"
             style={{ fontSize: "28px", fontWeight: "800", fontVariantNumeric: "tabular-nums" }}
           >
-            {minutes}
-            <tspan dx="3" dy="-4" className="text-xs font-medium fill-muted-foreground" style={{ fontSize: "12px" }}>
-              min
-            </tspan>
+            {hasRealData ? (
+              <>
+                {minutes}
+                <tspan dx="3" dy="-4" className="text-xs font-medium fill-muted-foreground" style={{ fontSize: "12px" }}>
+                  min
+                </tspan>
+              </>
+            ) : (
+              <tspan className="text-lg font-medium fill-muted-foreground" style={{ fontSize: "16px" }}>
+                No Data
+              </tspan>
+            )}
           </text>
 
           {/* Target Label below number */}
@@ -143,7 +151,7 @@ export function DockToStockGauge({
 
       {/* Footer Benchmark Note */}
       <div className="pt-2 border-t text-[11px] text-muted-foreground flex items-center justify-between">
-        <span>차량 하차 ➔ 랙 적치 완료</span>
+        <span>Dock Unload ➔ Put-away</span>
         <span className="font-semibold text-foreground">{benchmarkText}</span>
       </div>
     </div>
