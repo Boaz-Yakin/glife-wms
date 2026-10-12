@@ -303,10 +303,12 @@ graph LR
 - [x] **Tabbed Dashboard Architecture**: 세그먼트 탭 네비게이션으로 운영 화면과 분리하여 스크롤 피로감 해결 ([`DashboardTabNav.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DashboardTabNav.tsx))
 
 ### 🔹 Phase 4: 2D 디지털 레이아웃 맵 가시화 (차세대 WMS 완성)
-- [ ] **경량 인터랙티브 2D 창고 평면도(Floor Map) 컴포넌트 구축** (SVG / HTML5 Canvas 기반)
-- [ ] 통로(Aisle) 및 랙 셀(Cell) 클릭 시 팝오버로 **2D 랙 입면도(Rack Elevation View: 단/열별 보관 SKU 현황)** 표출
-- [ ] 랙별 재고 상태 2D 히트맵 컬러 코딩 (초록: 여유, 주황: 적정, 빨강: 결품/위험)
-- [ ] 현장 작업자 모바일 피킹 동선 최단 경로(2D SVG Polyline) 오버레이 안내
+- [x] **경량 인터랙티브 2D 창고 평면도(Floor Map) 컴포넌트 구축** ([`WarehouseMapViewer.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/WarehouseMapViewer.tsx))
+- [x] 통로(Aisle) 및 랙 베이 클릭 시 모달/드로어로 **2D 랙 입면도(Rack Elevation View: 4단 단별/슬롯별 보관 SKU 현황 및 골든존)** 표출 ([`RackElevationView.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/RackElevationView.tsx))
+- [x] 랙별 재고 상태 2D 히트맵 컬러 코딩 (초록: <50% 여유, 주황: 50~85% 적정, 빨강: >85% 혼잡, 회색: 빈 슬롯)
+- [x] 현장 작업자 모바일 피킹 동선 최단 경로(S-Shape Serpentine Route) 오버레이 안내 및 토글 기능
+- [x] 100% PostgreSQL 실데이터 집계 쿼리 연동 ([`getWarehouseMapData()`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dashboard.service.ts)) 및 원클릭 표준 레이아웃 초기화 액션 ([`warehouse-layout.actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/actions/warehouse-layout.actions.ts))
+
 
 ---
 

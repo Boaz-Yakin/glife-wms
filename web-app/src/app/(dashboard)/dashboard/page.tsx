@@ -6,6 +6,7 @@ import {
   getStorageCapacity,
   getLogistixFlowMetrics,
   getInventoryIntelligenceData,
+  getWarehouseMapData,
   DashboardPeriod,
 } from "@/services/dashboard.service"
 import { KpiCard } from "@/components/features/dashboard/KpiCard"
@@ -19,6 +20,7 @@ import { DashboardTabNav, DashboardTab } from "@/components/features/dashboard/D
 import { DeadStockCard } from "@/components/features/dashboard/DeadStockCard"
 import { SmartReorderQueue } from "@/components/features/dashboard/SmartReorderQueue"
 import { DynamicSlottingCard } from "@/components/features/dashboard/DynamicSlottingCard"
+import { WarehouseMapViewer } from "@/components/features/dashboard/WarehouseMapViewer"
 import { Card } from "@/components/ui/card"
 import {
   PackageCheck,
@@ -27,7 +29,6 @@ import {
   Boxes,
   DollarSign,
   Warehouse,
-  MapPin,
   TrendingDown,
   ShoppingCart,
   Layers,
@@ -48,6 +49,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
   const tab = (resolvedParams?.tab as DashboardTab) || "operations"
 
   // Fetch only what is needed for the active tab (or in parallel)
+  const isOperationsTab = tab === "operations"
   const isIntelligenceTab = tab === "intelligence"
   const isMapTab = tab === "map"
 
@@ -58,13 +60,15 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     storageCapacity,
     logistixFlow,
     intelligenceData,
+    warehouseMapData,
   ] = await Promise.all([
-    !isIntelligenceTab ? getDashboardKpis(period) : null,
-    !isIntelligenceTab ? getInventoryHealth() : null,
-    !isIntelligenceTab ? getHourlyPickingProgress(period) : null,
-    !isIntelligenceTab ? getStorageCapacity() : null,
-    !isIntelligenceTab ? getLogistixFlowMetrics(warehouse) : null,
+    isOperationsTab ? getDashboardKpis(period) : null,
+    isOperationsTab ? getInventoryHealth() : null,
+    isOperationsTab ? getHourlyPickingProgress(period) : null,
+    isOperationsTab ? getStorageCapacity() : null,
+    isOperationsTab ? getLogistixFlowMetrics(warehouse) : null,
     isIntelligenceTab ? getInventoryIntelligenceData() : null,
+    isMapTab ? getWarehouseMapData() : null,
   ])
 
   return (
@@ -78,8 +82,8 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <WarehouseSelector />
-          {!isIntelligenceTab && <DashboardPeriodSelector />}
+          {isOperationsTab && <WarehouseSelector />}
+          {isOperationsTab && <DashboardPeriodSelector />}
         </div>
       </div>
 
@@ -87,7 +91,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
       <DashboardTabNav />
 
       {/* TAB 1: OPERATIONS (Real-time Flow & Fulfillment) */}
-      {tab === "operations" && kpis && logistixFlow && pickingProgress && storageCapacity && inventoryHealth && (
+      {isOperationsTab && kpis && logistixFlow && pickingProgress && storageCapacity && inventoryHealth && (
         <>
           {/* 6 Core KPI Metric Cards */}
           <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
@@ -220,24 +224,11 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </div>
       )}
 
-      {/* TAB 3: 2D WAREHOUSE MAP (Phase 4 Placeholder) */}
-      {isMapTab && (
-        <Card className="p-12 text-center border-dashed border-2 flex flex-col items-center justify-center">
-          <div className="p-4 rounded-2xl bg-blue-500/10 text-blue-600 dark:text-blue-400 mb-3">
-            <MapPin className="h-8 w-8" />
-          </div>
-          <h3 className="text-lg font-bold tracking-tight text-foreground">
-            2D Digital Warehouse Layout Map
-          </h3>
-          <p className="text-sm text-muted-foreground max-w-md mt-1">
-            Interactive top-down floor map and rack elevation views are scheduled for{" "}
-            <strong>Phase 4</strong>. Real-time rack occupancy heatmaps and aisle traffic monitoring will be rendered here.
-          </p>
-          <div className="mt-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground border">
-            <span>SVG / Canvas 60fps Lightweight Engine</span>
-          </div>
-        </Card>
+      {/* TAB 3: 2D DIGITAL WAREHOUSE MAP (Phase 4) */}
+      {isMapTab && warehouseMapData && (
+        <WarehouseMapViewer data={warehouseMapData} />
       )}
     </div>
   )
 }
+

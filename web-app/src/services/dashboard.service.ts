@@ -947,5 +947,291 @@ export async function getInventoryIntelligenceData(): Promise<InventoryIntellige
   }
 }
 
+export interface RackSlotItem {
+  itemId: string
+  sku: string
+  name: string
+  onHandQty: number
+  unitPrice: number
+  level: string // 'A' | 'B' | 'C' | 'D'
+  bin: string // '01' | '02'
+  locationCode: string
+}
+
+export interface RackElevationData {
+  rackId: string
+  rackCode: string // e.g. "A-01-05"
+  zoneType: 'A' | 'F'
+  aisleNumber: number
+  bayNumber: number
+  totalUnits: number
+  occupancyPercent: number
+  status: 'empty' | 'available' | 'optimal' | 'congested'
+  levels: {
+    level: string
+    levelName: string
+    slots: RackSlotItem[]
+  }[]
+}
+
+export interface AisleLayoutData {
+  aisleNumber: number
+  zoneType: 'A' | 'F'
+  racks: RackElevationData[]
+}
+
+export interface WarehouseMapData {
+  totalLocations: number
+  totalRacks: number
+  occupiedRacks: number
+  overallOccupancyRate: number
+  zoneA: {
+    totalRacks: number
+    occupiedRacks: number
+    rate: number
+    aisles: AisleLayoutData[]
+  }
+  zoneF: {
+    totalRacks: number
+    occupiedRacks: number
+    rate: number
+    aisles: AisleLayoutData[]
+  }
+  pickPathPoints: { x: number; y: number; label: string }[]
+  hasData: boolean
+}
+
+export async function getWarehouseMapData(): Promise<WarehouseMapData> {
+  const supabase = await createClient()
+  const activeClientId = await getActiveClientAction()
+
+  // 1. Fetch real locations
+  const { data: locRows } = await (supabase as any)
+    .from('locations')
+    .select('id, code, zone_type')
+    .order('code', { ascending: true })
+
+  if (!locRows || locRows.length === 0) {
+    return {
+      totalLocations: 0,
+      totalRacks: 0,
+      occupiedRacks: 0,
+      overallOccupancyRate: 0,
+      zoneA: { totalRacks: 0, occupiedRacks: 0, rate: 0, aisles: [] },
+      zoneF: { totalRacks: 0, occupiedRacks: 0, rate: 0, aisles: [] },
+      pickPathPoints: [],
+      hasData: false,
+    }
+  }
+
+  // 2. Fetch inventory records mapped to locations
+  let invQuery = (supabase as any)
+    .from('inventory')
+    .select('location_id, item_id, on_hand_qty, item:item_id(id, sku, name_en, unit_price)')
+    .gt('on_hand_qty', 0)
+
+  if (activeClientId) {
+    invQuery = invQuery.eq('client_id', activeClientId)
+  }
+
+  const { data: invRows } = await invQuery
+
+  // Group inventory by location_id
+  const locInventoryMap = new Map<string, any[]>()
+  if (invRows) {
+    for (const inv of invRows) {
+      const list = locInventoryMap.get(inv.location_id) || []
+      list.push(inv)
+      locInventoryMap.set(inv.location_id, list)
+    }
+  }
+
+  // 3. Parse locations and aggregate into Racks (Bay level)
+  // Format: LOC-Zone(1)Aisle(2)Bay(2)Level(1)Bin(2) e.g., LOC-A0105B01
+  const rackMap = new Map<string, {
+    rackCode: string
+    zoneType: 'A' | 'F'
+    aisleNumber: number
+    bayNumber: number
+    slots: { [level: string]: RackSlotItem[] }
+    slotCapacity: number
+    usedSlots: number
+    totalUnits: number
+  }>()
+
+  const levelOrder = ['D', 'C', 'B', 'A']
+  const levelNames: Record<string, string> = {
+    D: 'Level D (4th Tier - High Stock)',
+    C: 'Level C (3rd Tier - Standard)',
+    B: 'Level B (2nd Tier - Active Reach)',
+    A: 'Level A (1st Tier - Golden Zone)',
+  }
+
+  for (const loc of locRows) {
+    const code = loc.code || ''
+    const match = code.match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
+
+    let zone = (loc.zone_type || 'A') as 'A' | 'F'
+    let aisle = 1
+    let bay = 1
+    let level = 'A'
+    let bin = '01'
+
+    if (match) {
+      zone = match[1] as 'A' | 'F'
+      aisle = parseInt(match[2], 10)
+      bay = parseInt(match[3], 10)
+      level = match[4]
+      bin = match[5]
+    } else {
+      // Fallback parser if code format differs
+      const parts = code.split('-')
+      if (parts.length >= 2) {
+        level = parts[parts.length - 1][0] || 'A'
+      }
+    }
+
+    const rackKey = `${zone}-${String(aisle).padStart(2, '0')}-${String(bay).padStart(2, '0')}`
+
+    if (!rackMap.has(rackKey)) {
+      rackMap.set(rackKey, {
+        rackCode: rackKey,
+        zoneType: zone,
+        aisleNumber: aisle,
+        bayNumber: bay,
+        slots: { D: [], C: [], B: [], A: [] },
+        slotCapacity: 8, // 4 levels * 2 bins standard capacity
+        usedSlots: 0,
+        totalUnits: 0,
+      })
+    }
+
+    const rack = rackMap.get(rackKey)!
+    const itemsInLoc = locInventoryMap.get(loc.id) || []
+
+    if (itemsInLoc.length > 0) {
+      rack.usedSlots += 1
+      for (const inv of itemsInLoc) {
+        rack.totalUnits += (inv.on_hand_qty || 0)
+        if (!rack.slots[level]) rack.slots[level] = []
+        rack.slots[level].push({
+          itemId: inv.item_id,
+          sku: inv.item?.sku || 'N/A',
+          name: inv.item?.name_en || 'Unknown Item',
+          onHandQty: inv.on_hand_qty || 0,
+          unitPrice: Number(inv.item?.unit_price || 0),
+          level,
+          bin,
+          locationCode: code,
+        })
+      }
+    }
+  }
+
+  // 4. Build RackElevationData structures
+  const allRacks: RackElevationData[] = Array.from(rackMap.values()).map((r) => {
+    const occupancyPercent = r.slotCapacity > 0
+      ? Number(Math.min(100, (r.usedSlots / r.slotCapacity) * 100).toFixed(1))
+      : 0
+
+    let status: 'empty' | 'available' | 'optimal' | 'congested' = 'empty'
+    if (occupancyPercent > 85) status = 'congested'
+    else if (occupancyPercent >= 50) status = 'optimal'
+    else if (occupancyPercent > 0) status = 'available'
+
+    const levels = levelOrder.map((lvl) => ({
+      level: lvl,
+      levelName: levelNames[lvl] || `Level ${lvl}`,
+      slots: r.slots[lvl] || [],
+    }))
+
+    return {
+      rackId: r.rackCode,
+      rackCode: r.rackCode,
+      zoneType: r.zoneType,
+      aisleNumber: r.aisleNumber,
+      bayNumber: r.bayNumber,
+      totalUnits: r.totalUnits,
+      occupancyPercent,
+      status,
+      levels,
+    }
+  })
+
+  // 5. Group Racks by Zone and Aisle
+  const zoneARacks = allRacks.filter((r) => r.zoneType === 'A')
+  const zoneFRacks = allRacks.filter((r) => r.zoneType === 'F')
+
+  const groupAisles = (racks: RackElevationData[]): AisleLayoutData[] => {
+    const aisleMap = new Map<number, RackElevationData[]>()
+    for (const r of racks) {
+      const list = aisleMap.get(r.aisleNumber) || []
+      list.push(r)
+      aisleMap.set(r.aisleNumber, list)
+    }
+
+    return Array.from(aisleMap.entries())
+      .sort(([a], [b]) => a - b)
+      .map(([aisleNumber, rks]) => ({
+        aisleNumber,
+        zoneType: rks[0]?.zoneType || 'A',
+        racks: rks.sort((a, b) => a.bayNumber - b.bayNumber),
+      }))
+  }
+
+  const zoneAAisles = groupAisles(zoneARacks)
+  const zoneFAisles = groupAisles(zoneFRacks)
+
+  const calcRate = (racks: RackElevationData[]) => {
+    if (racks.length === 0) return 0
+    const occupied = racks.filter((r) => r.totalUnits > 0).length
+    return Number(((occupied / racks.length) * 100).toFixed(1))
+  }
+
+  const zoneAOccupied = zoneARacks.filter((r) => r.totalUnits > 0).length
+  const zoneFOccupied = zoneFRacks.filter((r) => r.totalUnits > 0).length
+  const totalOccupied = allRacks.filter((r) => r.totalUnits > 0).length
+
+  // Generate S-Shape pick path simulation coordinates based on aisle layouts
+  const pickPathPoints: { x: number; y: number; label: string }[] = []
+  let ptIndex = 1
+  pickPathPoints.push({ x: 40, y: 30, label: 'Inbound Dock' })
+
+  zoneAAisles.forEach((aisle, idx) => {
+    const y = 80 + idx * 70
+    if (idx % 2 === 0) {
+      pickPathPoints.push({ x: 80, y, label: `Aisle ${aisle.aisleNumber} Entry` })
+      pickPathPoints.push({ x: 480, y, label: `Aisle ${aisle.aisleNumber} Exit` })
+    } else {
+      pickPathPoints.push({ x: 480, y, label: `Aisle ${aisle.aisleNumber} Entry` })
+      pickPathPoints.push({ x: 80, y, label: `Aisle ${aisle.aisleNumber} Exit` })
+    }
+  })
+
+  pickPathPoints.push({ x: 520, y: 300, label: 'Dispatch Bay' })
+
+  return {
+    totalLocations: locRows.length,
+    totalRacks: allRacks.length,
+    occupiedRacks: totalOccupied,
+    overallOccupancyRate: allRacks.length > 0 ? Number(((totalOccupied / allRacks.length) * 100).toFixed(1)) : 0,
+    zoneA: {
+      totalRacks: zoneARacks.length,
+      occupiedRacks: zoneAOccupied,
+      rate: calcRate(zoneARacks),
+      aisles: zoneAAisles,
+    },
+    zoneF: {
+      totalRacks: zoneFRacks.length,
+      occupiedRacks: zoneFOccupied,
+      rate: calcRate(zoneFRacks),
+      aisles: zoneFAisles,
+    },
+    pickPathPoints,
+    hasData: true,
+  }
+}
+
+
 
 

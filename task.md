@@ -103,5 +103,15 @@
 - [x] 10.5 `DynamicSlottingCard.tsx` 보관 온도 불일치 및 피킹 동선 최적화 슬로팅 제안 카드 구현
 - [x] 10.6 `src/app/(dashboard)/dashboard/page.tsx`에 탭별 분기 렌더링 통합 및 Turbopack 프로덕션 빌드 검증 완료
 
+---
+
+## 🗺️ Phase 11: web-app 대시보드 고도화 Phase 4 (2D Digital Warehouse Layout Map & Rack Elevation)
+- [x] 11.1 `dashboard.service.ts`에 `getWarehouseMapData()` 실데이터 쿼리 함수 구축 (표준 바코드 좌표 `LOC-Zone(1)Aisle(2)Bay(2)Level(1)Bin(2)` 파싱, 베이별 점유율 및 S자 피킹 동선 좌표 계산)
+- [x] 11.2 `WarehouseMapViewer.tsx` 2D 디지털 플로어 플랜 뷰어 컴포넌트 개발 (입고 하역장, 통로별 랙 베이, 냉장 챔버 구역, 출하 패킹장, S-Shape 피킹 동선 토글 및 점유율 히트맵 범례)
+- [x] 11.3 `RackElevationView.tsx` 4단 수직 랙 입면도(Elevation View) 다이얼로그 개발 (Level A 골든존 뱃지, 빈 슬롯/실제 SKU 정보, 수량 및 재고 가치 표출)
+- [x] 11.4 `warehouse-layout.actions.ts` 표준 창고 좌표 생성 및 초기화 Server Action 개발 (데이터 부재 시 원클릭 표준 레이아웃 생성 지원)
+- [x] 11.5 `dashboard/page.tsx` 3번째 탭(`2D Layout Map`)에 통합 연동 및 Turbopack 프로덕션 빌드 검증 완료
+
+
 
 
