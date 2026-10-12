@@ -139,14 +139,56 @@ export async function bulkCreateItemsAction(items: any[]) {
 
 export async function deleteItemAction(id: string) {
   const supabase = getAdminClient()
+
+  // 1. Check if the item is referenced in any order history
+  const { count: orderCount } = await (supabase as any)
+    .from('order_items')
+    .select('*', { count: 'exact', head: true })
+    .eq('item_id', id)
+
+  if (orderCount && orderCount > 0) {
+    return {
+      error: `Cannot delete item: It is referenced by ${orderCount} historical order(s). Please deactivate it (Active: No) instead to preserve audit logs.`,
+    }
+  }
+
+  // 2. Clean up associated inventory records and adjustment logs if any
+  const { data: invRows } = await (supabase as any)
+    .from('inventory')
+    .select('id')
+    .eq('item_id', id)
+
+  if (invRows && invRows.length > 0) {
+    const invIds = invRows.map((r: any) => r.id)
+    await (supabase as any)
+      .from('inventory_adjustments')
+      .delete()
+      .in('inventory_id', invIds)
+
+    const { error: invDeleteErr } = await (supabase as any)
+      .from('inventory')
+      .delete()
+      .eq('item_id', id)
+
+    if (invDeleteErr) {
+      console.error('Failed to clean up inventory records:', invDeleteErr)
+      return { error: 'Failed to clean up associated inventory: ' + invDeleteErr.message }
+    }
+  }
+
+  // 3. Delete the item
   const { error } = await supabase.from('items').delete().eq('id', id)
   if (error) {
     console.error('Delete Item Error:', error)
     return { error: 'Failed to delete item: ' + error.message }
   }
+
   revalidatePath('/master/items')
+  revalidatePath('/master/locations')
+  revalidatePath('/dashboard')
   return { success: true }
 }
+
 
 export async function getAllItemsForExportAction() {
   const supabase = getAdminClient()
