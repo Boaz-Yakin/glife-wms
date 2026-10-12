@@ -3,6 +3,7 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+import { getOrderItemEffectivePrice } from "@/lib/pricing"
 
 const getClient = async () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -53,43 +54,6 @@ export interface OrderItemData {
     box_price?: number | null
     pack_price?: number | null
   } | null
-}
-
-/**
- * Calculates the effective unit price for an order line item based on its UOM.
- * - BOX: uses item.box_price (fallback: item.unit_price)
- * - PACK: uses item.pack_price || item.box_price (fallback: item.unit_price)
- * - EA: uses item.unit_price (fallback: orderItem.price)
- */
-export function getOrderItemEffectivePrice(orderItem: {
-  uom?: string | null
-  price?: number | null
-  item?: {
-    uom?: string | null
-    unit_price?: number | null
-    box_price?: number | null
-    pack_price?: number | null
-  } | null
-}): number {
-  const itemData = orderItem.item
-  const uom = (itemData?.uom || orderItem.uom || '').trim().toUpperCase()
-
-  if (uom === 'BOX') {
-    const boxPrice = Number(itemData?.box_price ?? 0)
-    if (boxPrice > 0) return boxPrice
-  } else if (uom === 'PACK') {
-    const packPrice = Number(itemData?.pack_price ?? 0) || Number(itemData?.box_price ?? 0)
-    if (packPrice > 0) return packPrice
-  } else if (uom === 'EA') {
-    const unitPrice = Number(itemData?.unit_price ?? 0)
-    if (unitPrice > 0) return unitPrice
-  }
-
-  // Fallback if specific UOM price wasn't matched or is 0
-  if (itemData?.unit_price && Number(itemData.unit_price) > 0) {
-    return Number(itemData.unit_price)
-  }
-  return Number(orderItem.price || 0)
 }
 
 export async function getOrders({ page = 1, limit = 20, search = '', status = '' }) {

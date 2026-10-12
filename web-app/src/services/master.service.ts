@@ -28,32 +28,7 @@ export interface ItemData {
   created_at: string
 }
 
-/**
- * Calculates the effective price for an item based on its UOM:
- * - BOX: uses item.box_price (fallback: item.unit_price)
- * - PACK: uses item.pack_price || item.box_price (fallback: item.unit_price)
- * - EA: uses item.unit_price
- */
-export function getItemEffectivePrice(item: Partial<ItemData>): number {
-  const uom = (item.uom || '').trim().toUpperCase()
-
-  if (uom === 'BOX') {
-    const boxPrice = Number(item.box_price ?? 0)
-    if (boxPrice > 0) return boxPrice
-  } else if (uom === 'PACK') {
-    const packPrice = Number(item.pack_price ?? 0) || Number(item.box_price ?? 0)
-    if (packPrice > 0) return packPrice
-  } else if (uom === 'EA') {
-    const unitPrice = Number(item.unit_price ?? 0)
-    if (unitPrice > 0) return unitPrice
-  }
-
-  // Fallback
-  if (item.unit_price && Number(item.unit_price) > 0) {
-    return Number(item.unit_price)
-  }
-  return Number(item.box_price || item.pack_price || 0)
-}
+export { getItemEffectivePrice } from "@/lib/pricing"
 
 export async function getItems({ page = 1, limit = 20, search = '' }) {
   const supabase = await createClient()

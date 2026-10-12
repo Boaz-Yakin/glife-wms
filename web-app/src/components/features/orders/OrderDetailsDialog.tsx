@@ -20,7 +20,8 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { OrderData, OrderItemData, getOrderDetails, getOrderItemEffectivePrice } from "@/services/orders.service"
+import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
+import { getOrderItemEffectivePrice } from "@/lib/pricing"
 
 interface OrderDetailsDialogProps {
   order: OrderData

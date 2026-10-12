@@ -42,7 +42,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ItemData, getItemEffectivePrice } from "@/services/master.service"
+import type { ItemData } from "@/services/master.service"
+import { getItemEffectivePrice } from "@/lib/pricing"
 import { 
   createItemAction, 
   bulkCreateItemsAction, 
