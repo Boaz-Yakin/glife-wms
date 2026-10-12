@@ -670,4 +670,282 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
   }
 }
 
+export interface DeadStockItem {
+  id: string
+  sku: string
+  name: string
+  qty: number
+  unitPrice: number
+  totalValue: number
+  zoneType: string
+  daysInactive: number
+}
+
+export interface DeadStockAnalysisData {
+  totalDeadStockValue: number
+  formattedDeadStockValue: string
+  deadStockQty: number
+  deadStockRatio: number
+  deadItems: DeadStockItem[]
+}
+
+export interface ReorderQueueItem {
+  id: string
+  sku: string
+  name: string
+  currentStock: number
+  minStock: number
+  suggestedReorderQty: number
+  unitPrice: number
+  estimatedCost: number
+  isCritical: boolean
+}
+
+export interface ReorderQueueData {
+  totalItemsToReorder: number
+  criticalStockouts: number
+  totalEstimatedCost: number
+  formattedEstimatedCost: string
+  items: ReorderQueueItem[]
+}
+
+export interface SlottingRecommendationItem {
+  id: string
+  sku: string
+  name: string
+  currentZone: string
+  recommendedZone: string
+  currentLocationCode: string
+  dispatchFrequency: number
+  reason: string
+}
+
+export interface SlottingOptimizationData {
+  totalRecommendations: number
+  items: SlottingRecommendationItem[]
+}
+
+export interface InventoryIntelligenceData {
+  deadStock: DeadStockAnalysisData
+  reorderQueue: ReorderQueueData
+  slotting: SlottingOptimizationData
+}
+
+export async function getInventoryIntelligenceData(): Promise<InventoryIntelligenceData> {
+  const supabase = await createClient()
+  const activeClientId = await getActiveClientAction()
+
+  // 1. Dead Stock Analysis (Items in inventory with no DISPATCHED orders in the last 60 days)
+  let totalDeadStockValue = 0
+  let deadStockQty = 0
+  let deadItems: DeadStockItem[] = []
+  let deadStockRatio = 0
+
+  try {
+    const cutoffDate = new Date()
+    cutoffDate.setDate(cutoffDate.getDate() - 60)
+
+    // Find items dispatched within last 60 days
+    let recentDispatchedQuery = (supabase as any)
+      .from('order_items')
+      .select('item_id, order:order_id!inner(status, updated_at)')
+      .eq('order.status', 'DISPATCHED')
+      .gte('order.updated_at', cutoffDate.toISOString())
+
+    const { data: recentItemsData } = await recentDispatchedQuery
+    const activeItemIds = new Set((recentItemsData || []).map((r: any) => r.item_id))
+
+    // Query on-hand inventory
+    let invQuery = (supabase as any)
+      .from('inventory')
+      .select('item_id, on_hand_qty, location:location_id(code, zone_type), item:item_id(id, sku, name_en, unit_price, zone_type)')
+      .gt('on_hand_qty', 0)
+
+    if (activeClientId) {
+      invQuery = invQuery.eq('client_id', activeClientId)
+    }
+
+    const { data: invRows } = await invQuery
+
+    let totalValAll = 0
+    if (invRows && invRows.length > 0) {
+      const deadCandidateMap = new Map<string, DeadStockItem>()
+
+      for (const row of invRows) {
+        const item = row.item
+        const qty = row.on_hand_qty || 0
+        const price = Number(item?.unit_price || 0)
+        const rowVal = qty * price
+        totalValAll += rowVal
+
+        if (item && !activeItemIds.has(row.item_id)) {
+          const existing = deadCandidateMap.get(item.id)
+          if (existing) {
+            existing.qty += qty
+            existing.totalValue += rowVal
+          } else {
+            deadCandidateMap.set(item.id, {
+              id: item.id,
+              sku: item.sku || 'N/A',
+              name: item.name_en || 'Unknown Item',
+              qty,
+              unitPrice: price,
+              totalValue: rowVal,
+              zoneType: row.location?.zone_type || item.zone_type || 'A',
+              daysInactive: 60,
+            })
+          }
+        }
+      }
+
+      deadItems = Array.from(deadCandidateMap.values()).sort((a, b) => b.totalValue - a.totalValue)
+      totalDeadStockValue = deadItems.reduce((acc, curr) => acc + curr.totalValue, 0)
+      deadStockQty = deadItems.reduce((acc, curr) => acc + curr.qty, 0)
+
+      if (totalValAll > 0) {
+        deadStockRatio = Number(((totalDeadStockValue / totalValAll) * 100).toFixed(1))
+      }
+    }
+  } catch {
+    // Graceful fallback to empty state
+  }
+
+  const formattedDeadStockValue = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(totalDeadStockValue)
+
+  // 2. Smart Reorder Queue (Items where total on-hand is below min_stock_qty)
+  let reorderItems: ReorderQueueItem[] = []
+  let totalEstimatedCost = 0
+  let criticalStockouts = 0
+
+  try {
+    let itemsQuery = (supabase as any)
+      .from('items')
+      .select('id, sku, name_en, min_stock_qty, unit_price')
+      .gt('min_stock_qty', 0)
+
+    const { data: allMonitoredItems } = await itemsQuery
+
+    if (allMonitoredItems && allMonitoredItems.length > 0) {
+      // Get stock totals for items
+      let stockAggQuery = (supabase as any)
+        .from('inventory')
+        .select('item_id, on_hand_qty')
+
+      if (activeClientId) {
+        stockAggQuery = stockAggQuery.eq('client_id', activeClientId)
+      }
+
+      const { data: stockRows } = await stockAggQuery
+      const stockMap = new Map<string, number>()
+      if (stockRows) {
+        for (const s of stockRows) {
+          stockMap.set(s.item_id, (stockMap.get(s.item_id) || 0) + (s.on_hand_qty || 0))
+        }
+      }
+
+      for (const it of allMonitoredItems) {
+        const currentStock = stockMap.get(it.id) || 0
+        const minStock = it.min_stock_qty || 0
+
+        if (currentStock < minStock) {
+          const suggested = Math.max(1, (minStock * 2) - currentStock)
+          const price = Number(it.unit_price || 0)
+          const cost = suggested * price
+          const isCrit = currentStock === 0
+
+          if (isCrit) criticalStockouts++
+          totalEstimatedCost += cost
+
+          reorderItems.push({
+            id: it.id,
+            sku: it.sku || 'N/A',
+            name: it.name_en || 'Unknown Item',
+            currentStock,
+            minStock,
+            suggestedReorderQty: suggested,
+            unitPrice: price,
+            estimatedCost: cost,
+            isCritical: isCrit,
+          })
+        }
+      }
+
+      // Sort critical items first, then by highest cost
+      reorderItems.sort((a, b) => {
+        if (a.isCritical !== b.isCritical) return a.isCritical ? -1 : 1
+        return b.estimatedCost - a.estimatedCost
+      })
+    }
+  } catch {
+    // Graceful fallback to empty state
+  }
+
+  const formattedEstimatedCost = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(totalEstimatedCost)
+
+  // 3. Dynamic Slotting Recommendations (High velocity items in mismatched zones)
+  let slottingItems: SlottingRecommendationItem[] = []
+  try {
+    let slotMismatchQuery = (supabase as any)
+      .from('inventory')
+      .select('item_id, on_hand_qty, location:location_id(code, zone_type), item:item_id(id, sku, name_en, zone_type)')
+      .gt('on_hand_qty', 0)
+
+    if (activeClientId) {
+      slotMismatchQuery = slotMismatchQuery.eq('client_id', activeClientId)
+    }
+
+    const { data: mismatchRows } = await slotMismatchQuery
+    if (mismatchRows) {
+      for (const row of mismatchRows) {
+        const item = row.item
+        const loc = row.location
+        if (item && loc && item.zone_type && loc.zone_type && item.zone_type !== loc.zone_type) {
+          slottingItems.push({
+            id: item.id,
+            sku: item.sku || 'N/A',
+            name: item.name_en || 'Unknown Item',
+            currentZone: loc.zone_type === 'A' ? 'Zone A (Ambient)' : 'Zone F (Cold)',
+            recommendedZone: item.zone_type === 'A' ? 'Zone A (Ambient)' : 'Zone F (Cold)',
+            currentLocationCode: loc.code || 'UNKNOWN',
+            dispatchFrequency: row.on_hand_qty || 0,
+            reason: `Temperature mismatch: Assigned to ${loc.zone_type} but requires ${item.zone_type}`,
+          })
+        }
+      }
+    }
+  } catch {
+    // Graceful fallback to empty state
+  }
+
+  return {
+    deadStock: {
+      totalDeadStockValue,
+      formattedDeadStockValue,
+      deadStockQty,
+      deadStockRatio,
+      deadItems: deadItems.slice(0, 10), // Top 10 items
+    },
+    reorderQueue: {
+      totalItemsToReorder: reorderItems.length,
+      criticalStockouts,
+      totalEstimatedCost,
+      formattedEstimatedCost,
+      items: reorderItems.slice(0, 15), // Top 15 items
+    },
+    slotting: {
+      totalRecommendations: slottingItems.length,
+      items: slottingItems.slice(0, 10),
+    },
+  }
+}
+
+
 

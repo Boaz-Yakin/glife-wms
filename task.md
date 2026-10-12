@@ -93,4 +93,15 @@
 - [x] 9.5 `WarehouseSelector.tsx` 멀티 창고(전체 센터, 김포 메인센터, 용인 저온센터) 셀렉터 개발 및 URL SearchParams 동기화
 - [x] 9.6 `src/app/(dashboard)/dashboard/page.tsx` 메인 대시보드 페이지에 통합 연동 및 Turbopack 프로덕션 빌드 검증 완료
 
+---
+
+## 💡 Phase 10: web-app 대시보드 고도화 Phase 3 (Inventory Intelligence & Tabbed Navigation)
+- [x] 10.1 `dashboard.service.ts`에 `getInventoryIntelligenceData()` 순수 실데이터 쿼리 함수 구축 (Dead Stock 60일 분석, 안전재고 미달 Smart Reorder 큐, 고회전 품목 Dynamic Slotting 전진 배치)
+- [x] 10.2 `DashboardTabNav.tsx` 대시보드 상단 세그먼트 탭 네비게이션 구현 (`Operations` / `Inventory Intelligence` / `2D Layout Map`) 및 URL SearchParams 연동
+- [x] 10.3 `DeadStockCard.tsx` 체화 재고 지표 요약 및 비유동 자산 목록 카드 구현
+- [x] 10.4 `SmartReorderQueue.tsx` 결품 방지 자동 보충 제안 및 1-Click PO 생성 카드 구현
+- [x] 10.5 `DynamicSlottingCard.tsx` 보관 온도 불일치 및 피킹 동선 최적화 슬로팅 제안 카드 구현
+- [x] 10.6 `src/app/(dashboard)/dashboard/page.tsx`에 탭별 분기 렌더링 통합 및 Turbopack 프로덕션 빌드 검증 완료
+
+
 

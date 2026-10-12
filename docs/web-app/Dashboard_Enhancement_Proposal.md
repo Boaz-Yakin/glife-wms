@@ -296,11 +296,11 @@ graph LR
 - [x] 모바일 피킹 앱의 `CMD-SKIP` 발생 건수와 연계한 **실시간 피킹 정확도 %** 계산 로직 구축 (`getLogistixFlowMetrics()` in [`dashboard.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dashboard.service.ts))
 - [x] 상단 지점 셀렉터(김포센터, 용인센터 등 멀티 창고 필터) 연계 ([`WarehouseSelector.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/WarehouseSelector.tsx))
 
-### 🔹 Phase 3: PrediX Slotting & RepleniX 스마트 큐 (지능화)
-- [ ] **Dead Stock(장기 체화 재고)** 60일 자동 감지 도넛 위젯 구현
-- [ ] **RepleniX 자동 보충 제안 카드**: ROP 미달 품목에 대한 1-Click 발주 버튼 연동
-- [ ] **PrediX 슬로팅 추천 큐**: A등급 고회전 상품의 하단 골든존 전진 배치 가이드 팝업
-- [ ] 데이터 테이블 우상단 `CSV 내보내기` 및 모달 드릴다운(Drill-down) 기능
+### 🔹 Phase 3: Inventory Intelligence & Smart Reorder (구현 완료 ✅ - Tab 2 분리 적용)
+- [x] **Dead Stock Analysis (60+ Days)** 장기 체화 재고 자동 감지 및 비유동 자산 모니터링 카드 구현 ([`DeadStockCard.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DeadStockCard.tsx))
+- [x] **Smart Reorder Queue**: 안전재고(`min_stock_qty`) 미달 품목 자동 보충 제안 및 1-Click PO 생성 연동 ([`SmartReorderQueue.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/SmartReorderQueue.tsx))
+- [x] **Dynamic Slotting Optimization**: 보관 온도 구역 불일치 및 피킹 동선 최적화 전진 배치 제안 카드 ([`DynamicSlottingCard.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DynamicSlottingCard.tsx))
+- [x] **Tabbed Dashboard Architecture**: 세그먼트 탭 네비게이션으로 운영 화면과 분리하여 스크롤 피로감 해결 ([`DashboardTabNav.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/DashboardTabNav.tsx))
 
 ### 🔹 Phase 4: 2D 디지털 레이아웃 맵 가시화 (차세대 WMS 완성)
 - [ ] **경량 인터랙티브 2D 창고 평면도(Floor Map) 컴포넌트 구축** (SVG / HTML5 Canvas 기반)
