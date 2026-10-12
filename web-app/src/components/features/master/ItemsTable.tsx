@@ -42,7 +42,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { ItemData } from "@/services/master.service"
+import { ItemData, getItemEffectivePrice } from "@/services/master.service"
 import { 
   createItemAction, 
   bulkCreateItemsAction, 
@@ -110,9 +110,13 @@ const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => 
     header: "UOM",
   },
   {
-    accessorKey: "unit_price",
-    header: () => <div className="text-center">Unit Price</div>,
-    cell: ({ row }) => <div className="text-center tabular-nums">${row.original.unit_price?.toFixed(2)}</div>,
+    id: "price",
+    accessorFn: (row) => getItemEffectivePrice(row),
+    header: () => <div className="text-center">Price</div>,
+    cell: ({ row }) => {
+      const price = getItemEffectivePrice(row.original)
+      return <div className="text-center tabular-nums">${price.toFixed(2)}</div>
+    },
   },
   {
     accessorKey: "zone_type",

@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
+import { OrderData, OrderItemData, getOrderDetails, getOrderItemEffectivePrice } from "@/services/orders.service"
 
 interface OrderDetailsDialogProps {
   order: OrderData
@@ -55,11 +55,11 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   }, [open, order.id])
 
   const totalCalculated = items.reduce(
-    (acc, cur) => acc + (Number(cur.qty || 0) * Number(cur.price || 0)),
+    (acc, cur) => acc + (Number(cur.qty || 0) * getOrderItemEffectivePrice(cur)),
     0
   )
   const totalUnits = items.reduce((acc, cur) => acc + Number(cur.qty || 0), 0)
-  const displayAmount = order.invoice_amount || totalCalculated
+  const displayAmount = items.length > 0 ? totalCalculated : (order.invoice_amount || 0)
 
   const formattedDate = order.created_at
     ? new Date(order.created_at).toLocaleDateString("en-US", {
@@ -164,40 +164,44 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                 </TableHeader>
                 <TableBody>
                   {items.length > 0 ? (
-                    items.map((item, idx) => (
-                      <TableRow key={item.id} className="hover:bg-muted/30">
-                        <TableCell className="text-xs text-muted-foreground font-mono">
-                          {idx + 1}
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-semibold text-sm text-foreground leading-tight">
-                            {item.item?.name_en || "Unknown Item"}
-                            {item.item?.desc_en && (
-                              <span className="text-muted-foreground font-normal ml-1.5 text-xs">
-                                ({item.item.desc_en})
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-xs text-muted-foreground font-mono mt-0.5">
-                            SKU: {item.item?.sku || item.item_id}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Badge variant="outline" className="text-xs font-mono font-medium">
-                            {item.uom}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-xs font-medium text-muted-foreground">
-                          ${Number(item.price || 0).toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm font-bold text-foreground">
-                          {item.qty}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums text-sm font-bold text-primary">
-                          ${(Number(item.qty || 0) * Number(item.price || 0)).toFixed(2)}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                    items.map((item, idx) => {
+                      const effectivePrice = getOrderItemEffectivePrice(item)
+                      const subtotal = Number(item.qty || 0) * effectivePrice
+                      return (
+                        <TableRow key={item.id} className="hover:bg-muted/30">
+                          <TableCell className="text-xs text-muted-foreground font-mono">
+                            {idx + 1}
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-semibold text-sm text-foreground leading-tight">
+                              {item.item?.name_en || "Unknown Item"}
+                              {item.item?.desc_en && (
+                                <span className="text-muted-foreground font-normal ml-1.5 text-xs">
+                                  ({item.item.desc_en})
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono mt-0.5">
+                              SKU: {item.item?.sku || item.item_id}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Badge variant="outline" className="text-xs font-mono font-medium">
+                              {item.uom}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-xs font-medium text-muted-foreground">
+                            ${effectivePrice.toFixed(2)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-sm font-bold text-foreground">
+                            {item.qty}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums text-sm font-bold text-primary">
+                            ${subtotal.toFixed(2)}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={6} className="h-28 text-center text-muted-foreground text-sm">

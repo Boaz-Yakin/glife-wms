@@ -44,7 +44,52 @@ export interface OrderItemData {
   created_at?: string
   
   // joined fields
-  item?: { name_en: string; desc_en?: string | null; sku: string } | null
+  item?: {
+    name_en: string
+    desc_en?: string | null
+    sku: string
+    uom?: string | null
+    unit_price?: number | null
+    box_price?: number | null
+    pack_price?: number | null
+  } | null
+}
+
+/**
+ * Calculates the effective unit price for an order line item based on its UOM.
+ * - BOX: uses item.box_price (fallback: item.unit_price)
+ * - PACK: uses item.pack_price || item.box_price (fallback: item.unit_price)
+ * - EA: uses item.unit_price (fallback: orderItem.price)
+ */
+export function getOrderItemEffectivePrice(orderItem: {
+  uom?: string | null
+  price?: number | null
+  item?: {
+    uom?: string | null
+    unit_price?: number | null
+    box_price?: number | null
+    pack_price?: number | null
+  } | null
+}): number {
+  const itemData = orderItem.item
+  const uom = (itemData?.uom || orderItem.uom || '').trim().toUpperCase()
+
+  if (uom === 'BOX') {
+    const boxPrice = Number(itemData?.box_price ?? 0)
+    if (boxPrice > 0) return boxPrice
+  } else if (uom === 'PACK') {
+    const packPrice = Number(itemData?.pack_price ?? 0) || Number(itemData?.box_price ?? 0)
+    if (packPrice > 0) return packPrice
+  } else if (uom === 'EA') {
+    const unitPrice = Number(itemData?.unit_price ?? 0)
+    if (unitPrice > 0) return unitPrice
+  }
+
+  // Fallback if specific UOM price wasn't matched or is 0
+  if (itemData?.unit_price && Number(itemData.unit_price) > 0) {
+    return Number(itemData.unit_price)
+  }
+  return Number(orderItem.price || 0)
 }
 
 export async function getOrders({ page = 1, limit = 20, search = '', status = '' }) {
@@ -52,7 +97,12 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   let query = supabase.from('orders').select(`
     *,
     store:stores(name),
-    order_items(qty, price)
+    order_items(
+      qty,
+      price,
+      uom,
+      item:items(uom, unit_price, box_price, pack_price)
+    )
   `, { count: 'exact' })
   
   const activeClientId = await getActiveClientAction()
@@ -80,7 +130,10 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
 
   const formattedData = (data || []).map((order: any) => {
     const itemsTotal = (order.order_items || []).reduce(
-      (sum: number, item: any) => sum + (Number(item.qty || 0) * Number(item.price || 0)),
+      (sum: number, item: any) => {
+        const effectivePrice = getOrderItemEffectivePrice(item)
+        return sum + (Number(item.qty || 0) * effectivePrice)
+      },
       0
     )
     const tax = Number(order.tax_amount || 0)
@@ -99,7 +152,7 @@ export async function getOrderDetails(orderId: string) {
   const supabase = await getClient()
   const { data, error } = await supabase.from('order_items').select(`
     *,
-    item:items(name_en, desc_en, sku)
+    item:items(name_en, desc_en, sku, uom, unit_price, box_price, pack_price)
   `).eq('order_id', orderId)
   
   if (error) {
@@ -109,3 +162,4 @@ export async function getOrderDetails(orderId: string) {
   
   return { data, error: null }
 }
+
