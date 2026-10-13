@@ -173,5 +173,30 @@ export type Database = {
         Update: any;
       };
     };
+    Views: {
+      items_with_pricing: {
+        Row: Database['public']['Tables']['items']['Row'] & {
+          effective_price: number;
+        };
+      };
+    };
+    Functions: {
+      get_item_effective_price: {
+        Args: {
+          p_uom: string;
+          p_unit_price: number;
+          p_pack_price: number;
+          p_box_price: number;
+        };
+        Returns: number;
+      };
+      get_effective_price_for_item: {
+        Args: {
+          p_item_id: string;
+          p_order_uom?: string | null;
+        };
+        Returns: number;
+      };
+    };
   };
 };
