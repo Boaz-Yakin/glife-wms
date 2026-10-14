@@ -15,7 +15,8 @@ import {
   Check, 
   X, 
   AlertCircle,
-  Save
+  Save,
+  Pencil
 } from "lucide-react"
 
 import {
@@ -83,6 +84,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
 
   // Order Header Form State
   const [orderDateInput, setOrderDateInput] = React.useState("")
+  const [isEditingDate, setIsEditingDate] = React.useState(false)
   
   // Items State
   const [items, setItems] = React.useState<EditableItem[]>([])
@@ -108,6 +110,24 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
     }
   }
 
+  // Format for clean display
+  const formattedDisplayDate = React.useMemo(() => {
+    if (!orderDateInput) return "-"
+    try {
+      const d = new Date(orderDateInput)
+      if (isNaN(d.getTime())) return orderDateInput
+      return d.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    } catch {
+      return orderDateInput
+    }
+  }, [orderDateInput])
+
   // Load details on open
   React.useEffect(() => {
     if (open && order.id) {
@@ -117,6 +137,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       setShowAddSearch(false)
       setSearchQuery("")
       setSearchResults([])
+      setIsEditingDate(false)
 
       const initialDate = order.order_date || order.created_at || ""
       setOrderDateInput(formatForDateTimeInput(initialDate))
@@ -391,14 +412,43 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
           <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-primary font-semibold">
               <Calendar className="size-3.5" />
-              <span>Order Date (Editable)</span>
+              <span>Order Date</span>
             </div>
-            <Input
-              type="datetime-local"
-              value={orderDateInput}
-              onChange={(e) => setOrderDateInput(e.target.value)}
-              className="h-7 text-xs bg-background font-mono px-2 py-0 border-primary/30 focus-visible:ring-primary"
-            />
+            {isEditingDate ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  type="datetime-local"
+                  value={orderDateInput}
+                  onChange={(e) => setOrderDateInput(e.target.value)}
+                  autoFocus
+                  className="h-7 text-xs bg-background font-mono px-2 py-0 border-primary/40 focus-visible:ring-primary"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditingDate(false)}
+                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+                  title="Done editing date"
+                >
+                  <Check className="size-3.5 text-primary" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                onClick={() => setIsEditingDate(true)}
+                className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1.5 py-0.5 -mx-1.5 transition-colors"
+                title="Click to edit order date"
+              >
+                <p className="text-xs font-medium text-foreground truncate">
+                  {formattedDisplayDate}
+                </p>
+                <span className="text-[10px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5 shrink-0 ml-1">
+                  <Pencil className="size-2.5" />
+                  Edit
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="rounded-lg border bg-primary/10 border-primary/30 p-3 space-y-1">
