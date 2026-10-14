@@ -569,17 +569,24 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                             {idx + 1}
                           </TableCell>
                           
-                          {/* Item Name / SKU */}
+                          {/* Item Name / Description / SKU */}
                           <TableCell>
-                            <div className="font-semibold text-xs text-foreground leading-tight">
-                              {item.name_en}
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-xs text-foreground leading-tight">
+                                {item.name_en}
+                              </span>
                               {item.isNew && (
-                                <Badge variant="default" className="ml-1.5 text-[9px] px-1 py-0 h-4 bg-emerald-600">
+                                <Badge variant="default" className="text-[9px] px-1 py-0 h-4 bg-emerald-600">
                                   NEW
                                 </Badge>
                               )}
                             </div>
-                            <div className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                            {item.desc_en && (
+                              <div className="text-[11px] text-muted-foreground font-medium line-clamp-1 mt-0.5">
+                                {item.desc_en}
+                              </div>
+                            )}
+                            <div className="text-[10px] text-muted-foreground/80 font-mono mt-0.5">
                               SKU: {item.sku}
                             </div>
                           </TableCell>
