@@ -117,7 +117,7 @@ export async function getOrderDetails(orderId: string) {
   const { data, error } = await supabase.from('order_items').select(`
     *,
     item:items(name_en, desc_en, sku, uom, unit_price, box_price, pack_price)
-  `).eq('order_id', orderId)
+  `).eq('order_id', orderId).order('created_at', { ascending: true })
   
   if (error) {
     console.error('getOrderDetails error:', error)
@@ -125,5 +125,155 @@ export async function getOrderDetails(orderId: string) {
   }
   
   return { data, error: null }
+}
+
+export interface UpdateOrderItemInput {
+  id: string
+  qty: number
+  uom: string
+  price: number
+}
+
+export interface NewOrderItemInput {
+  item_id?: string | null
+  custom_item_name?: string | null
+  qty: number
+  uom: string
+  price: number
+}
+
+export interface UpdateOrderPayload {
+  orderId: string
+  orderDate?: string
+  itemsToUpdate?: UpdateOrderItemInput[]
+  itemsToAdd?: NewOrderItemInput[]
+  itemIdsToDelete?: string[]
+}
+
+export async function updateOrder(payload: UpdateOrderPayload) {
+  const supabase = await getClient()
+  const { orderId, orderDate, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
+
+  // 1. Update order header (order_date) if provided
+  if (orderDate) {
+    const { error: orderUpdateErr } = await (supabase as any)
+      .from('orders')
+      .update({
+        order_date: orderDate,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', orderId)
+
+    if (orderUpdateErr) {
+      console.error('updateOrder header error:', orderUpdateErr)
+      return { success: false, error: orderUpdateErr.message }
+    }
+  }
+
+  // 2. Delete items if any
+  if (itemIdsToDelete && itemIdsToDelete.length > 0) {
+    const { error: deleteErr } = await supabase
+      .from('order_items')
+      .delete()
+      .in('id', itemIdsToDelete)
+      .eq('order_id', orderId)
+
+    if (deleteErr) {
+      console.error('updateOrder delete items error:', deleteErr)
+      return { success: false, error: deleteErr.message }
+    }
+  }
+
+  // 3. Update existing items
+  if (itemsToUpdate && itemsToUpdate.length > 0) {
+    for (const item of itemsToUpdate) {
+      const invoiceAmount = Number(item.qty || 0) * Number(item.price || 0)
+      const { error: itemUpdateErr } = await (supabase as any)
+        .from('order_items')
+        .update({
+          qty: item.qty,
+          uom: item.uom,
+          price: item.price,
+          invoice_amount: invoiceAmount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', item.id)
+        .eq('order_id', orderId)
+
+      if (itemUpdateErr) {
+        console.error('updateOrder item update error:', itemUpdateErr)
+        return { success: false, error: itemUpdateErr.message }
+      }
+    }
+  }
+
+  // 4. Insert new items
+  if (itemsToAdd && itemsToAdd.length > 0) {
+    const insertPayload = itemsToAdd.map(item => ({
+      order_id: orderId,
+      item_id: item.item_id || null,
+      custom_item_name: item.custom_item_name || null,
+      qty: Number(item.qty || 1),
+      uom: item.uom || 'EA',
+      price: Number(item.price || 0),
+      invoice_amount: Number(item.qty || 1) * Number(item.price || 0),
+      is_taxable: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }))
+
+    const { error: insertErr } = await (supabase as any)
+      .from('order_items')
+      .insert(insertPayload)
+
+    if (insertErr) {
+      console.error('updateOrder insert items error:', insertErr)
+      return { success: false, error: insertErr.message }
+    }
+  }
+
+  return { success: true, error: null }
+}
+
+export interface MasterItemSearchResult {
+  id: string
+  sku: string
+  name_en: string
+  desc_en?: string | null
+  uom: string
+  unit_price: number
+  box_price: number
+  pack_price: number
+  category?: string | null
+}
+
+export async function searchMasterItemsForOrder(search: string): Promise<MasterItemSearchResult[]> {
+  if (!search || search.trim().length === 0) return []
+  const supabase = await getClient()
+  const cleanSearch = search.trim()
+
+  const { data, error } = await supabase
+    .from('items')
+    .select('id, sku, name_en, desc_en, uom, unit_price, box_price, pack_price, category')
+    .or(`sku.ilike.%${cleanSearch}%,name_en.ilike.%${cleanSearch}%`)
+    .eq('is_active', true)
+    .limit(15)
+
+  if (error) {
+    console.error('searchMasterItemsForOrder error:', error)
+    return []
+  }
+
+  return (data || []).map((item: any) => ({
+    id: item.id,
+    sku: item.sku,
+    name_en: item.name_en,
+    desc_en: item.desc_en,
+    uom: item.uom || 'EA',
+    unit_price: Number(item.unit_price || 0),
+    box_price: Number(item.box_price || 0),
+    pack_price: Number(item.pack_price || 0),
+    category: item.category,
+  }))
 }
 

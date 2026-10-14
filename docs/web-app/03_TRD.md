@@ -54,3 +54,20 @@ src/
 - **열람**: 상단 글로벌 `ClientSwitcher`와 자동 연동되어 선택된 화주사 매장만 필터링하거나, 'All Clients' 상태에서는 전체 매장 및 소속 화주사 뱃지 노출.
 - **등록/수정**: Server Action (`createStoreAction`, `updateStoreAction`)을 통해 처리되며 `(client_id, store_no)` 중복 에러 핸들링.
 - **삭제/비활성화**: `orders` 테이블과의 무결성 제약으로 인해 이미 주문 이력이 존재하는 매장은 삭제 차단 후 비활성화(`is_active = false`) 유도. 미사용 매장은 영구 삭제 지원.
+
+## 6. Order Management - Order Details Editing (주문 상세 편집 및 품목 관리)
+### 6.1 요구사항 및 기능 범위
+- **Order Header**: `order_date` (주문 일시) 수정 기능 제공.
+- **Order Items (품목 라인)**:
+  - `UOM` (단위: EA, BOX, PACK 등) 변경 시 해당 마스터 단가 자동 제안 및 수동 오버라이드 지원.
+  - `unit_price` (단가) 및 `qty` (발주 수량) 실시간 수정.
+  - 실시간 행별 `Subtotal` 및 상위 `Total Amount`, `Total Units` 자동 재계산.
+  - 기존 품목 행 삭제(Trash) 기능.
+  - 신규 품목 추가(Add Item) 기능: 상품 마스터 검색 드롭다운 연동하여 `item_id`, `uom`, `price`, `qty` 등록.
+### 6.2 데이터 정합성 및 트랜잭션 정책
+- Server Action (`updateOrderAction`) 및 `orders.service.ts`를 통해 서버 단에서 원자적 갱신:
+  - 삭제 대상 `order_items` DELETE
+  - 수정 대상 `order_items` UPDATE (`qty`, `uom`, `price`, `invoice_amount`)
+  - 신규 추가 `order_items` INSERT (`order_id`, `item_id`, `qty`, `uom`, `price`, `is_taxable`)
+  - `orders` 테이블의 `order_date`, `invoice_amount`, `updated_at` 갱신
+  - `revalidatePath('/orders')` 및 `revalidatePath('/dashboard')` 수행

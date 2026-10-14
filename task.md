@@ -112,6 +112,15 @@
 - [x] 11.4 `warehouse-layout.actions.ts` 표준 창고 좌표 생성 및 초기화 Server Action 개발 (데이터 부재 시 원클릭 표준 레이아웃 생성 지원)
 - [x] 11.5 `dashboard/page.tsx` 3번째 탭(`2D Layout Map`)에 통합 연동 및 Turbopack 프로덕션 빌드 검증 완료
 
+---
+
+## 📝 Phase 12: web-app 주문 상세(Order Details) 편집 및 라인 아이템 관리
+- [x] 12.1 `03_TRD.md` 설계 문서 및 `task.md` 갱신
+- [x] 12.2 `orders.service.ts`에 주문 일자, 품목 수정/추가/삭제 및 마스터 상품 검색 서비스 함수 개발
+- [x] 12.3 `orders/actions.ts` Server Action 개발 및 캐시 무효화(`revalidatePath`) 연동
+- [x] 12.4 `OrderDetailsDialog.tsx` UI 고도화 (Order Date 수정, 품목별 UOM/단가/수량 인라인 편집, 실시간 합계 계산, 품목 삭제 및 신규 품목 검색/추가)
+- [x] 12.5 빌드 검증 및 QA 테스트 완료
+
 
 
 
