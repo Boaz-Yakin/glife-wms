@@ -569,7 +569,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                             {idx + 1}
                           </TableCell>
                           
-                          {/* Item Name / Description / SKU */}
+                          {/* Item Name / Description */}
                           <TableCell>
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="font-semibold text-xs text-foreground leading-tight">
@@ -586,9 +586,6 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                                 {item.desc_en}
                               </div>
                             )}
-                            <div className="text-[10px] text-muted-foreground/80 font-mono mt-0.5">
-                              SKU: {item.sku}
-                            </div>
                           </TableCell>
 
                           {/* Editable UOM Select */}
