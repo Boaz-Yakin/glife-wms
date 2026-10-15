@@ -42,6 +42,7 @@ export interface OrderItemData {
   uom: string
   price: number
   qty: number
+  picked_qty?: number | null
   discount_rate?: number
   is_taxable?: boolean
   created_at?: string
@@ -65,6 +66,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
     store:stores(name),
     order_items(
       qty,
+      picked_qty,
       price,
       uom,
       item:items(uom, unit_price, box_price, pack_price)
@@ -97,8 +99,9 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   const formattedData = (data || []).map((order: any) => {
     const itemsTotal = (order.order_items || []).reduce(
       (sum: number, item: any) => {
-        const effectivePrice = getOrderItemEffectivePrice(item)
-        return sum + (Number(item.qty || 0) * effectivePrice)
+        const effectivePrice = Number(item.price || getOrderItemEffectivePrice(item))
+        const effectiveQty = item.picked_qty != null ? Number(item.picked_qty) : Number(item.qty || 0)
+        return sum + (effectiveQty * effectivePrice)
       },
       0
     )
@@ -222,6 +225,7 @@ export async function updateOrder(payload: UpdateOrderPayload) {
         .from('order_items')
         .update({
           qty: item.qty,
+          picked_qty: item.qty,
           uom: item.uom,
           price: item.price,
           invoice_amount: invoiceAmount,

@@ -60,6 +60,8 @@ interface EditableItem {
   uom: string
   price: number
   qty: number
+  order_qty?: number
+  picked_qty?: number | null
   unit_price: number
   box_price: number
   pack_price: number
@@ -168,6 +170,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         const { data } = await getOrderDetails(order.id)
         const mapped: EditableItem[] = ((data as any[]) || []).map((row) => {
           const effectivePrice = Number(row.price || getOrderItemEffectivePrice(row))
+          const effectiveQty = row.picked_qty != null ? Number(row.picked_qty) : Number(row.qty || 1)
           return {
             id: row.id,
             isNew: false,
@@ -178,7 +181,9 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             desc_en: row.item?.desc_en || null,
             uom: (row.uom || row.item?.uom || "EA").toUpperCase(),
             price: effectivePrice,
-            qty: Number(row.qty || 1),
+            qty: effectiveQty,
+            order_qty: Number(row.qty || 0),
+            picked_qty: row.picked_qty != null ? Number(row.picked_qty) : null,
             unit_price: Number(row.item?.unit_price || 0),
             box_price: Number(row.item?.box_price || 0),
             pack_price: Number(row.item?.pack_price || 0),
@@ -221,7 +226,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         cur.price = cur.box_price
       } else if (cur.uom === "PACK" && cur.pack_price > 0) {
         cur.price = cur.pack_price
-      } else if (cur.unit_price > 0) {
+      } else if (cur.uom === "EA" && cur.unit_price > 0) {
         cur.price = cur.unit_price
       }
       return copy
@@ -243,7 +248,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
     const num = parseInt(val, 10) || 0
     setItems((prev) => {
       const copy = [...prev]
-      copy[idx].qty = Math.max(1, num)
+      copy[idx].qty = Math.max(0, num)
       return copy
     })
   }
@@ -750,13 +755,22 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
 
                           {/* Editable Qty */}
                           <TableCell className="text-right">
-                            <Input
-                              type="number"
-                              min="1"
-                              value={item.qty}
-                              onChange={(e) => handleQtyChange(idx, e.target.value)}
-                              className="h-8 w-16 ml-auto text-right font-mono font-bold text-xs tabular-nums bg-background"
-                            />
+                            <div className="flex flex-col items-end gap-0.5">
+                              <Input
+                                type="number"
+                                min="0"
+                                value={item.qty}
+                                onChange={(e) => handleQtyChange(idx, e.target.value)}
+                                className={`h-8 w-16 ml-auto text-right font-mono font-bold text-xs tabular-nums bg-background ${
+                                  item.qty === 0 ? "border-destructive text-destructive bg-destructive/10" : ""
+                                }`}
+                              />
+                              {item.order_qty !== undefined && item.picked_qty !== null && item.order_qty !== item.qty && (
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title={`Original ordered quantity: ${item.order_qty}`}>
+                                  Ord: {item.order_qty}
+                                </span>
+                              )}
+                            </div>
                           </TableCell>
 
                           {/* Subtotal */}

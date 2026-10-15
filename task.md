@@ -131,6 +131,12 @@
 - [x] 13.5 TypeScript 검사 통과
 - [x] 13.6 브라우저 수동 QA (설정/초기화/주문일 충돌 차단/발행 주문 확인창)
 
+---
 
-
+## 💰 Phase 14: web-app 주문 품목 UOM 변경에 따른 단가 연동 및 목록/상세 합계 일치화
+- [x] 14.1 `lib/pricing.ts`의 `getOrderItemEffectivePrice()`에서 주문 품목 UOM 우선 참조 버그 수정 및 `orderItem.price` fallback 보완
+- [x] 14.2 `services/orders.service.ts`의 `getOrders()` 총액 계산 로직을 확정 단가(`item.price`) 최우선 사용으로 통일
+- [x] 14.3 `OrderDetailsDialog.tsx`의 `handleUomChange()`에서 UOM별 단가 추천 매핑 정확도 보정
+- [x] 14.4 `ORD-20261015-KCVM` 주문 데이터 검증 ($787.16 ➔ $915.60 상세와 100% 일치) 및 Turbopack 프로덕션 빌드 검증 완료
+- [x] 14.5 `OrderDetailsDialog.tsx` & `orders.service.ts`에 G-manager 피킹 수량(`picked_qty`) 우선 연동 및 0개 피킹(미출고/결품) 시각적 표시 지원
 

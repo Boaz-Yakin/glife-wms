@@ -40,13 +40,18 @@ export function getItemEffectivePrice(item: PricingItem): number {
 
 /**
  * Calculates the effective unit price for an order line item based on its UOM:
- * - BOX: uses item.box_price (fallback: item.unit_price)
- * - PACK: uses item.pack_price || item.box_price (fallback: item.unit_price)
- * - EA: uses item.unit_price (fallback: orderItem.price)
+ * 1. Prioritizes the order line's selected UOM (orderItem.uom), falling back to master item UOM.
+ * 2. Matches the UOM with the corresponding master price:
+ *    - BOX: uses item.box_price
+ *    - PACK: uses item.pack_price || item.box_price
+ *    - EA: uses item.unit_price
+ * 3. Fallback:
+ *    - If master item does not have a price (> 0) for the selected UOM, uses orderItem.price (transaction snapshot)
+ *    - Otherwise, falls back to item.unit_price or item.box_price / item.pack_price
  */
 export function getOrderItemEffectivePrice(orderItem: PricingOrderItem): number {
   const itemData = orderItem.item
-  const uom = (itemData?.uom || orderItem.uom || '').trim().toUpperCase()
+  const uom = (orderItem.uom || itemData?.uom || '').trim().toUpperCase()
 
   if (uom === 'BOX') {
     const boxPrice = Number(itemData?.box_price ?? 0)
@@ -59,9 +64,16 @@ export function getOrderItemEffectivePrice(orderItem: PricingOrderItem): number 
     if (unitPrice > 0) return unitPrice
   }
 
+  // Fallback: If master item doesn't have a specific price for this UOM,
+  // use the transaction price recorded on the order item itself
+  if (orderItem.price && Number(orderItem.price) > 0) {
+    return Number(orderItem.price)
+  }
+
   // Fallback if specific UOM price wasn't matched or is 0
   if (itemData?.unit_price && Number(itemData.unit_price) > 0) {
     return Number(itemData.unit_price)
   }
-  return Number(orderItem.price || 0)
+  return Number(itemData?.box_price || itemData?.pack_price || 0)
 }
+
