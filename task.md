@@ -121,6 +121,16 @@
 - [x] 12.4 `OrderDetailsDialog.tsx` UI 고도화 (Order Date 수정, 품목별 UOM/단가/수량 인라인 편집, 실시간 합계 계산, 품목 삭제 및 신규 품목 검색/추가)
 - [x] 12.5 빌드 검증 및 QA 테스트 완료
 
+---
+
+## 🧾 Phase 13: web-app 인보이스 발행일(Invoice Date) 분리 관리
+- [x] 13.1 `/grill-me` 설계 인터뷰 및 `docs/web-app/03_TRD.md` §6.3 반영
+- [x] 13.2 `lib/date.ts` NY 기준 날짜 변환/검증 헬퍼 (`toAtlantaDateString`, `validateInvoiceDate`)
+- [x] 13.3 `orders.service.ts#updateOrder` `invoiceDate` 지원 + 쓰기 전 서버 검증 (invoice_date ≥ order_date)
+- [x] 13.4 `OrderDetailsDialog.tsx` Invoice Date 카드 (Not set 표시, ✕ 초기화, 인라인 검증, 발행 후 수정 확인창)
+- [x] 13.5 TypeScript 검사 통과
+- [x] 13.6 브라우저 수동 QA (설정/초기화/주문일 충돌 차단/발행 주문 확인창)
+
 
 
 

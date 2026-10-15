@@ -69,5 +69,21 @@ src/
   - 삭제 대상 `order_items` DELETE
   - 수정 대상 `order_items` UPDATE (`qty`, `uom`, `price`, `invoice_amount`)
   - 신규 추가 `order_items` INSERT (`order_id`, `item_id`, `qty`, `uom`, `price`, `is_taxable`)
-  - `orders` 테이블의 `order_date`, `invoice_amount`, `updated_at` 갱신
+  - `orders` 테이블의 `order_date`, `invoice_date`, `updated_at` 갱신
   - `revalidatePath('/orders')` 및 `revalidatePath('/dashboard')` 수행
+
+### 6.3 Invoice Date (인보이스 발행일) 분리 관리
+<!-- 결정일: 2026-10-14 (/grill-me 세션) -->
+- **데이터 모델**: `orders.invoice_date DATE NULL` (마이그레이션 `20261013214500`). `order_date`(TIMESTAMPTZ, 주문 시각)와 독립된 값. G-manager와 web-app이 동일 컬럼을 공유.
+- **편집 위치**: `OrderDetailsDialog`에서 Order Date 옆 카드로 표시 및 수정. 주문 목록(`OrdersTable`)에는 노출하지 않음.
+- **NULL 표시**: `"Not set"`으로 표시. G-manager와 달리 `order_date`로 폴백하지 않음 (발행 여부 오인 방지).
+- **초기화**: ✕ 버튼으로 `NULL` 재설정 허용.
+- **API 시그니처** (`UpdateOrderPayload.invoiceDate`):
+  - `undefined` → 변경 없음 / `null` → NULL로 초기화 / `"YYYY-MM-DD"` → 설정
+- **검증 규칙** (web-app 서버 `orders.service.ts#updateOrder`에서만 강제, DB 제약 없음, G-manager는 현행 유지):
+  - 날짜 형식은 `YYYY-MM-DD`만 허용.
+  - `invoice_date >= order_date의 America/New_York 기준 날짜` (시각 무시, 날짜 단위 비교).
+  - 주문일 변경으로 기존 `invoice_date`가 주문일보다 빨라지는 경우도 동일하게 차단 → 사용자에게 인보이스 날짜를 함께 수정하도록 안내 (한 번의 저장으로 두 값 동시 갱신 가능).
+  - 검증은 모든 DB 쓰기 이전에 수행하여 부분 반영을 방지.
+- **발행 후 수정**: 차단하지 않음. 단, `invoice_number`가 존재하거나 `status ∈ {INVOICED, SHIPPED}`인 주문에서 인보이스 날짜를 변경하면 클라이언트에서 확인창(`confirm`) 표시.
+- **Out of Scope**: 대시보드/리포트 집계 기준 변경, 목록 필터, 카테고리별 인보이스 날짜 분리(`category_invoices` 단위).

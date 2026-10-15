@@ -16,7 +16,8 @@ import {
   X, 
   AlertCircle,
   Save,
-  Pencil
+  Pencil,
+  CalendarCheck
 } from "lucide-react"
 
 import {
@@ -40,6 +41,7 @@ import { Input } from "@/components/ui/input"
 import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { updateOrderAction, searchMasterItemsAction } from "@/app/(dashboard)/orders/actions"
+import { toAtlantaDateString, validateInvoiceDate } from "@/lib/date"
 
 interface OrderDetailsDialogProps {
   order: OrderData
@@ -75,6 +77,20 @@ const statusBadgeVariants: Record<string, "default" | "secondary" | "destructive
 
 const COMMON_UOMS = ["EA", "BOX", "PACK", "CASE", "BAG", "CAN", "BTL"]
 
+// 인보이스가 이미 발행된 것으로 간주되는 상태 (TRD 6.3)
+const ISSUED_INVOICE_STATUSES = ["INVOICED", "SHIPPED"]
+
+// DATE(YYYY-MM-DD) 문자열을 시간대 변환 없이 표시용으로 포맷
+const formatDateOnlyForDisplay = (value: string) => {
+  const [y, m, d] = value.split("-").map(Number)
+  if (!y || !m || !d) return value
+  return new Date(y, m - 1, d).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
 export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
@@ -85,6 +101,9 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   // Order Header Form State
   const [orderDateInput, setOrderDateInput] = React.useState("")
   const [isEditingDate, setIsEditingDate] = React.useState(false)
+  // "" = NULL (Not set)
+  const [invoiceDateInput, setInvoiceDateInput] = React.useState("")
+  const [isEditingInvoiceDate, setIsEditingInvoiceDate] = React.useState(false)
   
   // Items State
   const [items, setItems] = React.useState<EditableItem[]>([])
@@ -138,9 +157,11 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       setSearchQuery("")
       setSearchResults([])
       setIsEditingDate(false)
+      setIsEditingInvoiceDate(false)
 
       const initialDate = order.order_date || order.created_at || ""
       setOrderDateInput(formatForDateTimeInput(initialDate))
+      setInvoiceDateInput(order.invoice_date || "")
 
       const loadDetails = async () => {
         setLoading(true)
@@ -169,7 +190,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       }
       loadDetails()
     }
-  }, [open, order.id, order.order_date, order.created_at])
+  }, [open, order.id, order.order_date, order.created_at, order.invoice_date])
 
   // Debounced Item Search
   React.useEffect(() => {
@@ -272,10 +293,31 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   )
   const totalUnits = items.reduce((acc, cur) => acc + Number(cur.qty || 0), 0)
 
+  // Header change tracking
+  const isOrderDateChanged =
+    orderDateInput !== formatForDateTimeInput(order.order_date || order.created_at)
+  const isInvoiceDateChanged = invoiceDateInput !== (order.invoice_date || "")
+  const isInvoiceIssued =
+    Boolean(order.invoice_number) || ISSUED_INVOICE_STATUSES.includes(order.status)
+
+  // 주문일(NY 기준 날짜) — 인보이스 날짜 최소값
+  const orderDay = React.useMemo(
+    () => toAtlantaDateString(orderDateInput ? new Date(orderDateInput) : order.order_date || order.created_at),
+    [orderDateInput, order.order_date, order.created_at]
+  )
+
+  // 인보이스 날짜 검증 (서버와 동일 규칙). 날짜가 바뀐 경우에만 차단
+  const invoiceDateError = React.useMemo(() => {
+    if (!isOrderDateChanged && !isInvoiceDateChanged) return null
+    return validateInvoiceDate(
+      invoiceDateInput || null,
+      orderDateInput ? new Date(orderDateInput) : order.order_date || order.created_at
+    )
+  }, [isOrderDateChanged, isInvoiceDateChanged, invoiceDateInput, orderDateInput, order.order_date, order.created_at])
+
   // Check if form is dirty
   const isDirty = React.useMemo(() => {
-    const originalDateFormatted = formatForDateTimeInput(order.order_date || order.created_at)
-    if (orderDateInput !== originalDateFormatted) return true
+    if (isOrderDateChanged || isInvoiceDateChanged) return true
     if (deletedItemIds.length > 0) return true
     if (items.some((it) => it.isNew)) return true
     if (items.length !== originalItems.length) return true
@@ -288,10 +330,24 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       }
     }
     return false
-  }, [orderDateInput, deletedItemIds, items, originalItems, order.order_date, order.created_at])
+  }, [isOrderDateChanged, isInvoiceDateChanged, deletedItemIds, items, originalItems])
 
   // Save changes
   const handleSaveChanges = async () => {
+    if (invoiceDateError) {
+      setErrorMsg(invoiceDateError)
+      return
+    }
+    if (
+      isInvoiceDateChanged &&
+      isInvoiceIssued &&
+      !window.confirm(
+        "This invoice has already been issued. Are you sure you want to change the invoice date?"
+      )
+    ) {
+      return
+    }
+
     setIsSaving(true)
     setErrorMsg(null)
     setSuccessMsg(null)
@@ -316,9 +372,9 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
           price: it.price,
         }))
 
-      // ISO conversion for orderDate if changed
+      // ISO conversion for orderDate — only send when changed
       let formattedOrderDate: string | undefined = undefined
-      if (orderDateInput) {
+      if (isOrderDateChanged && orderDateInput) {
         const d = new Date(orderDateInput)
         if (!isNaN(d.getTime())) {
           formattedOrderDate = d.toISOString()
@@ -328,6 +384,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       const result = await updateOrderAction({
         orderId: order.id,
         orderDate: formattedOrderDate,
+        invoiceDate: isInvoiceDateChanged ? invoiceDateInput || null : undefined,
         itemsToUpdate,
         itemsToAdd,
         itemIdsToDelete: deletedItemIds,
@@ -387,7 +444,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         )}
 
         {/* Summary Info Cards (Editable Header) */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 shrink-0">
           <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <Store className="size-3.5" />
@@ -448,6 +505,84 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   Edit
                 </span>
               </div>
+            )}
+          </div>
+
+          {/* Editable Invoice Date (TRD 6.3) */}
+          <div
+            className={`rounded-lg border p-3 space-y-1 ${
+              invoiceDateError ? "border-destructive/50 bg-destructive/5" : "border-primary/30 bg-primary/5"
+            }`}
+          >
+            <div
+              className={`flex items-center gap-1.5 text-xs font-semibold ${
+                invoiceDateError ? "text-destructive" : "text-primary"
+              }`}
+            >
+              <CalendarCheck className="size-3.5" />
+              <span>Invoice Date</span>
+            </div>
+            {isEditingInvoiceDate ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  id="invoice-date-input"
+                  type="date"
+                  value={invoiceDateInput}
+                  min={orderDay || undefined}
+                  onChange={(e) => setInvoiceDateInput(e.target.value)}
+                  autoFocus
+                  className="h-7 text-xs bg-background font-mono px-2 py-0 border-primary/40 focus-visible:ring-primary"
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsEditingInvoiceDate(false)}
+                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
+                  title="Done editing invoice date"
+                >
+                  <Check className="size-3.5 text-primary" />
+                </Button>
+              </div>
+            ) : (
+              <div
+                onClick={() => setIsEditingInvoiceDate(true)}
+                className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1.5 py-0.5 -mx-1.5 transition-colors"
+                title="Click to edit invoice date"
+              >
+                {invoiceDateInput ? (
+                  <p className="text-xs font-medium text-foreground truncate tabular-nums">
+                    {formatDateOnlyForDisplay(invoiceDateInput)}
+                  </p>
+                ) : (
+                  <p className="text-xs italic text-muted-foreground truncate">Not set</p>
+                )}
+                <span className="flex items-center gap-1 shrink-0 ml-1">
+                  {invoiceDateInput && (
+                    <button
+                      id="invoice-date-clear"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setInvoiceDateInput("")
+                      }}
+                      className="text-muted-foreground hover:text-destructive transition-colors"
+                      title="Clear invoice date"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  )}
+                  <span className="text-[10px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5">
+                    <Pencil className="size-2.5" />
+                    Edit
+                  </span>
+                </span>
+              </div>
+            )}
+            {invoiceDateError && (
+              <p className="text-[10px] leading-tight text-destructive">
+                Must be on or after {orderDay}
+              </p>
             )}
           </div>
 
@@ -683,7 +818,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             </Button>
             <Button 
               size="sm" 
-              disabled={isSaving || !isDirty}
+              disabled={isSaving || !isDirty || Boolean(invoiceDateError)}
               onClick={handleSaveChanges}
               className="gap-1.5 bg-primary font-semibold"
             >

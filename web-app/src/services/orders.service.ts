@@ -4,6 +4,7 @@ import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
+import { validateInvoiceDate } from "@/lib/date"
 
 const getClient = async () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -23,6 +24,7 @@ export interface OrderData {
   store_id: number | null
   client_id: string | null
   order_date: string
+  invoice_date?: string | null
   status: string
   invoice_amount: number
   note: string | null
@@ -145,6 +147,8 @@ export interface NewOrderItemInput {
 export interface UpdateOrderPayload {
   orderId: string
   orderDate?: string
+  /** undefined: 변경 없음 / null: NULL로 초기화 / "YYYY-MM-DD": 설정 (TRD 6.3) */
+  invoiceDate?: string | null
   itemsToUpdate?: UpdateOrderItemInput[]
   itemsToAdd?: NewOrderItemInput[]
   itemIdsToDelete?: string[]
@@ -152,16 +156,42 @@ export interface UpdateOrderPayload {
 
 export async function updateOrder(payload: UpdateOrderPayload) {
   const supabase = await getClient()
-  const { orderId, orderDate, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
+  const { orderId, orderDate, invoiceDate, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
+  const isInvoiceDateChanged = invoiceDate !== undefined
 
-  // 1. Update order header (order_date) if provided
-  if (orderDate) {
+  // 1. Update order header (order_date / invoice_date) if provided
+  if (orderDate || isInvoiceDateChanged) {
+    // 1-1. 모든 쓰기 이전에 날짜 규칙 검증 (invoice_date >= order_date, NY 기준 날짜)
+    const { data: current, error: currentErr } = await (supabase as any)
+      .from('orders')
+      .select('order_date, created_at, invoice_date')
+      .eq('id', orderId)
+      .maybeSingle()
+
+    if (currentErr || !current) {
+      console.error('updateOrder fetch header error:', currentErr)
+      return { success: false, error: currentErr?.message || 'Order not found' }
+    }
+
+    const effectiveOrderDate: string | null = orderDate || current.order_date || current.created_at
+    const effectiveInvoiceDate: string | null = isInvoiceDateChanged
+      ? invoiceDate || null
+      : current.invoice_date
+
+    const validationError = validateInvoiceDate(effectiveInvoiceDate, effectiveOrderDate)
+    if (validationError) {
+      return { success: false, error: validationError }
+    }
+
+    const headerUpdate: Record<string, string | null> = {
+      updated_at: new Date().toISOString(),
+    }
+    if (orderDate) headerUpdate.order_date = orderDate
+    if (isInvoiceDateChanged) headerUpdate.invoice_date = invoiceDate || null
+
     const { error: orderUpdateErr } = await (supabase as any)
       .from('orders')
-      .update({
-        order_date: orderDate,
-        updated_at: new Date().toISOString()
-      })
+      .update(headerUpdate)
       .eq('id', orderId)
 
     if (orderUpdateErr) {
