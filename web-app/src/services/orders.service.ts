@@ -235,12 +235,10 @@ export async function updateOrder(payload: UpdateOrderPayload) {
         updated_at: new Date().toISOString()
       }
 
-      // DB의 qty 컬럼은 CHECK (qty > 0) 제약이 있으므로,
-      // 0(결품/미출고)인 경우 qty를 덮어쓰지 않고 picked_qty만 0으로 업데이트
-      if (Number(item.qty) > 0) {
-        updatePayload.qty = Number(item.qty)
-      }
-
+      // 원본 주문 수량(qty)은 고객의 원주문 내역이므로 보존하고,
+      // 관리자/피커가 조정한 실제 출고 수량은 picked_qty에만 저장합니다.
+      // (이렇게 해야 저장 후 다시 열었을 때도 원주문 대비 수정 여부를 파악할 수 있고,
+      // 0으로 결품 처리 시에도 DB의 CHECK(qty > 0) 제약을 위반하지 않습니다.)
       const { error: itemUpdateErr } = await (supabase as any)
         .from('order_items')
         .update(updatePayload)

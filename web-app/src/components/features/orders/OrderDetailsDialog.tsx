@@ -65,6 +65,7 @@ interface EditableItem {
   unit_price: number
   box_price: number
   pack_price: number
+  requested_uom?: string | null
 }
 
 const statusBadgeVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -187,6 +188,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             unit_price: Number(row.item?.unit_price || 0),
             box_price: Number(row.item?.box_price || 0),
             pack_price: Number(row.item?.pack_price || 0),
+            requested_uom: row.requested_uom ? row.requested_uom.toUpperCase() : null,
           }
         })
         setItems(mapped)
@@ -701,9 +703,23 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                     items.map((item, idx) => {
                       const subtotal = Number(item.qty || 0) * Number(item.price || 0)
                       const orig = originalItems.find((o) => o.id === item.id)
-                      const isUomChanged = !item.isNew && Boolean(orig && orig.uom !== item.uom)
-                      const isPriceChanged = !item.isNew && Boolean(orig && Math.abs(orig.price - item.price) > 0.0001)
-                      const isQtyChanged = !item.isNew && Boolean(orig && orig.qty !== item.qty)
+
+                      // 1. Qty 변경 여부: 원래 주문 수량(order_qty)과 다르거나 현재 다이얼로그 세션에서 변경된 경우
+                      const isQtyModifiedFromOrder = item.order_qty !== undefined && item.order_qty !== item.qty
+                      const isQtyChanged = isQtyModifiedFromOrder || Boolean(!item.isNew && orig && orig.qty !== item.qty)
+
+                      // 2. Price 변경 여부: 해당 UOM의 카탈로그 표준 단가와 다르거나 현재 다이얼로그 세션에서 변경된 경우
+                      let standardMasterPrice = 0
+                      if (item.uom === "BOX" && item.box_price > 0) standardMasterPrice = item.box_price
+                      else if (item.uom === "PACK" && item.pack_price > 0) standardMasterPrice = item.pack_price
+                      else if (item.unit_price > 0) standardMasterPrice = item.unit_price
+
+                      const isPriceModifiedFromCatalog = standardMasterPrice > 0 && Math.abs(item.price - standardMasterPrice) > 0.001
+                      const isPriceChanged = isPriceModifiedFromCatalog || Boolean(!item.isNew && orig && Math.abs(orig.price - item.price) > 0.0001)
+
+                      // 3. UOM 변경 여부: 원래 요청된 단위(requested_uom)와 다르거나 현재 다이얼로그 세션에서 변경된 경우
+                      const isUomModifiedFromOrder = Boolean(item.requested_uom && item.requested_uom !== item.uom)
+                      const isUomChanged = isUomModifiedFromOrder || Boolean(!item.isNew && orig && orig.uom !== item.uom)
 
                       return (
                         <TableRow 
