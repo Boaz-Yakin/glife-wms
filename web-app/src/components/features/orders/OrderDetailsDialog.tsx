@@ -700,6 +700,11 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   {items.length > 0 ? (
                     items.map((item, idx) => {
                       const subtotal = Number(item.qty || 0) * Number(item.price || 0)
+                      const orig = originalItems.find((o) => o.id === item.id)
+                      const isUomChanged = !item.isNew && Boolean(orig && orig.uom !== item.uom)
+                      const isPriceChanged = !item.isNew && Boolean(orig && Math.abs(orig.price - item.price) > 0.0001)
+                      const isQtyChanged = !item.isNew && Boolean(orig && orig.qty !== item.qty)
+
                       return (
                         <TableRow 
                           key={item.id} 
@@ -733,7 +738,12 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                             <select
                               value={item.uom}
                               onChange={(e) => handleUomChange(idx, e.target.value)}
-                              className="h-8 w-20 text-xs font-mono font-bold bg-background border border-input rounded px-1.5 focus:outline-none focus:ring-1 focus:ring-primary text-center cursor-pointer shadow-sm"
+                              title={isUomChanged && orig ? `Original: ${orig.uom}` : undefined}
+                              className={`h-8 w-20 text-xs font-mono font-bold rounded px-1.5 focus:outline-none focus:ring-1 text-center cursor-pointer shadow-sm transition-colors ${
+                                isUomChanged
+                                  ? "border-blue-500 text-blue-600 bg-blue-50/70 dark:text-blue-400 dark:bg-blue-950/30 focus:ring-blue-500"
+                                  : "bg-background border border-input text-foreground focus:ring-primary"
+                              }`}
                             >
                               {Array.from(new Set([item.uom, ...COMMON_UOMS])).map((u) => (
                                 <option key={u} value={u}>{u}</option>
@@ -749,7 +759,12 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                               min="0"
                               value={item.price}
                               onChange={(e) => handlePriceChange(idx, e.target.value)}
-                              className="h-8 w-24 ml-auto text-right font-mono text-xs tabular-nums bg-background"
+                              title={isPriceChanged && orig ? `Original: $${orig.price.toFixed(2)}` : undefined}
+                              className={`h-8 w-24 ml-auto text-right font-mono text-xs tabular-nums transition-colors ${
+                                isPriceChanged
+                                  ? "border-blue-500 text-blue-600 font-bold bg-blue-50/70 dark:text-blue-400 dark:bg-blue-950/30 focus-visible:ring-blue-500"
+                                  : "bg-background"
+                              }`}
                             />
                           </TableCell>
 
@@ -761,13 +776,18 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                                 min="0"
                                 value={item.qty}
                                 onChange={(e) => handleQtyChange(idx, e.target.value)}
-                                className={`h-8 w-16 ml-auto text-right font-mono font-bold text-xs tabular-nums bg-background ${
-                                  item.qty === 0 ? "border-destructive text-destructive bg-destructive/10" : ""
+                                title={isQtyChanged && orig ? `Original: ${orig.qty}` : undefined}
+                                className={`h-8 w-16 ml-auto text-right font-mono font-bold text-xs tabular-nums transition-colors ${
+                                  item.qty === 0
+                                    ? "border-destructive text-destructive bg-destructive/10 focus-visible:ring-destructive"
+                                    : isQtyChanged
+                                    ? "border-blue-500 text-blue-600 bg-blue-50/70 dark:text-blue-400 dark:bg-blue-950/30 focus-visible:ring-blue-500"
+                                    : "bg-background"
                                 }`}
                               />
-                              {item.order_qty !== undefined && item.picked_qty !== null && item.order_qty !== item.qty && (
-                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title={`Original ordered quantity: ${item.order_qty}`}>
-                                  Ord: {item.order_qty}
+                              {(isQtyChanged || item.qty === 0 || (item.order_qty !== undefined && item.order_qty !== item.qty)) && (
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title={`Original ordered quantity: ${orig?.qty ?? item.order_qty}`}>
+                                  Ord: {orig?.qty ?? item.order_qty}
                                 </span>
                               )}
                             </div>
