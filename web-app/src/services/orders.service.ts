@@ -201,6 +201,12 @@ export async function updateOrder(payload: UpdateOrderPayload) {
       console.error('updateOrder header error:', orderUpdateErr)
       return { success: false, error: orderUpdateErr.message }
     }
+  } else {
+    // 헤더 변경이 없더라도 품목 수정 시 orders.updated_at을 갱신하여 Realtime 이벤트 발생 유도
+    await (supabase as any)
+      .from('orders')
+      .update({ updated_at: new Date().toISOString() })
+      .eq('id', orderId)
   }
 
   // 2. Delete items if any
