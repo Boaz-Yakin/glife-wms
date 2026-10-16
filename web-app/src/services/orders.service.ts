@@ -221,16 +221,23 @@ export async function updateOrder(payload: UpdateOrderPayload) {
   if (itemsToUpdate && itemsToUpdate.length > 0) {
     for (const item of itemsToUpdate) {
       const invoiceAmount = Number(item.qty || 0) * Number(item.price || 0)
+      const updatePayload: Record<string, any> = {
+        picked_qty: item.qty,
+        uom: item.uom,
+        price: item.price,
+        invoice_amount: invoiceAmount,
+        updated_at: new Date().toISOString()
+      }
+
+      // DB의 qty 컬럼은 CHECK (qty > 0) 제약이 있으므로,
+      // 0(결품/미출고)인 경우 qty를 덮어쓰지 않고 picked_qty만 0으로 업데이트
+      if (Number(item.qty) > 0) {
+        updatePayload.qty = Number(item.qty)
+      }
+
       const { error: itemUpdateErr } = await (supabase as any)
         .from('order_items')
-        .update({
-          qty: item.qty,
-          picked_qty: item.qty,
-          uom: item.uom,
-          price: item.price,
-          invoice_amount: invoiceAmount,
-          updated_at: new Date().toISOString()
-        })
+        .update(updatePayload)
         .eq('id', item.id)
         .eq('order_id', orderId)
 
