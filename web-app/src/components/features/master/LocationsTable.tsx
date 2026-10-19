@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { LocationData } from "@/services/master.service"
+import { WarehouseStructureModal } from "@/components/features/dashboard/WarehouseStructureModal"
 import {
   SunMedium,
   ThermometerSnowflake,
@@ -31,6 +32,7 @@ import {
   CheckCircle2,
   Inbox,
   Clock,
+  Settings2,
 } from "lucide-react"
 
 const columns: ColumnDef<LocationData>[] = [
@@ -198,6 +200,8 @@ export function LocationsTable({ data }: LocationsTableProps) {
     },
   })
 
+  const [isStructureModalOpen, setIsStructureModalOpen] = React.useState<boolean>(false)
+
   const totalCount = data.length
   const occupiedCount = data.filter((d) => d.onHandQty > 0).length
 
@@ -255,11 +259,20 @@ export function LocationsTable({ data }: LocationsTableProps) {
           </div>
         </div>
 
-        {/* Quick Occupancy Stat */}
-        <div className="flex items-center gap-2 text-xs">
+        {/* Quick Occupancy Stat & Structure Settings Button */}
+        <div className="flex items-center gap-2.5 text-xs">
           <div className="px-2.5 py-1 rounded bg-muted/60 border text-muted-foreground font-mono">
             Occupied: <strong className="text-foreground">{occupiedCount}</strong> / {totalCount}
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsStructureModalOpen(true)}
+            className="gap-1.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary/10 shadow-xs"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            <span>Configure Structure</span>
+          </Button>
         </div>
       </div>
 
@@ -334,6 +347,13 @@ export function LocationsTable({ data }: LocationsTableProps) {
           </Button>
         </div>
       </div>
+
+      {/* Warehouse Structure Configuration Modal */}
+      <WarehouseStructureModal
+        open={isStructureModalOpen}
+        onClose={() => setIsStructureModalOpen(false)}
+        onSuccess={() => window.location.reload()}
+      />
     </div>
   )
 }

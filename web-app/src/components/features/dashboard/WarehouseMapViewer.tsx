@@ -3,6 +3,7 @@
 import * as React from "react"
 import { WarehouseMapData, RackElevationData } from "@/services/dashboard.service"
 import { RackElevationView } from "./RackElevationView"
+import { WarehouseStructureModal } from "./WarehouseStructureModal"
 import { seedStandardWarehouseLocationsAction } from "@/app/actions/warehouse-layout.actions"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,6 +23,7 @@ import {
   PackageCheck,
   RefreshCw,
   Sparkles,
+  Settings2,
 } from "lucide-react"
 
 interface WarehouseMapViewerProps {
@@ -33,6 +35,7 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
   const [showPickPath, setShowPickPath] = React.useState<boolean>(true)
   const [selectedRack, setSelectedRack] = React.useState<RackElevationData | null>(null)
   const [isSeeding, setIsSeeding] = React.useState<boolean>(false)
+  const [isStructureModalOpen, setIsStructureModalOpen] = React.useState<boolean>(false)
 
   const handleSeedLocations = async () => {
     setIsSeeding(true)
@@ -169,6 +172,16 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
         {/* Right: Pick Path Toggle & Heatmap Legend */}
         <div className="flex flex-wrap items-center gap-3">
           <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsStructureModalOpen(true)}
+            className="gap-1.5 text-xs h-8 border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            <span>Structure Settings</span>
+          </Button>
+
+          <Button
             variant={showPickPath ? "default" : "outline"}
             size="sm"
             onClick={() => setShowPickPath(!showPickPath)}
@@ -300,13 +313,9 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
 
           {/* 2. CENTER: STORAGE AISLES & RACK BAYS */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            {/* Zone A: Ambient Storage Aisles (col-span-8 or 12 depending on filter) */}
+            {/* Zone A: Ambient Storage Aisles */}
             {showZoneA && (
-              <div
-                className={`${
-                  showZoneF ? "lg:col-span-8" : "lg:col-span-12"
-                } flex flex-col gap-5`}
-              >
+              <div className="lg:col-span-12 flex flex-col gap-5">
                 <div className="flex items-center justify-between pb-1 border-b">
                   <div className="flex items-center gap-2">
                     <SunMedium className="h-4 w-4 text-amber-500" />
@@ -315,7 +324,7 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
                     </h5>
                   </div>
                   <span className="text-[11px] text-muted-foreground">
-                    Click any rack bay to inspect 4-tier vertical shelf elevation
+                    Click any rack bay to inspect vertical shelf elevation
                   </span>
                 </div>
 
@@ -349,8 +358,8 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
                           )}
                         </div>
 
-                        {/* Rack Bay Cards in this Aisle */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {/* Rack Bay Cards in this Aisle: responsive 5 columns for up to 10 bays */}
+                        <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-5 xl:grid-cols-5 gap-2.5">
                           {aisle.racks.map((rack) => (
                             <RackBayCard
                               key={rack.rackId}
@@ -366,13 +375,9 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
               </div>
             )}
 
-            {/* Zone F: Cold Storage Chamber (col-span-4 or 12) */}
+            {/* Zone F: Cold Storage Chamber */}
             {showZoneF && (
-              <div
-                className={`${
-                  showZoneA ? "lg:col-span-4" : "lg:col-span-12"
-                } p-4 rounded-xl border-2 border-cyan-500/30 bg-cyan-500/5 flex flex-col gap-4`}
-              >
+              <div className="lg:col-span-12 p-4 rounded-xl border-2 border-cyan-500/30 bg-cyan-500/5 flex flex-col gap-4">
                 <div className="flex items-center justify-between pb-1 border-b border-cyan-500/20">
                   <div className="flex items-center gap-2">
                     <ThermometerSnowflake className="h-4 w-4 text-cyan-500" />
@@ -394,9 +399,9 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
                   {data.zoneF.aisles.map((aisle) => (
                     <div key={aisle.aisleNumber} className="flex flex-col gap-2">
                       <span className="text-[11px] font-mono font-medium text-muted-foreground">
-                        Chamber Aisle {aisle.aisleNumber.toString().padStart(2, "0")}
+                        Chamber Aisle {aisle.aisleNumber.toString().padStart(2, "0")} • {aisle.racks.length} Storage Bays
                       </span>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                         {aisle.racks.map((rack) => (
                           <RackBayCard
                             key={rack.rackId}
@@ -448,6 +453,13 @@ export function WarehouseMapViewer({ data }: WarehouseMapViewerProps) {
         rack={selectedRack}
         open={!!selectedRack}
         onClose={() => setSelectedRack(null)}
+      />
+
+      {/* Warehouse Structure Configuration Modal */}
+      <WarehouseStructureModal
+        open={isStructureModalOpen}
+        onClose={() => setIsStructureModalOpen(false)}
+        onSuccess={() => window.location.reload()}
       />
     </div>
   )

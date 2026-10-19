@@ -140,3 +140,13 @@
 - [x] 14.4 `ORD-20261015-KCVM` 주문 데이터 검증 ($787.16 ➔ $915.60 상세와 100% 일치) 및 Turbopack 프로덕션 빌드 검증 완료
 - [x] 14.5 `OrderDetailsDialog.tsx` & `orders.service.ts`에 G-manager 피킹 수량(`picked_qty`) 우선 연동 및 0개 피킹(미출고/결품) 시각적 표시 지원
 
+---
+
+## 🏭 Phase 15: web-app 창고 로케이션 구조 동적 설정 및 120개 로케이션(Zone A/F 10-Bay 3-Level) 개편
+- [x] 15.1 창고 표준 구조 재구성: Zone A(상온 1 aisle × 10 bays × 3 tiers × 2 bins = 60), Zone F(냉동 1 aisle × 10 bays × 3 tiers × 2 bins = 60), 총 120개 로케이션 DB 마이그레이션 및 샘플 재고 분산 적재 완료
+- [x] 15.2 `warehouse-layout.actions.ts`에 동적 창고 구조 조회(`getWarehouseStructureConfigAction`) 및 적용(`applyWarehouseStructureAction`) 서버 액션 개발
+- [x] 15.3 대화형 창고 구조 설정 모달(`WarehouseStructureModal.tsx`) 개발 (Aisles, Bays, Levels, Bins 자유 설정 및 120개 원클릭 프리셋 지원)
+- [x] 15.4 `WarehouseMapViewer.tsx` 2D 디지털 플로어 뷰어 10개 Bay 5열 반응형 그리드 최적화 및 구조 설정 버튼 연동
+- [x] 15.5 `LocationsTable.tsx` 로케이션 마스터 페이지에 "Configure Structure" 액션 버튼 마운트
+- [x] 15.6 `dashboard.service.ts` 동적 층수 감지 및 랙 점유율 계산 로직 고도화 완료
+

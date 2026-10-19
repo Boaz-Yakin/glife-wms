@@ -1059,12 +1059,33 @@ export async function getWarehouseMapData(): Promise<WarehouseMapData> {
     totalUnits: number
   }>()
 
-  const levelOrder = ['D', 'C', 'B', 'A']
+  const detectedLevels = new Set<string>()
+  for (const loc of locRows) {
+    const code = loc.code || ''
+    const match = code.match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
+    if (match) detectedLevels.add(match[4])
+  }
+
+  const allPossibleLevels = ['D', 'C', 'B', 'A']
+  const levelOrder = allPossibleLevels.filter((lvl) => detectedLevels.has(lvl))
+  if (levelOrder.length === 0) levelOrder.push('C', 'B', 'A')
+
   const levelNames: Record<string, string> = {
     D: 'Level D (4th Tier - High Stock)',
     C: 'Level C (3rd Tier - Standard)',
     B: 'Level B (2nd Tier - Active Reach)',
     A: 'Level A (1st Tier - Golden Zone)',
+  }
+
+  // Count actual slots configured per rack
+  const rackSlotCountMap = new Map<string, number>()
+  for (const loc of locRows) {
+    const code = loc.code || ''
+    const match = code.match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
+    if (match) {
+      const rackKey = `${match[1]}-${match[2]}-${match[3]}`
+      rackSlotCountMap.set(rackKey, (rackSlotCountMap.get(rackKey) || 0) + 1)
+    }
   }
 
   for (const loc of locRows) {
@@ -1094,13 +1115,18 @@ export async function getWarehouseMapData(): Promise<WarehouseMapData> {
     const rackKey = `${zone}-${String(aisle).padStart(2, '0')}-${String(bay).padStart(2, '0')}`
 
     if (!rackMap.has(rackKey)) {
+      const initialSlots: { [level: string]: RackSlotItem[] } = {}
+      for (const lvl of levelOrder) {
+        initialSlots[lvl] = []
+      }
+
       rackMap.set(rackKey, {
         rackCode: rackKey,
         zoneType: zone,
         aisleNumber: aisle,
         bayNumber: bay,
-        slots: { D: [], C: [], B: [], A: [] },
-        slotCapacity: 8, // 4 levels * 2 bins standard capacity
+        slots: initialSlots,
+        slotCapacity: rackSlotCountMap.get(rackKey) || 6,
         usedSlots: 0,
         totalUnits: 0,
       })
