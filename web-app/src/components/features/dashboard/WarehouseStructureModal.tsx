@@ -15,8 +15,10 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import {
-  WarehouseStructureConfig,
+  type WarehouseStructureConfig,
   DEFAULT_WAREHOUSE_CONFIG,
+} from "@/types/warehouse-layout"
+import {
   applyWarehouseStructureAction,
   getWarehouseStructureConfigAction,
 } from "@/app/actions/warehouse-layout.actions"
