@@ -149,4 +149,5 @@
 - [x] 15.4 `WarehouseMapViewer.tsx` 2D 디지털 플로어 뷰어 10개 Bay 5열 반응형 그리드 최적화 및 구조 설정 버튼 연동
 - [x] 15.5 `LocationsTable.tsx` 로케이션 마스터 페이지에 "Configure Structure" 액션 버튼 마운트
 - [x] 15.6 `dashboard.service.ts` 동적 층수 감지 및 랙 점유율 계산 로직 고도화 완료
+- [x] 15.7 2D 레이아웃 맵 랙 입면도(`RackElevationView`)에서 특정 Bin 슬롯 클릭 시 상품 검색 및 수량 직접 배정/수정/비우기 기능 개발 (`BinAssignModal.tsx`, `bin-inventory.actions.ts`)
 

@@ -11,6 +11,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { RackElevationData, RackSlotItem } from "@/services/dashboard.service"
+import { BinAssignModal } from "./BinAssignModal"
 import {
   Layers,
   Sparkles,
@@ -21,6 +22,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   ArrowDownToDot,
+  Plus,
+  Pencil,
 } from "lucide-react"
 
 interface RackElevationViewProps {
@@ -30,6 +33,13 @@ interface RackElevationViewProps {
 }
 
 export function RackElevationView({ rack, open, onClose }: RackElevationViewProps) {
+  const [selectedSlotForAssign, setSelectedSlotForAssign] = React.useState<{
+    locationCode: string
+    currentSku?: string
+    currentName?: string
+    currentQty?: number
+  } | null>(null)
+
   if (!rack) return null
 
   const isColdZone = rack.zoneType === "F"
@@ -174,11 +184,27 @@ export function RackElevationView({ rack, open, onClose }: RackElevationViewProp
                       binLabel="Bin 01"
                       slot={slot01}
                       expectedCode={`LOC-${rack.zoneType}${rack.aisleNumber.toString().padStart(2, "0")}${rack.bayNumber.toString().padStart(2, "0")}${lvl.level}01`}
+                      onAssign={(code, slt) =>
+                        setSelectedSlotForAssign({
+                          locationCode: code,
+                          currentSku: slt?.sku,
+                          currentName: slt?.name,
+                          currentQty: slt?.onHandQty,
+                        })
+                      }
                     />
                     <SlotCell
                       binLabel="Bin 02"
                       slot={slot02}
                       expectedCode={`LOC-${rack.zoneType}${rack.aisleNumber.toString().padStart(2, "0")}${rack.bayNumber.toString().padStart(2, "0")}${lvl.level}02`}
+                      onAssign={(code, slt) =>
+                        setSelectedSlotForAssign({
+                          locationCode: code,
+                          currentSku: slt?.sku,
+                          currentName: slt?.name,
+                          currentQty: slt?.onHandQty,
+                        })
+                      }
                     />
                   </div>
                 </div>
@@ -189,12 +215,25 @@ export function RackElevationView({ rack, open, onClose }: RackElevationViewProp
 
         {/* Footer info note */}
         <div className="pt-2 border-t flex items-center justify-between text-xs text-muted-foreground">
-          <span>Standard Bay Dimensions: 4 Shelves × 2 Bins = 8 Capacity</span>
-          <Button variant="outline" size="sm" onClick={onClose}>
+          <span className="text-[11px]">Click any slot to directly assign or adjust stock.</span>
+          <Button variant="outline" size="sm" onClick={onClose} className="text-xs h-7">
             Close Elevation
           </Button>
         </div>
       </DialogContent>
+
+      {/* Bin Assignment Modal */}
+      {selectedSlotForAssign && (
+        <BinAssignModal
+          open={!!selectedSlotForAssign}
+          locationCode={selectedSlotForAssign.locationCode}
+          currentSku={selectedSlotForAssign.currentSku}
+          currentName={selectedSlotForAssign.currentName}
+          currentQty={selectedSlotForAssign.currentQty}
+          onClose={() => setSelectedSlotForAssign(null)}
+          onSuccess={() => window.location.reload()}
+        />
+      )}
     </Dialog>
   )
 }
@@ -203,27 +242,38 @@ function SlotCell({
   binLabel,
   slot,
   expectedCode,
+  onAssign,
 }: {
   binLabel: string
   slot?: RackSlotItem
   expectedCode: string
+  onAssign: (code: string, slot?: RackSlotItem) => void
 }) {
   if (!slot) {
     return (
-      <div className="flex flex-col justify-between p-2.5 rounded-lg border border-dashed border-border/80 bg-muted/20 min-h-[78px]">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-mono text-muted-foreground uppercase">
+      <button
+        type="button"
+        onClick={() => onAssign(expectedCode)}
+        className="group flex flex-col justify-between p-2.5 rounded-lg border border-dashed border-border/80 bg-muted/20 hover:border-primary/60 hover:bg-primary/5 transition-all cursor-pointer min-h-[82px] text-left w-full shadow-2xs"
+      >
+        <div className="flex items-center justify-between w-full">
+          <span className="text-[10px] font-mono text-muted-foreground uppercase group-hover:text-primary transition-colors">
             {binLabel}
           </span>
           <span className="text-[10px] font-mono text-muted-foreground/70">
             {expectedCode}
           </span>
         </div>
-        <div className="flex items-center gap-1.5 text-muted-foreground text-xs py-1">
-          <ArrowDownToDot className="h-3.5 w-3.5 text-muted-foreground/60" />
-          <span>Available for Putaway</span>
+        <div className="flex items-center justify-between w-full text-xs py-1">
+          <div className="flex items-center gap-1.5 text-muted-foreground group-hover:text-primary transition-colors">
+            <Plus className="h-3.5 w-3.5" />
+            <span className="font-medium text-[11px]">Click to Assign Item</span>
+          </div>
+          <Badge variant="outline" className="text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">
+            + Putaway
+          </Badge>
         </div>
-      </div>
+      </button>
     )
   }
 
@@ -233,28 +283,35 @@ function SlotCell({
   }).format(slot.onHandQty * slot.unitPrice)
 
   return (
-    <div className="flex flex-col justify-between p-2.5 rounded-lg border bg-card/90 hover:border-primary/40 transition-colors shadow-xs min-h-[78px]">
-      <div className="flex items-center justify-between gap-2">
+    <button
+      type="button"
+      onClick={() => onAssign(expectedCode, slot)}
+      className="group flex flex-col justify-between p-2.5 rounded-lg border bg-card/90 hover:border-primary/60 hover:shadow-md transition-all cursor-pointer shadow-xs min-h-[82px] text-left w-full"
+    >
+      <div className="flex items-center justify-between gap-2 w-full">
         <span className="text-[10px] font-mono text-muted-foreground uppercase">
           {binLabel}
         </span>
-        <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-4">
-          {slot.sku}
-        </Badge>
+        <div className="flex items-center gap-1">
+          <Badge variant="outline" className="text-[10px] font-mono px-1.5 py-0 h-4 border-primary/30 text-primary">
+            {slot.sku}
+          </Badge>
+          <Pencil className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
       </div>
 
-      <div className="my-1">
-        <p className="font-semibold text-xs text-foreground truncate" title={slot.name}>
+      <div className="my-1 w-full">
+        <p className="font-semibold text-xs text-foreground truncate group-hover:text-primary transition-colors" title={slot.name}>
           {slot.name}
         </p>
       </div>
 
-      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border/50 text-muted-foreground">
-        <span className="font-medium text-foreground">
+      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border/50 text-muted-foreground w-full">
+        <span className="font-mono font-bold text-foreground">
           {slot.onHandQty.toLocaleString()} units
         </span>
-        <span>{itemTotalValue}</span>
+        <span className="font-mono text-[10px]">{itemTotalValue}</span>
       </div>
-    </div>
+    </button>
   )
 }
