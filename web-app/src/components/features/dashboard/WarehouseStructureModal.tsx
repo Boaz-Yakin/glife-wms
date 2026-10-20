@@ -47,7 +47,7 @@ export function WarehouseStructureModal({
   const [config, setConfig] = React.useState<WarehouseStructureConfig>(DEFAULT_WAREHOUSE_CONFIG)
   const [loading, setLoading] = React.useState<boolean>(false)
   const [fetching, setFetching] = React.useState<boolean>(false)
-  const [reseedSample, setReseedSample] = React.useState<boolean>(true)
+  const [inventoryAction, setInventoryAction] = React.useState<'preserve' | 'seed' | 'wipe'>('preserve')
 
   // Load current structure config on open
   React.useEffect(() => {
@@ -91,7 +91,10 @@ export function WarehouseStructureModal({
   const handleSave = async () => {
     setLoading(true)
     try {
-      const res = await applyWarehouseStructureAction(config, reseedSample)
+      const res = await applyWarehouseStructureAction(config, {
+        seedDemoData: inventoryAction === 'seed',
+        wipeAllInventory: inventoryAction === 'wipe',
+      })
       if (res.success) {
         toast.success(res.message || "Warehouse structure updated successfully!")
         if (onSuccess) onSuccess()
@@ -327,43 +330,93 @@ export function WarehouseStructureModal({
               </div>
             </div>
 
-            {/* Summary Strip & Clear/Seed Options */}
-            <div className="flex flex-col gap-3 p-3.5 rounded-xl border bg-muted/40">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            {/* Summary & Inventory Action Settings */}
+            <div className="flex flex-col gap-3.5 p-4 rounded-xl border bg-muted/40">
+              <div className="flex items-center justify-between pb-2 border-b border-border/60">
                 <div className="flex items-center gap-2">
                   <Layers className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-medium text-foreground">
+                  <span className="text-xs font-semibold text-foreground">
                     Total Locations To Generate:
                   </span>
-                  <span className="font-mono font-bold text-sm text-primary">
-                    {grandTotal} Storage Bins
-                  </span>
                 </div>
-
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground">
-                  <input
-                    type="checkbox"
-                    checked={reseedSample}
-                    onChange={(e) => setReseedSample(e.target.checked)}
-                    className="rounded border-zinc-600 text-primary focus:ring-primary size-4"
-                  />
-                  <span>Seed demo inventory across racks</span>
-                </label>
+                <span className="font-mono font-bold text-sm text-primary">
+                  {grandTotal} Storage Bins
+                </span>
               </div>
 
-              {/* Informative helper note based on checkbox state */}
-              {!reseedSample ? (
-                <div className="flex items-center gap-2 text-xs text-rose-500 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
-                  <AlertTriangle className="h-4 w-4 shrink-0" />
-                  <span>
-                    <strong>Reset to Empty Warehouse:</strong> All existing demo inventory will be cleared. All 120 racks will be set to 0 units (Empty).
-                  </span>
-                </div>
-              ) : (
-                <span className="text-[11px] text-muted-foreground">
-                  Populates select rack bays with 14 sample SKUs to bring the 2D heatmap and elevation view alive.
+              {/* 3 Explicit Inventory Modes */}
+              <div className="space-y-2">
+                <span className="text-xs font-semibold text-foreground block">
+                  Inventory Handling Policy:
                 </span>
-              )}
+
+                {/* Option 1: Preserve (Default Safe) */}
+                <label className="flex items-start gap-2.5 p-2.5 rounded-lg border bg-background hover:bg-muted/30 cursor-pointer transition-all">
+                  <input
+                    type="radio"
+                    name="inventoryAction"
+                    value="preserve"
+                    checked={inventoryAction === "preserve"}
+                    onChange={() => setInventoryAction("preserve")}
+                    className="mt-0.5 text-primary focus:ring-primary size-4"
+                  />
+                  <div className="flex flex-col gap-0.5 text-xs">
+                    <span className="font-medium text-foreground flex items-center gap-1.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Preserve Real Inventory (Safe & Default)</span>
+                    </span>
+                    <span className="text-muted-foreground text-[11px]">
+                      Never deletes real inventory. Any items in deprecated/resized racks will be safely re-routed.
+                    </span>
+                  </div>
+                </label>
+
+                {/* Option 2: Seed Demo Data */}
+                <label className="flex items-start gap-2.5 p-2.5 rounded-lg border bg-background hover:bg-muted/30 cursor-pointer transition-all">
+                  <input
+                    type="radio"
+                    name="inventoryAction"
+                    value="seed"
+                    checked={inventoryAction === "seed"}
+                    onChange={() => setInventoryAction("seed")}
+                    className="mt-0.5 text-primary focus:ring-primary size-4"
+                  />
+                  <div className="flex flex-col gap-0.5 text-xs">
+                    <span className="font-medium text-foreground flex items-center gap-1.5">
+                      <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Seed Demo Inventory</span>
+                    </span>
+                    <span className="text-muted-foreground text-[11px]">
+                      Populates 14 sample SKUs across select bays to test the 2D heatmap and elevation viewer.
+                    </span>
+                  </div>
+                </label>
+
+                {/* Option 3: Wipe All (Dangerous Reset) */}
+                <label className={`flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-all ${
+                  inventoryAction === "wipe"
+                    ? "border-rose-500/50 bg-rose-500/10 text-rose-500"
+                    : "bg-background hover:bg-muted/30"
+                }`}>
+                  <input
+                    type="radio"
+                    name="inventoryAction"
+                    value="wipe"
+                    checked={inventoryAction === "wipe"}
+                    onChange={() => setInventoryAction("wipe")}
+                    className="mt-0.5 text-rose-500 focus:ring-rose-500 size-4"
+                  />
+                  <div className="flex flex-col gap-0.5 text-xs">
+                    <span className="font-semibold text-rose-600 dark:text-rose-400 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5" />
+                      <span>Danger: Factory Reset (Wipe All Inventory)</span>
+                    </span>
+                    <span className="text-muted-foreground text-[11px]">
+                      Deletes all inventory ledger records. All 120 rack bays will be reset to 0 units (Empty).
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
           </div>
         )}

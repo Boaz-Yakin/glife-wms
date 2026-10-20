@@ -103,16 +103,25 @@ export async function getWarehouseStructureConfigAction(): Promise<{
   }
 }
 
+export interface StructureApplyOptions {
+  seedDemoData?: boolean
+  wipeAllInventory?: boolean
+}
+
 /**
  * Apply new warehouse structure configuration:
  * Updates the database locations table to match the configured Zone, Aisles, Bays, Levels, and Bins.
- * Safely preserves existing inventory by re-assigning to valid active locations.
+ * Safely preserves existing inventory by default unless wipeAllInventory is explicitly requested.
  */
 export async function applyWarehouseStructureAction(
   config: WarehouseStructureConfig,
-  reseedSampleInventory: boolean = true
+  options?: StructureApplyOptions | boolean
 ) {
   try {
+    const opts: StructureApplyOptions = typeof options === 'boolean'
+      ? { seedDemoData: options, wipeAllInventory: false }
+      : (options || {})
+
     const supabase = createAdminClient()
 
     // 1. Generate target location codes
@@ -165,34 +174,45 @@ export async function applyWarehouseStructureAction(
       }
     }
 
-    // 5. Check if any existing inventory needs migration from deprecated locations
-    const { data: currentInvs } = await (supabase as any)
-      .from('inventory')
-      .select('id, item_id, location_id, on_hand_qty, allocated_qty')
+    // 5. Handle Inventory:
+    // CASE A: Explicit Wipe Requested (Dangerous Reset)
+    if (opts.wipeAllInventory) {
+      const { error: clearInvErr } = await (supabase as any)
+        .from('inventory')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
 
-    if (currentInvs && currentInvs.length > 0) {
-      const validLocationIds = new Set(Array.from(existingLocMap.entries())
-        .filter(([code]) => targetCodeSet.has(code))
-        .map(([, id]) => id))
+      if (clearInvErr) {
+        console.error('Error wiping inventory:', clearInvErr)
+      }
+    } else {
+      // CASE B: Default Safe Mode - Preserve and Re-route orphan inventory
+      const { data: currentInvs } = await (supabase as any)
+        .from('inventory')
+        .select('id, item_id, location_id, on_hand_qty, allocated_qty')
 
-      // Fallback target: first available valid location in Zone A / Zone F
-      const firstValidLocA = targetLocations.find((l) => l.zone_type === 'A')
-      const firstValidLocIdA = firstValidLocA ? existingLocMap.get(firstValidLocA.code) : null
-      const firstValidLocF = targetLocations.find((l) => l.zone_type === 'F')
-      const firstValidLocIdF = firstValidLocF ? existingLocMap.get(firstValidLocF.code) : null
+      if (currentInvs && currentInvs.length > 0) {
+        const validLocationIds = new Set(Array.from(existingLocMap.entries())
+          .filter(([code]) => targetCodeSet.has(code))
+          .map(([, id]) => id))
 
-      for (const inv of currentInvs) {
-        if (!validLocationIds.has(inv.location_id)) {
-          // Re-route orphan inventory to a valid location in the new structure
-          const oldCode = existingIdMap.get(inv.location_id) || ''
-          const isF = oldCode.startsWith('LOC-F')
-          const targetLocId = (isF ? firstValidLocIdF : firstValidLocIdA) || Array.from(validLocationIds)[0]
+        const firstValidLocA = targetLocations.find((l) => l.zone_type === 'A')
+        const firstValidLocIdA = firstValidLocA ? existingLocMap.get(firstValidLocA.code) : null
+        const firstValidLocF = targetLocations.find((l) => l.zone_type === 'F')
+        const firstValidLocIdF = firstValidLocF ? existingLocMap.get(firstValidLocF.code) : null
 
-          if (targetLocId) {
-            await (supabase as any)
-              .from('inventory')
-              .update({ location_id: targetLocId })
-              .eq('id', inv.id)
+        for (const inv of currentInvs) {
+          if (!validLocationIds.has(inv.location_id)) {
+            const oldCode = existingIdMap.get(inv.location_id) || ''
+            const isF = oldCode.startsWith('LOC-F')
+            const targetLocId = (isF ? firstValidLocIdF : firstValidLocIdA) || Array.from(validLocationIds)[0]
+
+            if (targetLocId) {
+              await (supabase as any)
+                .from('inventory')
+                .update({ location_id: targetLocId })
+                .eq('id', inv.id)
+            }
           }
         }
       }
@@ -211,15 +231,14 @@ export async function applyWarehouseStructureAction(
       }
     }
 
-    // 7. Reseed balanced sample inventory if requested, or clear all inventory to reset to empty warehouse
-    if (reseedSampleInventory) {
+    // 7. Seed balanced demo inventory if requested
+    if (opts.seedDemoData) {
       const { data: items } = await (supabase as any)
         .from('items')
         .select('id, sku')
         .limit(16)
 
       if (items && items.length > 0) {
-        // Distribute items across the newly configured bays
         const sampleAssignments = [
           { code: 'LOC-A0101A01', qty: 45, itemIdx: 0 },
           { code: 'LOC-A0101A02', qty: 30, itemIdx: 1 },
@@ -257,25 +276,18 @@ export async function applyWarehouseStructureAction(
             .upsert(inventoryToUpsert, { onConflict: 'item_id,location_id' })
         }
       }
-    } else {
-      // When unchecked, clear all inventory to reset all racks to empty
-      const { error: clearInvErr } = await (supabase as any)
-        .from('inventory')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000')
-
-      if (clearInvErr) {
-        console.error('Error clearing inventory:', clearInvErr)
-      }
     }
 
     revalidatePath('/dashboard')
     revalidatePath('/master/locations')
     revalidatePath('/inventory')
 
-    const invMsg = reseedSampleInventory
-      ? 'Sample inventory distributed across bays.'
-      : 'All inventory cleared (all racks reset to empty).'
+    let invMsg = 'Existing inventory preserved.'
+    if (opts.wipeAllInventory) {
+      invMsg = 'All inventory wiped (empty warehouse).'
+    } else if (opts.seedDemoData) {
+      invMsg = 'Demo sample inventory seeded across bays.'
+    }
 
     return {
       success: true,
