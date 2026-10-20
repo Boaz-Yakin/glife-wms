@@ -91,6 +91,10 @@ export function PrintClient() {
             padding: 0 !important;
             margin: 0 !important;
           }
+          svg {
+            max-width: 100% !important;
+            height: auto !important;
+          }
         }
       `}} />
 
@@ -184,27 +188,36 @@ export function PrintClient() {
             <div 
               key={index} 
               className={`
-                flex flex-col items-center justify-center bg-white text-black mx-auto w-full
+                flex flex-col items-center justify-center bg-white text-black mx-auto w-full overflow-hidden
                 ${paperSize === 'label' 
-                  ? ('h-[30mm] p-1 ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
+                  ? ('h-[30mm] p-1.5 ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
                   : 'p-4 print:border print:border-dashed print:border-gray-400'}
               `}
             >
               {locInfo && (
-                <span className="text-[9px] font-bold text-gray-800 tracking-wider uppercase mb-0.5">
-                  {locInfo.summary}
-                </span>
+                <div className="w-full text-center px-1 mb-1 leading-tight select-none">
+                  <span className="block text-[9px] font-bold text-gray-900 tracking-wider uppercase">
+                    {locInfo.zone}
+                  </span>
+                  <span className="block text-[8px] font-semibold text-gray-600 tracking-wide uppercase">
+                    Aisle {locInfo.aisle} • Bay {locInfo.bay} • Tier {locInfo.level}-{locInfo.bin}
+                  </span>
+                </div>
               )}
-              <Barcode 
-                value={code} 
-                width={paperSize === 'label' ? 1.3 : 1.5} 
-                height={paperSize === 'label' ? 36 : 46} 
-                fontSize={13} 
-                displayValue={true} 
-                margin={0} 
-                background="#ffffff" 
-                lineColor="#000000" 
-              />
+              <div className="w-full flex items-center justify-center overflow-hidden px-1 [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block">
+                <Barcode 
+                  value={code} 
+                  width={paperSize === 'label' ? 1.1 : 1.2} 
+                  height={paperSize === 'label' ? 34 : 42} 
+                  fontSize={12} 
+                  font="monospace"
+                  displayValue={true} 
+                  margin={0} 
+                  background="#ffffff" 
+                  lineColor="#000000" 
+                  className="max-w-full h-auto block"
+                />
+              </div>
             </div>
           )
         })}
@@ -215,7 +228,7 @@ export function PrintClient() {
         <h4 className="font-semibold text-base mb-4 text-foreground">Screen Preview ({codes.length} labels)</h4>
         <div className={`
           border p-6 bg-muted/20 rounded-xl
-          ${paperSize === 'label' ? 'flex flex-col gap-4 items-start' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'}
+          ${paperSize === 'label' ? 'flex flex-col gap-4 items-start' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5'}
         `}>
           {codes.map((code, index) => {
             const locInfo = parseLocationCode(code)
@@ -223,16 +236,32 @@ export function PrintClient() {
               <div 
                 key={`preview-${index}`} 
                 className={`
-                  flex flex-col items-center justify-center bg-white text-black rounded-lg
-                  ${paperSize === 'label' ? 'border shadow-xs w-[60mm] min-h-[35mm] p-3' : 'border border-dashed border-gray-300 py-5 px-3 shadow-xs'}
+                  flex flex-col items-center justify-center bg-white text-black rounded-lg overflow-hidden transition-shadow hover:shadow-md
+                  ${paperSize === 'label' ? 'border shadow-xs w-[60mm] min-h-[35mm] p-3' : 'border border-dashed border-gray-300 py-4 px-3 shadow-xs min-w-0'}
                 `}
               >
                 {locInfo && (
-                  <span className="text-[10px] font-bold text-gray-800 tracking-wider uppercase mb-1">
-                    {locInfo.summary}
-                  </span>
+                  <div className="w-full text-center px-1 mb-1.5 leading-tight select-none">
+                    <span className="block text-[10px] font-bold text-gray-900 tracking-wider uppercase">
+                      {locInfo.zone}
+                    </span>
+                    <span className="block text-[9px] font-semibold text-gray-600 tracking-wide uppercase">
+                      Aisle {locInfo.aisle} • Bay {locInfo.bay} • Tier {locInfo.level}-{locInfo.bin}
+                    </span>
+                  </div>
                 )}
-                <Barcode value={code} width={1.2} height={40} fontSize={12} displayValue={true} />
+                <div className="w-full flex items-center justify-center overflow-hidden px-1 [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block">
+                  <Barcode 
+                    value={code} 
+                    width={1.15} 
+                    height={38} 
+                    fontSize={12} 
+                    font="monospace"
+                    displayValue={true} 
+                    margin={0} 
+                    className="max-w-full h-auto block"
+                  />
+                </div>
               </div>
             )
           })}
