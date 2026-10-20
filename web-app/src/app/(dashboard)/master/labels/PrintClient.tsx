@@ -94,6 +94,7 @@ export function PrintClient() {
           svg {
             max-width: 100% !important;
             height: auto !important;
+            shape-rendering: crispEdges !important;
           }
         }
       `}} />
@@ -107,6 +108,17 @@ export function PrintClient() {
               Standard format: <code className="font-mono text-primary font-semibold">LOC-&#123;Zone:1&#125;&#123;Aisle:2&#125;&#123;Bay:2&#125;&#123;Tier:1&#125;&#123;Bin:2&#125;</code> (e.g. <span className="font-mono font-bold text-foreground">LOC-A0101A01</span>)
             </p>
           </div>
+        </div>
+
+        {/* Quiet Zone & Camera Tip */}
+        <div className="p-3 rounded-lg bg-primary/5 border border-primary/20 text-xs text-muted-foreground leading-relaxed flex flex-col gap-1">
+          <span className="font-semibold text-foreground flex items-center gap-1.5">
+            📱 스마트폰 카메라 / 스캐너 인식 팁
+          </span>
+          <p>
+            • <strong>Quiet Zone(좌우 여백)</strong>이 확보되어 바코드 경계가 명확하게 렌더링됩니다.<br />
+            • 모니터 화면의 모아레(빛 반사) 현상으로 인해 스마트폰 기본 카메라보다 <strong>바코드 전용 스캐너 앱</strong>(네이버 렌즈, ZXing, 바코드 스캐너) 또는 <strong>실제 출력물(PDF 인쇄)</strong>에서 가장 정확하게 인식됩니다.
+          </p>
         </div>
 
         {/* Quick Presets */}
@@ -207,15 +219,15 @@ export function PrintClient() {
               <div className="w-full flex items-center justify-center overflow-hidden px-1 [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block">
                 <Barcode 
                   value={code} 
-                  width={paperSize === 'label' ? 1.1 : 1.2} 
-                  height={paperSize === 'label' ? 34 : 42} 
+                  width={paperSize === 'label' ? 1.15 : 1.25} 
+                  height={paperSize === 'label' ? 36 : 46} 
                   fontSize={12} 
                   font="monospace"
                   displayValue={true} 
-                  margin={0} 
+                  margin={10} 
                   background="#ffffff" 
                   lineColor="#000000" 
-                  className="max-w-full h-auto block"
+                  className="max-w-full h-auto block [shape-rendering:crispEdges]"
                 />
               </div>
             </div>
@@ -253,13 +265,15 @@ export function PrintClient() {
                 <div className="w-full flex items-center justify-center overflow-hidden px-1 [&>svg]:max-w-full [&>svg]:h-auto [&>svg]:block">
                   <Barcode 
                     value={code} 
-                    width={1.15} 
-                    height={38} 
+                    width={1.2} 
+                    height={44} 
                     fontSize={12} 
                     font="monospace"
                     displayValue={true} 
-                    margin={0} 
-                    className="max-w-full h-auto block"
+                    margin={10} 
+                    background="#ffffff"
+                    lineColor="#000000"
+                    className="max-w-full h-auto block [shape-rendering:crispEdges]"
                   />
                 </div>
               </div>
