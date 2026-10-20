@@ -151,3 +151,13 @@
 - [x] 15.6 `dashboard.service.ts` 동적 층수 감지 및 랙 점유율 계산 로직 고도화 완료
 - [x] 15.7 2D 레이아웃 맵 랙 입면도(`RackElevationView`)에서 특정 Bin 슬롯 클릭 시 상품 검색 및 수량 직접 배정/수정/비우기 기능 개발 (`BinAssignModal.tsx`, `bin-inventory.actions.ts`)
 
+---
+
+## 🗑️ Phase 16: web-app 특정 주문 삭제 기능 (Order Deletion)
+- [x] 16.1 `docs/web-app/03_TRD.md` §6.4 주문 삭제 설계 및 안전 정책 반영
+- [x] 16.2 `orders.service.ts#deleteOrder` 서비스 로직 구현 (주문 유효성 검사, `order_items` 및 `orders` 연계 삭제)
+- [x] 16.3 `orders/actions.ts#deleteOrderAction` Server Action 구현 및 캐시 무효화(`revalidatePath`)
+- [x] 16.4 `OrdersTable.tsx` 각 행 삭제 버튼(Trash2) 및 확인 모달(Dialog) 연동, sonner 토스트 피드백
+- [x] 16.5 `OrderDetailsDialog.tsx` 모달 Footer에 'Delete Order' 액션 및 2차 확인 모달 추가
+- [x] 16.6 Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
+

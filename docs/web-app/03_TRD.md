@@ -87,3 +87,16 @@ src/
   - 검증은 모든 DB 쓰기 이전에 수행하여 부분 반영을 방지.
 - **발행 후 수정**: 차단하지 않음. 단, `invoice_number`가 존재하거나 `status ∈ {INVOICED, SHIPPED}`인 주문에서 인보이스 날짜를 변경하면 클라이언트에서 확인창(`confirm`) 표시.
 - **Out of Scope**: 대시보드/리포트 집계 기준 변경, 목록 필터, 카테고리별 인보이스 날짜 분리(`category_invoices` 단위).
+
+### 6.4 Order Deletion (특정 주문 삭제 기능)
+- **목적**: 오등록되었거나 취소된 특정 주문을 관리자가 완전히 삭제할 수 있는 기능 제공.
+- **보안 및 권한**: 관리자(`ADMIN`, `SUPERVISOR`) 권한을 가진 사용자에게만 삭제 권한 부여.
+- **안전 정책 (Safety Policy)**:
+  - 오작동 방지를 위해 삭제 실행 전 확인 팝업(Confirmation Modal)을 필수적으로 표시.
+  - 삭제 시 연계된 `order_items` 데이터가 `ON DELETE CASCADE` 또는 서비스 레이어 명시적 삭제를 통해 함께 정리됨을 사용자에게 사전 고지.
+- **서비스 및 액션 계층**:
+  - `orders.service.ts#deleteOrder(orderId: string)`: `order_items` 및 `orders` 레코드의 원자적 삭제 처리.
+  - `actions.ts#deleteOrderAction(orderId: string)`: Server Action을 통한 안전한 호출 및 `revalidatePath('/orders')`, `revalidatePath('/dashboard')` 수행.
+- **UI 제공 위치**:
+  1. `OrdersTable`: 테이블 행 액션 영역에 직관적인 삭제(Trash2) 버튼 및 전용 확인 다이얼로그 제공.
+  2. `OrderDetailsDialog`: 주문 상세 모달 하단(Footer)에 삭제 버튼 배치로 상세 검토 후 즉시 삭제 지원.

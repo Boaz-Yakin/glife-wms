@@ -322,3 +322,51 @@ export async function searchMasterItemsForOrder(search: string): Promise<MasterI
   }))
 }
 
+export async function deleteOrder(orderId: string): Promise<{ success: boolean; error: string | null }> {
+  if (!orderId) {
+    return { success: false, error: "Order ID is required." }
+  }
+
+  const supabase = await getClient()
+
+  // 1. 주문 존재 여부 확인
+  const { data: existingOrder, error: findError } = await (supabase as any)
+    .from("orders")
+    .select("id, order_no, status")
+    .eq("id", orderId)
+    .maybeSingle()
+
+  if (findError) {
+    console.error("deleteOrder find error:", findError)
+    return { success: false, error: findError.message }
+  }
+
+  if (!existingOrder) {
+    return { success: false, error: "Order not found." }
+  }
+
+  // 2. 연계된 order_items 명시적 삭제 (DB ON DELETE CASCADE가 있더라도 안전성 보장)
+  const { error: itemsDeleteError } = await (supabase as any)
+    .from("order_items")
+    .delete()
+    .eq("order_id", orderId)
+
+  if (itemsDeleteError) {
+    console.error("deleteOrder items delete error:", itemsDeleteError)
+    return { success: false, error: itemsDeleteError.message }
+  }
+
+  // 3. orders 레코드 삭제
+  const { error: orderDeleteError } = await (supabase as any)
+    .from("orders")
+    .delete()
+    .eq("id", orderId)
+
+  if (orderDeleteError) {
+    console.error("deleteOrder order delete error:", orderDeleteError)
+    return { success: false, error: orderDeleteError.message }
+  }
+
+  return { success: true, error: null }
+}
+

@@ -8,7 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Eye } from "lucide-react"
+import { Eye, Download, Trash2, Loader2 } from "lucide-react"
 
 import {
   Table,
@@ -22,9 +22,18 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Download } from "lucide-react"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { toast } from "sonner"
 import { exportToExcel } from "@/lib/export"
 import { OrderData } from "@/services/orders.service"
+import { deleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -60,6 +69,30 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
   
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
   const [selectedOrder, setSelectedOrder] = React.useState<OrderData | null>(null)
+  const [orderToDelete, setOrderToDelete] = React.useState<OrderData | null>(null)
+  const [isDeleting, setIsDeleting] = React.useState(false)
+
+  const handleConfirmDelete = async () => {
+    if (!orderToDelete) return
+    setIsDeleting(true)
+    try {
+      const res = await deleteOrderAction(orderToDelete.id)
+      if (res.success) {
+        toast.success(`Order ${orderToDelete.order_no || orderToDelete.id} has been deleted.`)
+        setOrderToDelete(null)
+        if (selectedOrder?.id === orderToDelete.id) {
+          setSelectedOrder(null)
+        }
+      } else {
+        toast.error(res.error || "Failed to delete order.")
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unexpected error occurred"
+      toast.error(msg)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -147,10 +180,21 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     {
       id: "actions",
       cell: ({ row }) => (
-        <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(row.original)}>
-          <Eye className="size-4 mr-2" />
-          Details
-        </Button>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(row.original)}>
+            <Eye className="size-4 mr-1.5" />
+            Details
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2.5"
+            onClick={() => setOrderToDelete(row.original)}
+            title="Delete Order"
+          >
+            <Trash2 className="size-4 text-destructive/80 hover:text-destructive" />
+          </Button>
+        </div>
       ),
     },
   ]
@@ -243,6 +287,64 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
           onOpenChange={(val) => !val && setSelectedOrder(null)} 
         />
       )}
+
+      {/* Delete Order Confirmation Dialog */}
+      <Dialog 
+        open={!!orderToDelete} 
+        onOpenChange={(open) => !open && !isDeleting && setOrderToDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" />
+              Delete Order
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm leading-relaxed">
+              Are you sure you want to delete order{" "}
+              <span className="font-semibold text-foreground font-mono">
+                {orderToDelete?.order_no || orderToDelete?.id}
+              </span>
+              {orderToDelete?.store?.name && (
+                <>
+                  {" "}for <span className="font-semibold text-foreground">{orderToDelete.store.name}</span>
+                </>
+              )}
+              ?
+              <br />
+              <span className="text-destructive font-medium block mt-2 text-xs">
+                Warning: All line items and records associated with this order will be permanently deleted. This action cannot be undone.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setOrderToDelete(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="gap-1.5"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete Order
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

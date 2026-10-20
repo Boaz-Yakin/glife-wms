@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { 
   updateOrder, 
+  deleteOrder,
   searchMasterItemsForOrder, 
   UpdateOrderPayload, 
   MasterItemSearchResult 
@@ -31,5 +32,22 @@ export async function searchMasterItemsAction(search: string): Promise<MasterIte
   } catch (err) {
     console.error("searchMasterItemsAction error:", err)
     return []
+  }
+}
+
+export async function deleteOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await deleteOrder(orderId)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to delete order" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("deleteOrderAction error:", err)
+    return { success: false, error: errorMsg }
   }
 }

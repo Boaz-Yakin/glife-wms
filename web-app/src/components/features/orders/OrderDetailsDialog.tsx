@@ -23,6 +23,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -40,8 +41,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
-import { updateOrderAction, searchMasterItemsAction } from "@/app/(dashboard)/orders/actions"
+import { updateOrderAction, searchMasterItemsAction, deleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { toAtlantaDateString, validateInvoiceDate } from "@/lib/date"
+import { toast } from "sonner"
 
 interface OrderDetailsDialogProps {
   order: OrderData
@@ -118,6 +120,29 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   const [searchQuery, setSearchQuery] = React.useState("")
   const [searchResults, setSearchResults] = React.useState<any[]>([])
   const [isSearching, setIsSearching] = React.useState(false)
+
+  // Delete Order State
+  const [isDeletingOrder, setIsDeletingOrder] = React.useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = React.useState(false)
+
+  const handleDeleteOrder = async () => {
+    setIsDeletingOrder(true)
+    try {
+      const res = await deleteOrderAction(order.id)
+      if (res.success) {
+        toast.success(`Order ${order.order_no || order.id} has been deleted.`)
+        setShowDeleteConfirm(false)
+        onOpenChange(false)
+      } else {
+        toast.error(res.error || "Failed to delete order.")
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unexpected error occurred"
+      toast.error(msg)
+    } finally {
+      setIsDeletingOrder(false)
+    }
+  }
 
   // Format order date to YYYY-MM-DDTHH:mm for datetime-local input
   const formatForDateTimeInput = (dateStr?: string | null) => {
@@ -843,32 +868,46 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         </div>
 
         {/* Footer */}
-        <DialogFooter className="flex sm:justify-between items-center pt-3 border-t shrink-0">
-          <div className="text-xs text-muted-foreground flex items-center gap-2">
-            <span>Total {items.length} item(s)</span>
-            <span>•</span>
-            <span className="font-semibold text-foreground">{totalUnits} units</span>
-            <span>•</span>
-            <span className="font-bold text-primary text-sm">${totalCalculated.toFixed(2)}</span>
-            {isDirty && (
-              <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30">
-                Unsaved changes
-              </Badge>
-            )}
+        <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center gap-3 pt-3 border-t shrink-0">
+          <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+            <div className="text-xs text-muted-foreground flex items-center gap-2">
+              <span>Total {items.length} item(s)</span>
+              <span>•</span>
+              <span className="font-semibold text-foreground">{totalUnits} units</span>
+              <span>•</span>
+              <span className="font-bold text-primary text-sm">${totalCalculated.toFixed(2)}</span>
+              {isDirty && (
+                <Badge variant="outline" className="text-[10px] text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-950/30">
+                  Unsaved changes
+                </Badge>
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={isSaving || isDeletingOrder}
+              onClick={() => setShowDeleteConfirm(true)}
+              className="text-destructive border-destructive/30 hover:bg-destructive/10 hover:text-destructive gap-1 text-xs h-7 px-2"
+              title="Delete this order"
+            >
+              <Trash2 className="size-3" />
+              Delete Order
+            </Button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
             <Button 
               variant="outline" 
               size="sm" 
-              disabled={isSaving}
+              disabled={isSaving || isDeletingOrder}
               onClick={() => onOpenChange(false)}
             >
               Cancel
             </Button>
             <Button 
               size="sm" 
-              disabled={isSaving || !isDirty || Boolean(invoiceDateError)}
+              disabled={isSaving || !isDirty || Boolean(invoiceDateError) || isDeletingOrder}
               onClick={handleSaveChanges}
               className="gap-1.5 bg-primary font-semibold"
             >
@@ -887,6 +926,64 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
           </div>
         </DialogFooter>
       </DialogContent>
+
+      {/* Delete Order Confirmation Dialog */}
+      <Dialog 
+        open={showDeleteConfirm} 
+        onOpenChange={(open) => !open && !isDeletingOrder && setShowDeleteConfirm(false)}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" />
+              Delete Order
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm leading-relaxed">
+              Are you sure you want to delete order{" "}
+              <span className="font-semibold text-foreground font-mono">
+                {order.order_no || order.id}
+              </span>
+              {order.store?.name && (
+                <>
+                  {" "}for <span className="font-semibold text-foreground">{order.store.name}</span>
+                </>
+              )}
+              ?
+              <br />
+              <span className="text-destructive font-medium block mt-2 text-xs">
+                Warning: All line items ({items.length} items) and records associated with this order will be permanently deleted. This action cannot be undone.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={isDeletingOrder}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteOrder}
+              disabled={isDeletingOrder}
+              className="gap-1.5"
+            >
+              {isDeletingOrder ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Delete Order
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   )
 }
