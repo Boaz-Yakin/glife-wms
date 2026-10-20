@@ -10,8 +10,59 @@ import Barcode from "react-barcode"
 
 type PaperSize = "letter" | "a4" | "label"
 
+const DEFAULT_LOCATION_CODES = [
+  "LOC-A0101A01",
+  "LOC-A0101A02",
+  "LOC-A0101B01",
+  "LOC-A0101B02",
+  "LOC-A0101C01",
+  "LOC-A0101C02",
+].join("\n")
+
+const ZONE_F_LOCATION_CODES = [
+  "LOC-F0101A01",
+  "LOC-F0101A02",
+  "LOC-F0101B01",
+  "LOC-F0101B02",
+  "LOC-F0101C01",
+  "LOC-F0101C02",
+].join("\n")
+
+const SAMPLE_SKU_CODES = [
+  "BEV-001",
+  "BEV-002",
+  "BEV-003",
+  "BEV-004",
+  "BEV-005",
+  "BEV-006",
+].join("\n")
+
+interface ParsedLocation {
+  zone: string
+  aisle: string
+  bay: string
+  level: string
+  bin: string
+  summary: string
+}
+
+function parseLocationCode(code: string): ParsedLocation | null {
+  const match = code.trim().match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
+  if (!match) return null
+  const zoneLetter = match[1]
+  const zoneName = zoneLetter === 'F' ? 'Zone F (Cold)' : `Zone ${zoneLetter} (Ambient)`
+  return {
+    zone: zoneName,
+    aisle: match[2],
+    bay: match[3],
+    level: match[4],
+    bin: match[5],
+    summary: `${zoneName} • Aisle ${match[2]} • Bay ${match[3]} • Tier ${match[4]}-${match[5]}`,
+  }
+}
+
 export function PrintClient() {
-  const [codesInput, setCodesInput] = React.useState("LOC-A01-01\nLOC-A01-02\nLOC-A01-03\nLOC-A01-04\nLOC-A01-05")
+  const [codesInput, setCodesInput] = React.useState(DEFAULT_LOCATION_CODES)
   const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
 
   const codes = codesInput.split('\n').map(c => c.trim()).filter(Boolean)
@@ -44,9 +95,48 @@ export function PrintClient() {
       `}} />
 
       {/* Control panel (hidden when printing) */}
-      <div className="print:hidden space-y-6 max-w-2xl border p-6 rounded-lg bg-card">
+      <div className="print:hidden space-y-6 max-w-2xl border p-6 rounded-xl bg-card shadow-xs">
         <div className="flex items-center justify-between">
-          <h3 className="font-semibold text-lg">Batch Label Print Settings</h3>
+          <div>
+            <h3 className="font-semibold text-lg text-foreground">Batch Label Print Settings</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Standard format: <code className="font-mono text-primary font-semibold">LOC-&#123;Zone:1&#125;&#123;Aisle:2&#125;&#123;Bay:2&#125;&#123;Tier:1&#125;&#123;Bin:2&#125;</code> (e.g. <span className="font-mono font-bold text-foreground">LOC-A0101A01</span>)
+            </p>
+          </div>
+        </div>
+
+        {/* Quick Presets */}
+        <div className="space-y-1.5">
+          <Label className="text-xs font-semibold text-muted-foreground">Quick Presets</Label>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCodesInput(DEFAULT_LOCATION_CODES)}
+              className="text-xs h-7 px-2.5 font-medium"
+            >
+              Zone A Ambient (Rack 01)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCodesInput(ZONE_F_LOCATION_CODES)}
+              className="text-xs h-7 px-2.5 font-medium"
+            >
+              Zone F Cold (Rack 01)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCodesInput(SAMPLE_SKU_CODES)}
+              className="text-xs h-7 px-2.5 font-medium"
+            >
+              Sample SKUs
+            </Button>
+          </div>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -70,16 +160,17 @@ export function PrintClient() {
               id="codes" 
               value={codesInput} 
               onChange={(e) => setCodesInput(e.target.value)} 
-              rows={6}
-              placeholder="LOC-001\nLOC-002..."
+              rows={7}
+              placeholder={"LOC-A0101A01\nLOC-A0101A02\nLOC-F0101A01..."}
+              className="font-mono text-xs"
             />
             <p className="text-xs text-muted-foreground">
-              Total {codes.length} labels to print.
+              Total <span className="font-semibold text-foreground">{codes.length}</span> labels to print.
             </p>
           </div>
         </div>
 
-        <Button onClick={handlePrint} className="w-full">
+        <Button onClick={handlePrint} className="w-full font-semibold shadow-xs">
           <Printer className="mr-2 h-4 w-4" />
           Print Labels (Save to PDF)
         </Button>
@@ -87,39 +178,64 @@ export function PrintClient() {
 
       {/* Actual Print area (hidden on screen, visible on print) */}
       <div className={`hidden ${paperSize === 'label' ? 'print:block' : 'print:grid print:grid-cols-3 print:gap-x-4 print:gap-y-6'}`}>
-        {codes.map((code, index) => (
-          <div 
-            key={index} 
-            className={`
-              flex flex-col items-center justify-center bg-white text-black mx-auto w-full
-              ${paperSize === 'label' 
-                ? ('h-[30mm] ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
-                : 'p-4 print:border print:border-dashed print:border-gray-400'}
-            `}
-          >
-            <Barcode value={code} width={1.5} height={50} fontSize={14} displayValue={true} margin={0} background="#ffffff" lineColor="#000000" />
-          </div>
-        ))}
+        {codes.map((code, index) => {
+          const locInfo = parseLocationCode(code)
+          return (
+            <div 
+              key={index} 
+              className={`
+                flex flex-col items-center justify-center bg-white text-black mx-auto w-full
+                ${paperSize === 'label' 
+                  ? ('h-[30mm] p-1 ' + (index < codes.length - 1 ? 'print:break-after-page' : ''))
+                  : 'p-4 print:border print:border-dashed print:border-gray-400'}
+              `}
+            >
+              {locInfo && (
+                <span className="text-[9px] font-bold text-gray-800 tracking-wider uppercase mb-0.5">
+                  {locInfo.summary}
+                </span>
+              )}
+              <Barcode 
+                value={code} 
+                width={paperSize === 'label' ? 1.3 : 1.5} 
+                height={paperSize === 'label' ? 36 : 46} 
+                fontSize={13} 
+                displayValue={true} 
+                margin={0} 
+                background="#ffffff" 
+                lineColor="#000000" 
+              />
+            </div>
+          )
+        })}
       </div>
 
       {/* Screen Preview (visible on screen, hidden on print) */}
       <div className="print:hidden">
-        <h4 className="font-medium mb-4">Screen Preview ({codes.length} labels)</h4>
+        <h4 className="font-semibold text-base mb-4 text-foreground">Screen Preview ({codes.length} labels)</h4>
         <div className={`
-          border p-6 bg-muted/20 rounded-md
-          ${paperSize === 'label' ? 'flex flex-col gap-4' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'}
+          border p-6 bg-muted/20 rounded-xl
+          ${paperSize === 'label' ? 'flex flex-col gap-4 items-start' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6'}
         `}>
-          {codes.map((code, index) => (
-            <div 
-              key={`preview-${index}`} 
-              className={`
-                flex flex-col items-center justify-center bg-white text-black mx-auto w-full
-                ${paperSize === 'label' ? 'border shadow-sm w-[50mm] h-[30mm]' : 'border border-dashed border-gray-400 py-6'}
-              `}
-            >
-              <Barcode value={code} width={1.2} height={40} fontSize={12} displayValue={true} />
-            </div>
-          ))}
+          {codes.map((code, index) => {
+            const locInfo = parseLocationCode(code)
+            return (
+              <div 
+                key={`preview-${index}`} 
+                className={`
+                  flex flex-col items-center justify-center bg-white text-black rounded-lg
+                  ${paperSize === 'label' ? 'border shadow-xs w-[60mm] min-h-[35mm] p-3' : 'border border-dashed border-gray-300 py-5 px-3 shadow-xs'}
+                `}
+              >
+                {locInfo && (
+                  <span className="text-[10px] font-bold text-gray-800 tracking-wider uppercase mb-1">
+                    {locInfo.summary}
+                  </span>
+                )}
+                <Barcode value={code} width={1.2} height={40} fontSize={12} displayValue={true} />
+              </div>
+            )
+          })}
         </div>
       </div>
     </div>
