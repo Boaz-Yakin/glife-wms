@@ -195,78 +195,111 @@ export function BinAssignModal({
             </div>
           </div>
 
-          {/* Search Result List */}
-          <div className="border rounded-xl p-1.5 max-h-44 overflow-y-auto divide-y bg-background">
-            {searching ? (
-              <div className="p-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
-                <RefreshCw className="h-3.5 w-3.5 animate-spin" />
-                <span>Searching items...</span>
-              </div>
-            ) : searchResults.length === 0 ? (
-              <div className="p-4 text-center text-xs text-muted-foreground">
-                No items found. Try a different SKU or name.
-              </div>
-            ) : (
-              searchResults.map((it) => {
-                const isSelected = selectedItem?.id === it.id
-                return (
-                  <button
-                    key={it.id}
-                    type="button"
-                    onClick={() => setSelectedItem(it)}
-                    className={`w-full text-left p-2 rounded-lg flex items-center justify-between transition-colors ${
-                      isSelected
-                        ? "bg-primary/10 border border-primary/30 text-primary font-medium"
-                        : "hover:bg-muted/50 text-foreground"
-                    }`}
-                  >
-                    <div className="flex flex-col min-w-0 pr-2">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-xs font-bold text-foreground">
-                          {it.sku}
-                        </span>
-                        {it.category && (
-                          <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                            {it.category}
-                          </Badge>
+            {/* Search Result List */}
+            <div className="border rounded-xl p-1.5 max-h-56 overflow-y-auto divide-y bg-background shadow-2xs">
+              {searching ? (
+                <div className="p-4 text-center text-xs text-muted-foreground flex items-center justify-center gap-2">
+                  <RefreshCw className="h-3.5 w-3.5 animate-spin text-primary" />
+                  <span>Searching items...</span>
+                </div>
+              ) : searchResults.length === 0 ? (
+                <div className="p-4 text-center text-xs text-muted-foreground">
+                  No items found. Try searching by SKU, name, or description.
+                </div>
+              ) : (
+                searchResults.map((it) => {
+                  const isSelected = selectedItem?.id === it.id
+                  return (
+                    <button
+                      key={it.id}
+                      type="button"
+                      onClick={() => setSelectedItem(it)}
+                      className={`w-full text-left p-2.5 rounded-lg flex items-center justify-between transition-all ${
+                        isSelected
+                          ? "bg-primary/10 border border-primary/30 text-primary font-medium shadow-2xs"
+                          : "hover:bg-muted/50 text-foreground"
+                      }`}
+                    >
+                      <div className="flex flex-col min-w-0 pr-2 gap-0.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-mono text-xs font-bold text-foreground">
+                            {it.sku}
+                          </span>
+                          {it.category && (
+                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
+                              {it.category}
+                            </Badge>
+                          )}
+                        </div>
+
+                        {/* Description Prominently Displayed */}
+                        {it.desc_en ? (
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs font-semibold text-foreground">
+                              {it.desc_en}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground truncate max-w-[150px]">
+                              • {it.name_en}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs font-medium text-foreground truncate max-w-[280px]">
+                            {it.name_en}
+                          </span>
                         )}
                       </div>
-                      <span className="text-[11px] text-muted-foreground truncate max-w-[280px]">
-                        {it.name_en}
-                      </span>
-                    </div>
 
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-mono font-semibold block">
-                        ${it.unit_price.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{it.uom}</span>
-                    </div>
-                  </button>
-                )
-              })
-            )}
-          </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-xs font-mono font-bold block text-foreground">
+                          ${it.unit_price.toFixed(2)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono">{it.uom}</span>
+                      </div>
+                    </button>
+                  )
+                })
+              )}
+            </div>
 
-          {/* Selected Item Preview Card */}
-          {selectedItem && (
-            <div className="p-3 rounded-xl border border-primary/20 bg-primary/5 flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <Package className="h-4 w-4 text-primary shrink-0" />
-                <div>
-                  <span className="font-mono font-bold text-foreground block">
-                    {selectedItem.sku}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground truncate max-w-[260px] block">
-                    {selectedItem.name_en}
-                  </span>
+            {/* Selected Item Preview Card */}
+            {selectedItem && (
+              <div className="p-3 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-lg bg-primary/15 text-primary shrink-0">
+                    <Package className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col gap-0.5 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-foreground">
+                        {selectedItem.sku}
+                      </span>
+                      {selectedItem.category && (
+                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30">
+                          {selectedItem.category}
+                        </Badge>
+                      )}
+                    </div>
+                    {/* Description highlight */}
+                    {selectedItem.desc_en ? (
+                      <p className="font-semibold text-xs text-primary truncate max-w-[280px]">
+                        {selectedItem.desc_en}
+                        <span className="text-muted-foreground font-normal ml-1">({selectedItem.name_en})</span>
+                      </p>
+                    ) : (
+                      <p className="text-[11px] text-muted-foreground truncate max-w-[280px]">
+                        {selectedItem.name_en}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <div className="text-right shrink-0">
+                  <Badge variant="outline" className="font-mono text-xs text-primary border-primary/30 block">
+                    ${selectedItem.unit_price.toFixed(2)}
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground font-mono">{selectedItem.uom}</span>
                 </div>
               </div>
-              <Badge variant="outline" className="font-mono text-xs text-primary border-primary/30">
-                ${selectedItem.unit_price.toFixed(2)} / {selectedItem.uom}
-              </Badge>
-            </div>
-          )}
+            )}
 
           {/* Quantity Input with Quick increment buttons */}
           <div className="space-y-2">

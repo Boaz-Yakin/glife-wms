@@ -8,6 +8,7 @@ export interface AssignableItem {
   id: string
   sku: string
   name_en: string
+  desc_en: string | null
   category: string | null
   uom: string
   unit_price: number
@@ -27,9 +28,9 @@ export async function searchAssignableItemsAction(query: string = ''): Promise<{
 
     let dbQuery = (supabase as any)
       .from('items')
-      .select('id, sku, name_en, category, uom, unit_price')
+      .select('id, sku, name_en, desc_en, category, uom, unit_price')
       .order('sku', { ascending: true })
-      .limit(30)
+      .limit(40)
 
     if (activeClientId) {
       dbQuery = dbQuery.eq('client_id', activeClientId)
@@ -37,7 +38,7 @@ export async function searchAssignableItemsAction(query: string = ''): Promise<{
 
     if (query.trim()) {
       const q = query.trim()
-      dbQuery = dbQuery.or(`sku.ilike.%${q}%,name_en.ilike.%${q}%`)
+      dbQuery = dbQuery.or(`sku.ilike.%${q}%,name_en.ilike.%${q}%,desc_en.ilike.%${q}%`)
     }
 
     const { data, error } = await dbQuery
@@ -51,6 +52,7 @@ export async function searchAssignableItemsAction(query: string = ''): Promise<{
       id: it.id,
       sku: it.sku,
       name_en: it.name_en,
+      desc_en: it.desc_en || null,
       category: it.category || null,
       uom: it.uom || 'EA',
       unit_price: Number(it.unit_price || 0),
