@@ -221,39 +221,50 @@ export function BinAssignModal({
                       }`}
                     >
                       <div className="flex flex-col min-w-0 pr-2 gap-0.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-mono text-xs font-bold text-foreground">
-                            {it.sku}
-                          </span>
-                          {it.category && (
-                            <Badge variant="outline" className="text-[10px] px-1 py-0 h-4">
-                              {it.category}
-                            </Badge>
-                          )}
-                        </div>
-
-                        {/* Description Prominently Displayed */}
+                        {/* 1st Line: Description & Name (Emphasized) */}
                         {it.desc_en ? (
-                          <div className="flex items-center gap-1">
-                            <span className="text-xs font-semibold text-foreground">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span className="text-xs font-bold text-foreground truncate">
                               {it.desc_en}
                             </span>
-                            <span className="text-[11px] text-muted-foreground truncate max-w-[150px]">
+                            <span className="text-xs font-semibold text-foreground/80 truncate">
                               • {it.name_en}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-xs font-medium text-foreground truncate max-w-[280px]">
+                          <span className="text-xs font-bold text-foreground truncate max-w-[280px]">
                             {it.name_en}
                           </span>
                         )}
+
+                        {/* 2nd Line: SKU & Category (Dimmed) */}
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="font-mono text-[11px] text-muted-foreground/75 tracking-tight">
+                            {it.sku}
+                          </span>
+                          {it.category && (
+                            <Badge
+                              variant="outline"
+                              className="text-[9px] px-1.5 py-0 h-3.5 text-muted-foreground/60 border-muted-foreground/25 font-normal bg-muted/20"
+                            >
+                              {it.category}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="text-right shrink-0">
+                      {/* UOM-based Dynamic Price Display */}
+                      <div className="text-right shrink-0 pl-3">
                         <span className="text-xs font-mono font-bold block text-foreground">
-                          ${it.unit_price.toFixed(2)}
+                          ${(it.effective_price ?? it.unit_price).toFixed(2)}
                         </span>
-                        <span className="text-[10px] text-muted-foreground font-mono">{it.uom}</span>
+                        <span className="text-[10px] text-muted-foreground/80 font-mono font-medium block">
+                          {it.uom?.toUpperCase() === 'BOX'
+                            ? 'BOX PRICE'
+                            : it.uom?.toUpperCase() === 'PACK'
+                            ? 'PACK PRICE'
+                            : `/ ${it.uom || 'EA'}`}
+                        </span>
                       </div>
                     </button>
                   )
@@ -269,34 +280,49 @@ export function BinAssignModal({
                     <Package className="h-4 w-4" />
                   </div>
                   <div className="flex flex-col gap-0.5 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-foreground">
+                    {/* 1st Line: Description & Name (Emphasized) */}
+                    {selectedItem.desc_en ? (
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="font-bold text-xs text-foreground truncate">
+                          {selectedItem.desc_en}
+                        </span>
+                        <span className="text-xs font-semibold text-foreground/80 truncate max-w-[200px]">
+                          • {selectedItem.name_en}
+                        </span>
+                      </div>
+                    ) : (
+                      <p className="font-bold text-xs text-foreground truncate max-w-[280px]">
+                        {selectedItem.name_en}
+                      </p>
+                    )}
+
+                    {/* 2nd Line: SKU & Category (Dimmed) */}
+                    <div className="flex items-center gap-1.5 mt-0.5">
+                      <span className="font-mono text-[11px] text-muted-foreground/75">
                         {selectedItem.sku}
                       </span>
                       {selectedItem.category && (
-                        <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-primary/30">
+                        <Badge
+                          variant="outline"
+                          className="text-[9px] px-1.5 py-0 h-3.5 text-muted-foreground/60 border-muted-foreground/25 font-normal bg-muted/20"
+                        >
                           {selectedItem.category}
                         </Badge>
                       )}
                     </div>
-                    {/* Description highlight */}
-                    {selectedItem.desc_en ? (
-                      <p className="font-semibold text-xs text-primary truncate max-w-[280px]">
-                        {selectedItem.desc_en}
-                        <span className="text-muted-foreground font-normal ml-1">({selectedItem.name_en})</span>
-                      </p>
-                    ) : (
-                      <p className="text-[11px] text-muted-foreground truncate max-w-[280px]">
-                        {selectedItem.name_en}
-                      </p>
-                    )}
                   </div>
                 </div>
-                <div className="text-right shrink-0">
+                <div className="text-right shrink-0 pl-3">
                   <Badge variant="outline" className="font-mono text-xs text-primary border-primary/30 block">
-                    ${selectedItem.unit_price.toFixed(2)}
+                    ${(selectedItem.effective_price ?? selectedItem.unit_price).toFixed(2)}
                   </Badge>
-                  <span className="text-[10px] text-muted-foreground font-mono">{selectedItem.uom}</span>
+                  <span className="text-[10px] text-muted-foreground/80 font-mono font-medium block mt-0.5">
+                    {selectedItem.uom?.toUpperCase() === 'BOX'
+                      ? 'BOX PRICE'
+                      : selectedItem.uom?.toUpperCase() === 'PACK'
+                      ? 'PACK PRICE'
+                      : `/ ${selectedItem.uom || 'EA'}`}
+                  </span>
                 </div>
               </div>
             )}

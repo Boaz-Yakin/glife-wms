@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { getItemEffectivePrice } from '@/lib/pricing'
 import { getActiveClientAction } from './client.actions'
 
 export interface AssignableItem {
@@ -12,6 +13,9 @@ export interface AssignableItem {
   category: string | null
   uom: string
   unit_price: number
+  box_price?: number | null
+  pack_price?: number | null
+  effective_price: number
 }
 
 /**
@@ -28,7 +32,7 @@ export async function searchAssignableItemsAction(query: string = ''): Promise<{
 
     let dbQuery = (supabase as any)
       .from('items')
-      .select('id, sku, name_en, desc_en, category, uom, unit_price')
+      .select('id, sku, name_en, desc_en, category, uom, unit_price, box_price, pack_price')
       .order('sku', { ascending: true })
       .limit(40)
 
@@ -48,15 +52,31 @@ export async function searchAssignableItemsAction(query: string = ''): Promise<{
       return { success: false, items: [], error: error.message }
     }
 
-    const items: AssignableItem[] = (data || []).map((it: any) => ({
-      id: it.id,
-      sku: it.sku,
-      name_en: it.name_en,
-      desc_en: it.desc_en || null,
-      category: it.category || null,
-      uom: it.uom || 'EA',
-      unit_price: Number(it.unit_price || 0),
-    }))
+    const items: AssignableItem[] = (data || []).map((it: any) => {
+      const uom = it.uom || 'EA'
+      const unit_price = Number(it.unit_price || 0)
+      const box_price = it.box_price != null ? Number(it.box_price) : null
+      const pack_price = it.pack_price != null ? Number(it.pack_price) : null
+      const effective_price = getItemEffectivePrice({
+        uom,
+        unit_price,
+        box_price,
+        pack_price,
+      })
+
+      return {
+        id: it.id,
+        sku: it.sku,
+        name_en: it.name_en,
+        desc_en: it.desc_en || null,
+        category: it.category || null,
+        uom,
+        unit_price,
+        box_price,
+        pack_price,
+        effective_price,
+      }
+    })
 
     return { success: true, items }
   } catch (err: any) {
