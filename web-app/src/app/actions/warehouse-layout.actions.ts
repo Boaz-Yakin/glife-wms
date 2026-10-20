@@ -211,7 +211,7 @@ export async function applyWarehouseStructureAction(
       }
     }
 
-    // 7. Reseed balanced sample inventory if requested
+    // 7. Reseed balanced sample inventory if requested, or clear all inventory to reset to empty warehouse
     if (reseedSampleInventory) {
       const { data: items } = await (supabase as any)
         .from('items')
@@ -257,17 +257,32 @@ export async function applyWarehouseStructureAction(
             .upsert(inventoryToUpsert, { onConflict: 'item_id,location_id' })
         }
       }
+    } else {
+      // When unchecked, clear all inventory to reset all racks to empty
+      const { error: clearInvErr } = await (supabase as any)
+        .from('inventory')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000')
+
+      if (clearInvErr) {
+        console.error('Error clearing inventory:', clearInvErr)
+      }
     }
 
     revalidatePath('/dashboard')
     revalidatePath('/master/locations')
+    revalidatePath('/inventory')
+
+    const invMsg = reseedSampleInventory
+      ? 'Sample inventory distributed across bays.'
+      : 'All inventory cleared (all racks reset to empty).'
 
     return {
       success: true,
       totalLocations: targetLocations.length,
       insertedCount: locationsToInsert.length,
       removedCount: locationsToRemove.length,
-      message: `Successfully updated warehouse layout: ${targetLocations.length} locations configured across Zone A and Zone F.`,
+      message: `Successfully updated warehouse layout: ${targetLocations.length} locations configured. ${invMsg}`,
     }
   } catch (err: any) {
     console.error('applyWarehouseStructureAction exception:', err)

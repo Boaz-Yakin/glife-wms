@@ -327,27 +327,43 @@ export function WarehouseStructureModal({
               </div>
             </div>
 
-            {/* Summary Strip */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3.5 rounded-xl border bg-muted/40 gap-2">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-primary" />
-                <span className="text-xs font-medium text-foreground">
-                  Total Locations To Generate:
-                </span>
-                <span className="font-mono font-bold text-sm text-primary">
-                  {grandTotal} Storage Bins
-                </span>
+            {/* Summary Strip & Clear/Seed Options */}
+            <div className="flex flex-col gap-3 p-3.5 rounded-xl border bg-muted/40">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-medium text-foreground">
+                    Total Locations To Generate:
+                  </span>
+                  <span className="font-mono font-bold text-sm text-primary">
+                    {grandTotal} Storage Bins
+                  </span>
+                </div>
+
+                <label className="flex items-center gap-2 cursor-pointer text-xs font-medium text-foreground">
+                  <input
+                    type="checkbox"
+                    checked={reseedSample}
+                    onChange={(e) => setReseedSample(e.target.checked)}
+                    className="rounded border-zinc-600 text-primary focus:ring-primary size-4"
+                  />
+                  <span>Seed demo inventory across racks</span>
+                </label>
               </div>
 
-              <label className="flex items-center gap-2 cursor-pointer text-xs text-muted-foreground">
-                <input
-                  type="checkbox"
-                  checked={reseedSample}
-                  onChange={(e) => setReseedSample(e.target.checked)}
-                  className="rounded border-zinc-600 text-primary focus:ring-primary"
-                />
-                <span>Seed balanced demo inventory across racks</span>
-              </label>
+              {/* Informative helper note based on checkbox state */}
+              {!reseedSample ? (
+                <div className="flex items-center gap-2 text-xs text-rose-500 bg-rose-500/10 p-2.5 rounded-lg border border-rose-500/20">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>
+                    <strong>Reset to Empty Warehouse:</strong> All existing demo inventory will be cleared. All 120 racks will be set to 0 units (Empty).
+                  </span>
+                </div>
+              ) : (
+                <span className="text-[11px] text-muted-foreground">
+                  Populates select rack bays with 14 sample SKUs to bring the 2D heatmap and elevation view alive.
+                </span>
+              )}
             </div>
           </div>
         )}
