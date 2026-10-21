@@ -6,7 +6,7 @@ export type Database = {
     Enums: {
       adjustment_reason: 'COUNT_MISMATCH' | 'DAMAGED' | 'LOST' | 'FOUND' | 'EXPIRED';
       user_role: 'ADMIN' | 'INSPECTOR' | 'PICKER' | 'STORE';
-      order_status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'DISPATCHED' | 'CANCELED';
+      order_status: 'PENDING' | 'PICKING' | 'PACKED' | 'INVOICED' | 'SHIPPED' | 'CANCELED' | 'RECEIVED' | 'ALLOCATED' | 'PICKED' | 'DISPATCHED';
       zone_type: 'A' | 'F';
       partner_type: 'MANUFACTURER' | 'SUPPLIER' | 'BOTH';
     };
@@ -146,7 +146,7 @@ export type Database = {
           shipping_method: string | null;
           tax_amount: number;
           discount_amount: number;
-          status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'DISPATCHED' | 'CANCELED';
+          status: 'PENDING' | 'PICKING' | 'PACKED' | 'INVOICED' | 'SHIPPED' | 'CANCELED' | 'RECEIVED' | 'ALLOCATED' | 'PICKED' | 'DISPATCHED';
           order_date: string;
           note: string | null;
           created_at: string;

@@ -115,7 +115,7 @@ export async function getDashboardKpis(period: DashboardPeriod = 'today'): Promi
   let dispatchedQuery = (supabase as any)
     .from('orders')
     .select('*', { count: 'exact', head: true })
-    .eq('status', 'DISPATCHED')
+    .in('status', ['SHIPPED', 'DISPATCHED'])
     .gte('updated_at', currentStart.toISOString())
 
   if (activeClientId) {
@@ -126,7 +126,7 @@ export async function getDashboardKpis(period: DashboardPeriod = 'today'): Promi
   let prevDispatchedQuery = (supabase as any)
     .from('orders')
     .select('*', { count: 'exact', head: true })
-    .eq('status', 'DISPATCHED')
+    .in('status', ['SHIPPED', 'DISPATCHED'])
     .gte('updated_at', previousStart.toISOString())
     .lte('updated_at', previousEnd.toISOString())
 
@@ -323,7 +323,7 @@ export async function getHourlyPickingProgress(period: DashboardPeriod = 'today'
   let pickedQuery = (supabase as any)
     .from('orders')
     .select('id, status, updated_at')
-    .in('status', ['PICKED', 'DISPATCHED'])
+    .in('status', ['PACKED', 'INVOICED', 'SHIPPED', 'PICKED', 'DISPATCHED'])
     .gte('updated_at', today.toISOString())
     .order('updated_at', { ascending: true })
 
@@ -497,7 +497,7 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
     let pickedQuery = (supabase as any)
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .in('status', ['PICKED', 'DISPATCHED'])
+      .in('status', ['PACKED', 'INVOICED', 'SHIPPED', 'PICKED', 'DISPATCHED'])
 
     if (activeClientId) {
       pickedQuery = pickedQuery.eq('client_id', activeClientId)
@@ -526,7 +526,7 @@ export async function getLogistixFlowMetrics(warehouse: string = 'all'): Promise
     let dispatchedQuery = (supabase as any)
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .eq('status', 'DISPATCHED')
+      .in('status', ['SHIPPED', 'DISPATCHED'])
 
     let canceledQuery = (supabase as any)
       .from('orders')

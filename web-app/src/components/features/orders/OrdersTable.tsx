@@ -43,21 +43,31 @@ import { deleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  PENDING: "secondary",
+  PICKING: "default",
+  PACKED: "outline",
+  INVOICED: "default",
+  SHIPPED: "secondary",
+  CANCELED: "destructive",
+  // Legacy compatibility
   RECEIVED: "secondary",
   ALLOCATED: "outline",
-  PICKING: "default",
-  PICKED: "default",
-  DISPATCHED: "default",
-  CANCELED: "destructive",
+  PICKED: "outline",
+  DISPATCHED: "secondary",
 }
 
 const statusLabels: Record<string, string> = {
+  PENDING: "Pending",
+  PICKING: "Picking",
+  PACKED: "Packed",
+  INVOICED: "Invoiced",
+  SHIPPED: "Shipped",
+  CANCELED: "Canceled",
+  // Legacy compatibility
   RECEIVED: "Received",
   ALLOCATED: "Allocated",
-  PICKING: "Picking",
   PICKED: "Picked",
   DISPATCHED: "Dispatched",
-  CANCELED: "Canceled",
 }
 
 interface OrdersTableProps {
@@ -281,11 +291,11 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="RECEIVED">Received</SelectItem>
-              <SelectItem value="ALLOCATED">Allocated</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
               <SelectItem value="PICKING">Picking</SelectItem>
-              <SelectItem value="PICKED">Picked</SelectItem>
-              <SelectItem value="DISPATCHED">Dispatched</SelectItem>
+              <SelectItem value="PACKED">Packed</SelectItem>
+              <SelectItem value="INVOICED">Invoiced</SelectItem>
+              <SelectItem value="SHIPPED">Shipped</SelectItem>
               <SelectItem value="CANCELED">Canceled</SelectItem>
             </SelectContent>
           </Select>

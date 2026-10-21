@@ -71,13 +71,17 @@ interface EditableItem {
 }
 
 const statusBadgeVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
+  PENDING: "secondary",
+  PICKING: "default",
+  PACKED: "outline",
+  INVOICED: "default",
+  SHIPPED: "secondary",
+  CANCELED: "destructive",
+  // Legacy compatibility
   RECEIVED: "secondary",
   ALLOCATED: "outline",
-  PICKING: "default",
-  PICKED: "default",
-  DISPATCHED: "default",
-  CANCELED: "destructive",
-  PENDING: "secondary",
+  PICKED: "outline",
+  DISPATCHED: "secondary",
 }
 
 const COMMON_UOMS = ["EA", "BOX", "PACK", "CASE", "BAG", "CAN", "BTL"]

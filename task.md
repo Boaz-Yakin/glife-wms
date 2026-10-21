@@ -169,4 +169,14 @@
 - [x] 17.3 `OrderDetailsDialog.tsx` 상단 요약 카드에 카테고리별 인보이스(Grocery, General, Frozen) 개별 뱃지 칩 표시 연동
 - [x] 17.4 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드 및 아키텍처 규칙 검증 통과
 
+---
+
+## 🔄 Phase 18: WMS 주문 상태(Order Status) G-manager 실무 표준 통일
+- [x] 18.1 `types/database.ts`에 G-manager 표준 상태(`PACKED`, `INVOICED`, `SHIPPED`) 추가
+- [x] 18.2 `OrdersTable.tsx` 필터 드롭다운을 실데이터 기준 6대 표준 상태(`Pending`, `Picking`, `Packed`, `Invoiced`, `Shipped`, `Canceled`)로 전면 개편 및 뱃지 색상/라벨 매핑 확장
+- [x] 18.3 `OrderDetailsDialog.tsx`의 `statusBadgeVariants`에 6대 표준 상태 뱃지 매핑 완료
+- [x] 18.4 `services/dashboard.service.ts` 대시보드 KPI 쿼리(출고량, 피킹 완료율 등)에서 실제 상태(`SHIPPED`, `PACKED`, `INVOICED`)가 포함되도록 통계 쿼리 확장
+- [x] 18.5 TypeScript 타입 검증 및 Next.js Turbopack 빌드 검증 완료
+
+
 
