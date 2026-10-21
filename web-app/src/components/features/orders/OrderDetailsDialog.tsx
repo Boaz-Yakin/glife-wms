@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { 
   Loader2, 
   Store, 
+  Building2,
   Calendar, 
   Receipt, 
   DollarSign, 
@@ -39,6 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { updateOrderAction, searchMasterItemsAction, deleteOrderAction } from "@/app/(dashboard)/orders/actions"
@@ -49,6 +51,7 @@ interface OrderDetailsDialogProps {
   order: OrderData
   open: boolean
   onOpenChange: (open: boolean) => void
+  clients?: { id: string; name: string; code: string }[]
 }
 
 interface EditableItem {
@@ -100,7 +103,12 @@ const formatDateOnlyForDisplay = (value: string) => {
   })
 }
 
-export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDialogProps) {
+export function OrderDetailsDialog({ 
+  order, 
+  open, 
+  onOpenChange,
+  clients = [],
+}: OrderDetailsDialogProps) {
   const router = useRouter()
   const [loading, setLoading] = React.useState(false)
   const [isSaving, setIsSaving] = React.useState(false)
@@ -108,6 +116,8 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   const [successMsg, setSuccessMsg] = React.useState<string | null>(null)
 
   // Order Header Form State
+  const initialClientId = order.client_id || order.client?.id || ""
+  const [selectedClientId, setSelectedClientId] = React.useState(initialClientId)
   const [orderDateInput, setOrderDateInput] = React.useState("")
   const [isEditingDate, setIsEditingDate] = React.useState(false)
   // "" = NULL (Not set)
@@ -194,6 +204,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       const initialDate = order.order_date || order.created_at || ""
       setOrderDateInput(formatForDateTimeInput(initialDate))
       setInvoiceDateInput(order.invoice_date || "")
+      setSelectedClientId(order.client_id || order.client?.id || "")
 
       const loadDetails = async () => {
         setLoading(true)
@@ -226,7 +237,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       }
       loadDetails()
     }
-  }, [open, order.id, order.order_date, order.created_at, order.invoice_date])
+  }, [open, order.id, order.order_date, order.created_at, order.invoice_date, order.client_id, order.client?.id])
 
   // Debounced Item Search
   React.useEffect(() => {
@@ -333,6 +344,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
   const isOrderDateChanged =
     orderDateInput !== formatForDateTimeInput(order.order_date || order.created_at)
   const isInvoiceDateChanged = invoiceDateInput !== (order.invoice_date || "")
+  const isClientChanged = selectedClientId !== initialClientId
   const isInvoiceIssued =
     Boolean(order.invoice_number) || ISSUED_INVOICE_STATUSES.includes(order.status)
 
@@ -353,7 +365,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
 
   // Check if form is dirty
   const isDirty = React.useMemo(() => {
-    if (isOrderDateChanged || isInvoiceDateChanged) return true
+    if (isOrderDateChanged || isInvoiceDateChanged || isClientChanged) return true
     if (deletedItemIds.length > 0) return true
     if (items.some((it) => it.isNew)) return true
     if (items.length !== originalItems.length) return true
@@ -366,7 +378,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
       }
     }
     return false
-  }, [isOrderDateChanged, isInvoiceDateChanged, deletedItemIds, items, originalItems])
+  }, [isOrderDateChanged, isInvoiceDateChanged, isClientChanged, deletedItemIds, items, originalItems])
 
   // Save changes
   const handleSaveChanges = async () => {
@@ -421,6 +433,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         orderId: order.id,
         orderDate: formattedOrderDate,
         invoiceDate: isInvoiceDateChanged ? invoiceDateInput || null : undefined,
+        clientId: isClientChanged ? selectedClientId || null : undefined,
         itemsToUpdate,
         itemsToAdd,
         itemIdsToDelete: deletedItemIds,
@@ -480,7 +493,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
         )}
 
         {/* Summary Info Cards (Editable Header) */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 shrink-0">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
           <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
               <Store className="size-3.5" />
@@ -489,6 +502,40 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
             <p className="font-semibold text-sm truncate" title={order.store?.name || "-"}>
               {order.store?.name || "-"}
             </p>
+          </div>
+
+          {/* Client (화주사) Card - Editable */}
+          <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <div className="flex items-center gap-1.5">
+                <Building2 className="size-3.5" />
+                <span>Client</span>
+              </div>
+              {isClientChanged && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                  Modified
+                </Badge>
+              )}
+            </div>
+            {clients && clients.length > 0 ? (
+              <Select value={selectedClientId} onValueChange={(val) => setSelectedClientId(val || "")}>
+                <SelectTrigger className="h-7 text-xs bg-background font-medium px-2 py-0 border-muted-foreground/30 focus-visible:ring-primary w-full">
+                  <SelectValue placeholder="Select Client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id} className="text-xs">
+                      <span className="font-medium">{c.name}</span>
+                      <span className="text-[10px] text-muted-foreground ml-1 font-mono">({c.code})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <p className="font-semibold text-sm truncate" title={order.client?.name || "-"}>
+                {order.client?.name || "-"}
+              </p>
+            )}
           </div>
 
           <div className="rounded-lg border bg-muted/30 p-3 space-y-1">

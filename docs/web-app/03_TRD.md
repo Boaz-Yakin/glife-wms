@@ -100,3 +100,13 @@ src/
 - **UI 제공 위치**:
   1. `OrdersTable`: 테이블 행 액션 영역에 직관적인 삭제(Trash2) 버튼 및 전용 확인 다이얼로그 제공.
   2. `OrderDetailsDialog`: 주문 상세 모달 하단(Footer)에 삭제 버튼 배치로 상세 검토 후 즉시 삭제 지원.
+
+### 6.5 Order Client Reassignment (특정 주문 화주사/클라이언트 변경 기능)
+- **목적**: 오배정되었거나 화주사가 변경된 특정 주문의 `client_id`를 관리자가 UI 상에서 직접 안전하게 수정/재배정할 수 있도록 지원.
+- **서비스 및 액션 계층**:
+  - `orders.service.ts`: `OrderData` 인터페이스에 `client?: { id: string; name: string; code: string } | null` 조인 지원 및 `UpdateOrderPayload.clientId?: string | null` 추가.
+  - `orders.service.ts#updateOrder`: `clientId !== undefined` 감지 시 `orders.client_id` 갱신 및 `updated_at` 업데이트.
+  - `orders/actions.ts#updateOrderAction`: 기존 Server Action 인터페이스를 통해 원자적 처리 및 캐시 무효화(`revalidatePath`).
+- **UI 제공 위치**:
+  1. `OrdersTable`: `Client` 컬럼을 추가하여 각 주문의 소속 화주사명(`name`) 및 코드(`code`)를 직관적으로 확인.
+  2. `OrderDetailsDialog`: 상단 요약 정보 카드 영역에 `Client` 카드를 배치하고, 시스템에 등록된 화주사 목록(`Select` 드롭다운)을 통해 손쉽게 변경 후 하단 `Save Changes` 클릭 시 주문 일자/품목과 함께 일괄 저장.

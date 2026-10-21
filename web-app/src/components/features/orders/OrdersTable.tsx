@@ -70,11 +70,18 @@ const statusLabels: Record<string, string> = {
   DISPATCHED: "Dispatched",
 }
 
+export interface ClientOption {
+  id: string
+  name: string
+  code: string
+}
+
 interface OrdersTableProps {
   data: OrderData[]
   totalCount: number
   currentPage?: number
   pageSize?: number
+  clients?: ClientOption[]
 }
 
 export function OrdersTable({ 
@@ -82,6 +89,7 @@ export function OrdersTable({
   totalCount,
   currentPage = 1,
   pageSize = 50,
+  clients = [],
 }: OrdersTableProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -252,6 +260,22 @@ export function OrdersTable({
       id: "store_name",
       header: "Store",
       cell: ({ row }) => <div className="font-medium text-sm">{row.original.store?.name || '-'}</div>,
+    },
+    {
+      id: "client_name",
+      header: "Client",
+      cell: ({ row }) => {
+        const client = row.original.client
+        if (!client?.name) return <span className="text-muted-foreground text-xs">-</span>
+        return (
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-foreground">{client.name}</span>
+            {client.code && (
+              <span className="text-[10px] text-muted-foreground font-mono">{client.code}</span>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "created_at",
@@ -486,6 +510,7 @@ export function OrdersTable({
           order={selectedOrder} 
           open={!!selectedOrder} 
           onOpenChange={(val) => !val && setSelectedOrder(null)} 
+          clients={clients}
         />
       )}
 

@@ -191,3 +191,13 @@
 - [x] 20.1 `(dashboard)/orders/page.tsx`에 `limit` 쿼리 파라미터 지원 및 기본 표시 개수를 50개(`limit = 50`)로 확장 (초기 24건 전체 및 SHIPPED 주문 즉시 노출)
 - [x] 20.2 `OrdersTable.tsx`에 `currentPage`, `pageSize` 프로퍼티 연동 및 하단 페이지네이션 UI 구현 (Showing X to Y of Z orders, 페이지당 20/50/100/200개 선택 드롭다운, 이전/다음/첫/마지막/페이지번호 이동 버튼)
 - [x] 20.3 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
+---
+
+## 🏬 Phase 21: web-app 특정 주문 화주사(Client) 수정 기능 구현
+- [x] 21.1 `docs/web-app/03_TRD.md` §6.5 주문 화주사 변경(Client Reassignment) 설계 반영
+- [x] 21.2 `services/orders.service.ts`: `OrderData`에 `client` 조인 추가, `UpdateOrderPayload.clientId` 인터페이스 확장 및 `updateOrder` 서비스에 `orders.client_id` 원자적 갱신 로직 구현
+- [x] 21.3 `(dashboard)/orders/page.tsx`: `getClients()` 연동하여 화주사 마스터 목록 조회 및 `OrdersTable`에 주입
+- [x] 21.4 `OrdersTable.tsx`: 테이블에 `Client` 컬럼(화주사명, 코드) 추가 및 `OrderDetailsDialog`로 `clients` 목록 전달
+- [x] 21.5 `OrderDetailsDialog.tsx`: 상단 요약 카드에 `Client` 카드 배치, 화주사 `Select` 드롭다운 제공, 변경 감지(`isClientChanged`, `Modified` 뱃지, `isDirty` 연동) 및 `Save Changes` 클릭 시 주문 일자/품목과 함께 일괄 저장 연동
+- [x] 21.6 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료

@@ -1,5 +1,6 @@
 import * as React from "react"
 import { getOrders } from "@/services/orders.service"
+import { getClients } from "@/services/master.service"
 import { OrdersTable } from "@/components/features/orders/OrdersTable"
 
 export const dynamic = "force-dynamic"
@@ -16,12 +17,15 @@ export default async function OrdersPage({
   const search = typeof params.search === 'string' ? params.search : ''
   const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
   
-  const { data, count, error } = await getOrders({
-    page,
-    limit,
-    search,
-    status
-  })
+  const [{ data, count, error }, { data: clients }] = await Promise.all([
+    getOrders({
+      page,
+      limit,
+      search,
+      status
+    }),
+    getClients(),
+  ])
 
   return (
     <div className="flex flex-col gap-6">
@@ -42,6 +46,7 @@ export default async function OrdersPage({
           totalCount={count || 0}
           currentPage={page}
           pageSize={limit}
+          clients={clients || []}
         />
       )}
     </div>

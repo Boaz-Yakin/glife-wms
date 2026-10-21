@@ -33,6 +33,7 @@ export interface OrderData {
   
   // joined fields
   store?: { name: string } | null
+  client?: { id: string; name: string; code: string } | null
 }
 
 export interface OrderItemData {
@@ -65,6 +66,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   let query = supabase.from('orders').select(`
     *,
     store:stores(name),
+    client:clients(id, name, code),
     order_items(
       qty,
       picked_qty,
@@ -153,6 +155,8 @@ export interface UpdateOrderPayload {
   orderDate?: string
   /** undefined: 변경 없음 / null: NULL로 초기화 / "YYYY-MM-DD": 설정 (TRD 6.3) */
   invoiceDate?: string | null
+  /** undefined: 변경 없음 / string: 새 화주사 id (TRD 6.5) */
+  clientId?: string | null
   itemsToUpdate?: UpdateOrderItemInput[]
   itemsToAdd?: NewOrderItemInput[]
   itemIdsToDelete?: string[]
@@ -160,11 +164,12 @@ export interface UpdateOrderPayload {
 
 export async function updateOrder(payload: UpdateOrderPayload) {
   const supabase = await getClient()
-  const { orderId, orderDate, invoiceDate, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
+  const { orderId, orderDate, invoiceDate, clientId, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
   const isInvoiceDateChanged = invoiceDate !== undefined
+  const isClientChanged = clientId !== undefined
 
-  // 1. Update order header (order_date / invoice_date) if provided
-  if (orderDate || isInvoiceDateChanged) {
+  // 1. Update order header (order_date / invoice_date / client_id) if provided
+  if (orderDate || isInvoiceDateChanged || isClientChanged) {
     // 1-1. 모든 쓰기 이전에 날짜 규칙 검증 (invoice_date >= order_date, NY 기준 날짜)
     const { data: current, error: currentErr } = await (supabase as any)
       .from('orders')
@@ -192,6 +197,7 @@ export async function updateOrder(payload: UpdateOrderPayload) {
     }
     if (orderDate) headerUpdate.order_date = orderDate
     if (isInvoiceDateChanged) headerUpdate.invoice_date = invoiceDate || null
+    if (isClientChanged) headerUpdate.client_id = clientId || null
 
     const { error: orderUpdateErr } = await (supabase as any)
       .from('orders')
