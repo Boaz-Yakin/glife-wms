@@ -11,13 +11,14 @@ export default async function OrdersPage({
 }) {
   const params = await searchParams
   
-  const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1
+  const page = typeof params.page === 'string' ? Math.max(1, parseInt(params.page, 10)) : 1
+  const limit = typeof params.limit === 'string' ? Math.max(10, parseInt(params.limit, 10)) : 50
   const search = typeof params.search === 'string' ? params.search : ''
   const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
   
   const { data, count, error } = await getOrders({
     page,
-    limit: 20,
+    limit,
     search,
     status
   })
@@ -36,7 +37,12 @@ export default async function OrdersPage({
           Failed to load data. ({error})
         </div>
       ) : (
-        <OrdersTable data={data || []} totalCount={count} />
+        <OrdersTable 
+          data={data || []} 
+          totalCount={count || 0}
+          currentPage={page}
+          pageSize={limit}
+        />
       )}
     </div>
   )

@@ -8,7 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Eye, Download, Trash2, Loader2 } from "lucide-react"
+import { Eye, Download, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
 
 import {
   Table,
@@ -73,9 +73,16 @@ const statusLabels: Record<string, string> = {
 interface OrdersTableProps {
   data: OrderData[]
   totalCount: number
+  currentPage?: number
+  pageSize?: number
 }
 
-export function OrdersTable({ data, totalCount }: OrdersTableProps) {
+export function OrdersTable({ 
+  data, 
+  totalCount,
+  currentPage = 1,
+  pageSize = 50,
+}: OrdersTableProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -87,6 +94,42 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
   const [selectedOrder, setSelectedOrder] = React.useState<OrderData | null>(null)
   const [orderToDelete, setOrderToDelete] = React.useState<OrderData | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const startItem = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
+  const endItem = Math.min(currentPage * pageSize, totalCount)
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("page", newPage.toString())
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (newSize: string | null) => {
+    if (!newSize) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("limit", newSize)
+    params.set("page", "1")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const getVisiblePages = () => {
+    const pages: (number | string)[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, "...", totalPages)
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages)
+      }
+    }
+    return pages
+  }
 
   const handleConfirmDelete = async () => {
     if (!orderToDelete) return
@@ -346,8 +389,96 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
         </Table>
       </div>
       
-      <div className="text-sm text-muted-foreground">
-        Total {totalCount} orders
+      {/* Pagination Footer */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-1">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span>
+            Showing <strong className="font-semibold text-foreground">{startItem}</strong> to{" "}
+            <strong className="font-semibold text-foreground">{endItem}</strong> of{" "}
+            <strong className="font-semibold text-foreground">{totalCount}</strong> orders
+          </span>
+          <span className="text-slate-300">|</span>
+          <div className="flex items-center gap-1.5">
+            <span>Per page:</span>
+            <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+              <SelectTrigger className="h-7 w-[68px] text-xs bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+                <SelectItem value="100">100</SelectItem>
+                <SelectItem value="200">200</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(1)}
+              disabled={currentPage <= 1}
+              className="h-8 w-8 p-0"
+              title="First Page"
+            >
+              <ChevronsLeft className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              className="h-8 px-2 text-xs flex items-center gap-1"
+            >
+              <ChevronLeft className="size-4" />
+              Prev
+            </Button>
+
+            <div className="flex items-center gap-1 px-1">
+              {getVisiblePages().map((p, idx) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                    ...
+                  </span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === currentPage ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handlePageChange(p as number)}
+                    className={`h-8 w-8 p-0 text-xs ${p === currentPage ? "font-bold" : ""}`}
+                  >
+                    {p}
+                  </Button>
+                )
+              )}
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              className="h-8 px-2 text-xs flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="size-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(totalPages)}
+              disabled={currentPage >= totalPages}
+              className="h-8 w-8 p-0"
+              title="Last Page"
+            >
+              <ChevronsRight className="size-4" />
+            </Button>
+          </div>
+        )}
       </div>
       
       {selectedOrder && (

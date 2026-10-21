@@ -184,3 +184,10 @@
 - [x] 19.1 WMS vs G-manager 주문 수 불일치 원인 분석 (WMS의 Active Client `Food Depot` 필터링 및 `Cosmetics Co` 소속 주문 1건 확인)
 - [x] 19.2 식품 품목 주문 `ORD-20261014-W78H`의 `client_id`를 `Cosmetics Co`에서 `Food Depot`(`9df4f04d-b4be-4256-bfa5-aa48c4fd5d13`)으로 업데이트
 - [x] 19.3 WMS `Food Depot` 기준 주문 24건 및 DB 전체 24건 100% 일치 확인 완료
+
+---
+
+## 📄 Phase 20: web-app 주문 관리(Orders) 페이지네이션 및 페이지당 표시 개수 컨트롤 구현
+- [x] 20.1 `(dashboard)/orders/page.tsx`에 `limit` 쿼리 파라미터 지원 및 기본 표시 개수를 50개(`limit = 50`)로 확장 (초기 24건 전체 및 SHIPPED 주문 즉시 노출)
+- [x] 20.2 `OrdersTable.tsx`에 `currentPage`, `pageSize` 프로퍼티 연동 및 하단 페이지네이션 UI 구현 (Showing X to Y of Z orders, 페이지당 20/50/100/200개 선택 드롭다운, 이전/다음/첫/마지막/페이지번호 이동 버튼)
+- [x] 20.3 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
