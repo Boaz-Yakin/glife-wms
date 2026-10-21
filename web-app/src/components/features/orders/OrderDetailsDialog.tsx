@@ -488,13 +488,35 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
           </div>
 
           <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-              <Receipt className="size-3.5" />
-              <span>Invoice No.</span>
+            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <div className="flex items-center gap-1.5">
+                <Receipt className="size-3.5" />
+                <span>Invoice No.</span>
+              </div>
+              {order.category_invoices && Object.keys(order.category_invoices).length > 1 && (
+                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-sans">
+                  {Object.keys(order.category_invoices).length} Invoices
+                </span>
+              )}
             </div>
-            <p className="font-mono font-medium text-sm text-foreground">
-              {order.invoice_number || "-"}
-            </p>
+            {order.category_invoices && Object.keys(order.category_invoices).length > 0 ? (
+              <div className="flex flex-wrap gap-1 pt-0.5">
+                {Object.entries(order.category_invoices).map(([cat, num]) => (
+                  <span
+                    key={cat}
+                    className="inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded border bg-background text-foreground shadow-2xs"
+                    title={`${cat} Invoice`}
+                  >
+                    <span className="text-[9px] font-bold text-muted-foreground uppercase">{cat.slice(0, 3)}:</span>
+                    <span className="font-semibold">{num}</span>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="font-mono font-medium text-sm text-foreground">
+                {order.invoice_number || "-"}
+              </p>
+            )}
           </div>
 
           {/* Editable Order Date */}

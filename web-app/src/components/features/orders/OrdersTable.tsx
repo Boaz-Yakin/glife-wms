@@ -23,6 +23,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -133,7 +139,61 @@ export function OrdersTable({ data, totalCount }: OrdersTableProps) {
     {
       accessorKey: "invoice_number",
       header: "Invoice No.",
-      cell: ({ row }) => <div className="tabular-nums text-muted-foreground">{row.original.invoice_number || '-'}</div>,
+      cell: ({ row }) => {
+        const primary = row.original.invoice_number
+        const catInvoices = row.original.category_invoices as Record<string, string> | null | undefined
+        const entries = Object.entries(catInvoices || {}).filter(([_, num]) => Boolean(num))
+
+        if (!primary && entries.length === 0) {
+          return <div className="tabular-nums text-muted-foreground">-</div>
+        }
+
+        const extraCount = entries.length > 1 ? entries.length - 1 : 0
+
+        if (entries.length <= 1) {
+          return (
+            <div className="font-mono tabular-nums text-xs text-foreground font-medium">
+              {primary || entries[0]?.[1] || '-'}
+            </div>
+          )
+        }
+
+        return (
+          <TooltipProvider delay={100}>
+            <Tooltip>
+              <TooltipTrigger className="inline-flex items-center gap-1.5 cursor-help bg-transparent border-0 p-0 text-inherit text-left">
+                <span className="font-mono tabular-nums text-xs text-foreground font-semibold">
+                  {primary || entries[0][1]}
+                </span>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] px-1 py-0 h-4 font-mono font-semibold bg-muted/60 text-muted-foreground hover:bg-muted"
+                >
+                  +{extraCount}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="p-2 space-y-1.5 text-xs bg-popover text-popover-foreground border shadow-md"
+              >
+                <p className="font-semibold text-[11px] text-muted-foreground border-b pb-1">
+                  Invoices by Category ({entries.length})
+                </p>
+                <div className="space-y-1 font-mono">
+                  {entries.map(([cat, num]) => (
+                    <div key={cat} className="flex items-center justify-between gap-3 text-xs">
+                      <span className="text-muted-foreground font-sans font-medium text-[11px] uppercase tracking-wide">
+                        {cat}:
+                      </span>
+                      <span className="font-semibold text-foreground">{num}</span>
+                    </div>
+                  ))}
+                </div>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
     },
     {
       id: "store_name",

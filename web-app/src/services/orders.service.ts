@@ -21,6 +21,7 @@ export interface OrderData {
   id: string
   order_no?: string | null
   invoice_number: string | null
+  category_invoices?: Record<string, string> | null
   store_id: number | null
   client_id: string | null
   order_date: string
@@ -79,7 +80,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   }
 
   if (search) {
-    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,shipping_address.ilike.%${search}%`)
+    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,shipping_address.ilike.%${search}%,invoice_number.ilike.%${search}%`)
   }
   
   if (status) {

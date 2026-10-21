@@ -161,3 +161,12 @@
 - [x] 16.5 `OrderDetailsDialog.tsx` 모달 Footer에 'Delete Order' 액션 및 2차 확인 모달 추가
 - [x] 16.6 Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
 
+---
+
+## 🧾 Phase 17: web-app 주문 다중 인보이스 번호(Grocery, General, Frozen) 조회 및 UI 고도화
+- [x] 17.1 `services/orders.service.ts`의 `OrderData` 인터페이스에 `category_invoices` 필드 추가 및 주문 검색 필터(`search`)에 `invoice_number` 검색 지원 추가
+- [x] 17.2 `OrdersTable.tsx`의 `Invoice No.` 컬럼에 다중 인보이스 뱃지(`+N`) 및 카테고리별 툴팁(Tooltip) 조회 연동
+- [x] 17.3 `OrderDetailsDialog.tsx` 상단 요약 카드에 카테고리별 인보이스(Grocery, General, Frozen) 개별 뱃지 칩 표시 연동
+- [x] 17.4 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드 및 아키텍처 규칙 검증 통과
+
+
