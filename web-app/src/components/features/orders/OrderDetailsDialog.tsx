@@ -520,7 +520,9 @@ export function OrderDetailsDialog({
             {clients && clients.length > 0 ? (
               <Select value={selectedClientId} onValueChange={(val) => setSelectedClientId(val || "")}>
                 <SelectTrigger className="h-7 text-xs bg-background font-medium px-2 py-0 border-muted-foreground/30 focus-visible:ring-primary w-full">
-                  <SelectValue placeholder="Select Client" />
+                  <SelectValue placeholder="Select Client">
+                    {clients.find((c) => c.id === selectedClientId)?.name || order.client?.name || "Select Client"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {clients.map((c) => (

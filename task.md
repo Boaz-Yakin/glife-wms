@@ -200,4 +200,5 @@
 - [x] 21.3 `(dashboard)/orders/page.tsx`: `getClients()` 연동하여 화주사 마스터 목록 조회 및 `OrdersTable`에 주입
 - [x] 21.4 `OrdersTable.tsx`: 테이블에 `Client` 컬럼(화주사명, 코드) 추가 및 `OrderDetailsDialog`로 `clients` 목록 전달
 - [x] 21.5 `OrderDetailsDialog.tsx`: 상단 요약 카드에 `Client` 카드 배치, 화주사 `Select` 드롭다운 제공, 변경 감지(`isClientChanged`, `Modified` 뱃지, `isDirty` 연동) 및 `Save Changes` 클릭 시 주문 일자/품목과 함께 일괄 저장 연동
-- [x] 21.6 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+- [x] 21.6 `OrderDetailsDialog.tsx` Client 카드 드롭다운 트리거에 UUID 대신 화주사 이름(`Food Depot`, `Cosmetics Co` 등)이 명확히 표시되도록 `SelectValue` 렌더링 보정
+- [x] 21.7 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
