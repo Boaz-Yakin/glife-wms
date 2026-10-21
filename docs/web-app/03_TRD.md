@@ -110,3 +110,20 @@ src/
 - **UI 제공 위치**:
   1. `OrdersTable`: `Client` 컬럼을 추가하여 각 주문의 소속 화주사명(`name`) 및 코드(`code`)를 직관적으로 확인.
   2. `OrderDetailsDialog`: 상단 요약 정보 카드 영역에 `Client` 카드를 배치하고, 시스템에 등록된 화주사 목록(`Select` 드롭다운)을 통해 손쉽게 변경 후 하단 `Save Changes` 클릭 시 주문 일자/품목과 함께 일괄 저장.
+
+### 6.6 Order Status Update (주문 상태 변경 기능)
+- **목적**: 관리자가 데스크탑 환경에서 주문의 진행 단계(`PENDING`, `PICKING`, `PACKED`, `INVOICED`, `SHIPPED`, `CANCELED`)를 손쉽게 변경하고 제어할 수 있도록 지원.
+- **허용 상태 목록**:
+  - `PENDING` (대기)
+  - `PICKING` (피킹 중)
+  - `PACKED` (패킹 완료)
+  - `INVOICED` (인보이스 발행 완료)
+  - `SHIPPED` (출고/배송 완료)
+  - `CANCELED` (주문 취소)
+- **서비스 및 액션 계층**:
+  - `orders.service.ts#updateOrderStatus(orderId: string, status: string)`: `orders.status` 갱신 및 `updated_at` 타임스탬프 업데이트.
+  - `orders.service.ts#updateOrder`: `UpdateOrderPayload.status` 지원으로 `OrderDetailsDialog`에서 다른 필드와 일괄 저장 가능.
+  - `orders/actions.ts#updateOrderStatusAction(orderId: string, status: string)`: 전용 Server Action 제공 및 `revalidatePath('/orders')`, `revalidatePath('/dashboard')` 수행.
+- **UI 제공 위치**:
+  1. `OrdersTable`: 테이블 행의 Status 컬럼에 인라인 `Select` 드롭다운을 적용하여, 목록에서 별도의 다이얼로그 진입 없이 즉시 상태를 변경하고 토스트 알림을 제공.
+  2. `OrderDetailsDialog`: 상단 헤더의 Status 뱃지 영역을 `Select` 드롭다운으로 연동하여 상세 내역 확인 중에도 상태를 수정할 수 있도록 지원.

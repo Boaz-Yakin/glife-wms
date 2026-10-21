@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner"
 import { exportToExcel } from "@/lib/export"
 import { OrderData } from "@/services/orders.service"
-import { deleteOrderAction } from "@/app/(dashboard)/orders/actions"
+import { deleteOrderAction, updateOrderStatusAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
 
 const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
@@ -68,6 +68,84 @@ const statusLabels: Record<string, string> = {
   ALLOCATED: "Allocated",
   PICKED: "Picked",
   DISPATCHED: "Dispatched",
+}
+
+const AVAILABLE_STATUSES = [
+  "PENDING",
+  "PICKING",
+  "PACKED",
+  "INVOICED",
+  "SHIPPED",
+  "CANCELED",
+] as const
+
+function OrderStatusCell({ order }: { order: OrderData }) {
+  const [currentStatus, setCurrentStatus] = React.useState(order.status)
+  const [isUpdating, setIsUpdating] = React.useState(false)
+
+  React.useEffect(() => {
+    setCurrentStatus(order.status)
+  }, [order.status])
+
+  const handleStatusUpdate = async (newStatus: string | null) => {
+    if (!newStatus || newStatus === currentStatus || isUpdating) return
+    setIsUpdating(true)
+    const prevStatus = currentStatus
+    setCurrentStatus(newStatus)
+
+    try {
+      const res = await updateOrderStatusAction(order.id, newStatus)
+      if (!res.success) {
+        throw new Error(res.error || "Failed to update status")
+      }
+      toast.success(`Order #${order.order_no || order.id.slice(0, 8)} status updated to ${statusLabels[newStatus] || newStatus}`)
+    } catch (err: unknown) {
+      setCurrentStatus(prevStatus)
+      const msg = err instanceof Error ? err.message : "Failed to update status"
+      toast.error(msg)
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const variant = statusColors[currentStatus] || "secondary"
+  const label = statusLabels[currentStatus] || currentStatus
+
+  return (
+    <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+      <Select
+        value={currentStatus}
+        onValueChange={handleStatusUpdate}
+        disabled={isUpdating}
+      >
+        <SelectTrigger className="h-7 w-[115px] text-xs font-medium border-muted/80 bg-background hover:bg-muted/50 px-2 py-0">
+          {isUpdating ? (
+            <div className="flex items-center gap-1 text-muted-foreground text-[11px]">
+              <Loader2 className="size-3 animate-spin shrink-0" />
+              <span>Updating...</span>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5 truncate">
+              <Badge variant={variant as any} className="text-[10px] px-1.5 py-0 h-4 font-semibold shrink-0">
+                {label}
+              </Badge>
+            </div>
+          )}
+        </SelectTrigger>
+        <SelectContent align="start">
+          {AVAILABLE_STATUSES.map((st) => (
+            <SelectItem key={st} value={st} className="text-xs">
+              <div className="flex items-center gap-2">
+                <Badge variant={statusColors[st] || "secondary"} className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                  {statusLabels[st] || st}
+                </Badge>
+              </div>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  )
 }
 
 export interface ClientOption {
@@ -298,12 +376,7 @@ export function OrdersTable({
     {
       accessorKey: "status",
       header: "Status",
-      cell: ({ row }) => {
-        const status = row.original.status
-        const variant = statusColors[status] || "secondary"
-        const label = statusLabels[status] || status
-        return <Badge variant={variant as any}>{label}</Badge>
-      }
+      cell: ({ row }) => <OrderStatusCell order={row.original} />,
     },
     {
       accessorKey: "invoice_amount",

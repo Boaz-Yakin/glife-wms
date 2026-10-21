@@ -3,11 +3,29 @@
 import { revalidatePath } from "next/cache"
 import { 
   updateOrder, 
+  updateOrderStatus,
   deleteOrder,
   searchMasterItemsForOrder, 
   UpdateOrderPayload, 
   MasterItemSearchResult 
 } from "@/services/orders.service"
+
+export async function updateOrderStatusAction(orderId: string, status: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const result = await updateOrderStatus(orderId, status)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to update order status" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("updateOrderStatusAction error:", err)
+    return { success: false, error: errorMsg }
+  }
+}
 
 export async function updateOrderAction(payload: UpdateOrderPayload) {
   try {

@@ -150,6 +150,17 @@ export interface NewOrderItemInput {
   price: number
 }
 
+const VALID_ORDER_STATUSES = [
+  "PENDING",
+  "PICKING",
+  "PACKED",
+  "INVOICED",
+  "SHIPPED",
+  "CANCELED",
+] as const
+
+export type OrderStatus = typeof VALID_ORDER_STATUSES[number]
+
 export interface UpdateOrderPayload {
   orderId: string
   orderDate?: string
@@ -157,19 +168,44 @@ export interface UpdateOrderPayload {
   invoiceDate?: string | null
   /** undefined: 변경 없음 / string: 새 화주사 id (TRD 6.5) */
   clientId?: string | null
+  /** undefined: 변경 없음 / string: 새 상태값 (TRD 6.6) */
+  status?: string
   itemsToUpdate?: UpdateOrderItemInput[]
   itemsToAdd?: NewOrderItemInput[]
   itemIdsToDelete?: string[]
 }
 
+export async function updateOrderStatus(orderId: string, status: string) {
+  if (!VALID_ORDER_STATUSES.includes(status as OrderStatus)) {
+    return { success: false, error: `Invalid status: ${status}. Must be one of: ${VALID_ORDER_STATUSES.join(', ')}` }
+  }
+
+  const supabase = await getClient()
+  const { error } = await (supabase as any)
+    .from('orders')
+    .update({
+      status,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', orderId)
+
+  if (error) {
+    console.error('updateOrderStatus error:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
 export async function updateOrder(payload: UpdateOrderPayload) {
   const supabase = await getClient()
-  const { orderId, orderDate, invoiceDate, clientId, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
+  const { orderId, orderDate, invoiceDate, clientId, status, itemsToUpdate, itemsToAdd, itemIdsToDelete } = payload
   const isInvoiceDateChanged = invoiceDate !== undefined
   const isClientChanged = clientId !== undefined
+  const isStatusChanged = status !== undefined
 
-  // 1. Update order header (order_date / invoice_date / client_id) if provided
-  if (orderDate || isInvoiceDateChanged || isClientChanged) {
+  // 1. Update order header (order_date / invoice_date / client_id / status) if provided
+  if (orderDate || isInvoiceDateChanged || isClientChanged || isStatusChanged) {
     // 1-1. 모든 쓰기 이전에 날짜 규칙 검증 (invoice_date >= order_date, NY 기준 날짜)
     const { data: current, error: currentErr } = await (supabase as any)
       .from('orders')
@@ -198,6 +234,7 @@ export async function updateOrder(payload: UpdateOrderPayload) {
     if (orderDate) headerUpdate.order_date = orderDate
     if (isInvoiceDateChanged) headerUpdate.invoice_date = invoiceDate || null
     if (isClientChanged) headerUpdate.client_id = clientId || null
+    if (isStatusChanged && status) headerUpdate.status = status
 
     const { error: orderUpdateErr } = await (supabase as any)
       .from('orders')

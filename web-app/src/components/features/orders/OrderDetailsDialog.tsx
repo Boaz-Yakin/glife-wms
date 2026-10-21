@@ -89,6 +89,15 @@ const statusBadgeVariants: Record<string, "default" | "secondary" | "destructive
 
 const COMMON_UOMS = ["EA", "BOX", "PACK", "CASE", "BAG", "CAN", "BTL"]
 
+const AVAILABLE_STATUSES = [
+  "PENDING",
+  "PICKING",
+  "PACKED",
+  "INVOICED",
+  "SHIPPED",
+  "CANCELED",
+] as const
+
 // 인보이스가 이미 발행된 것으로 간주되는 상태 (TRD 6.3)
 const ISSUED_INVOICE_STATUSES = ["INVOICED", "SHIPPED"]
 
@@ -118,6 +127,7 @@ export function OrderDetailsDialog({
   // Order Header Form State
   const initialClientId = order.client_id || order.client?.id || ""
   const [selectedClientId, setSelectedClientId] = React.useState(initialClientId)
+  const [selectedStatus, setSelectedStatus] = React.useState(order.status)
   const [orderDateInput, setOrderDateInput] = React.useState("")
   const [isEditingDate, setIsEditingDate] = React.useState(false)
   // "" = NULL (Not set)
@@ -205,6 +215,7 @@ export function OrderDetailsDialog({
       setOrderDateInput(formatForDateTimeInput(initialDate))
       setInvoiceDateInput(order.invoice_date || "")
       setSelectedClientId(order.client_id || order.client?.id || "")
+      setSelectedStatus(order.status)
 
       const loadDetails = async () => {
         setLoading(true)
@@ -237,7 +248,7 @@ export function OrderDetailsDialog({
       }
       loadDetails()
     }
-  }, [open, order.id, order.order_date, order.created_at, order.invoice_date, order.client_id, order.client?.id])
+  }, [open, order.id, order.status, order.order_date, order.created_at, order.invoice_date, order.client_id, order.client?.id])
 
   // Debounced Item Search
   React.useEffect(() => {
@@ -345,6 +356,7 @@ export function OrderDetailsDialog({
     orderDateInput !== formatForDateTimeInput(order.order_date || order.created_at)
   const isInvoiceDateChanged = invoiceDateInput !== (order.invoice_date || "")
   const isClientChanged = selectedClientId !== initialClientId
+  const isStatusChanged = selectedStatus !== order.status
   const isInvoiceIssued =
     Boolean(order.invoice_number) || ISSUED_INVOICE_STATUSES.includes(order.status)
 
@@ -365,7 +377,7 @@ export function OrderDetailsDialog({
 
   // Check if form is dirty
   const isDirty = React.useMemo(() => {
-    if (isOrderDateChanged || isInvoiceDateChanged || isClientChanged) return true
+    if (isOrderDateChanged || isInvoiceDateChanged || isClientChanged || isStatusChanged) return true
     if (deletedItemIds.length > 0) return true
     if (items.some((it) => it.isNew)) return true
     if (items.length !== originalItems.length) return true
@@ -378,7 +390,7 @@ export function OrderDetailsDialog({
       }
     }
     return false
-  }, [isOrderDateChanged, isInvoiceDateChanged, isClientChanged, deletedItemIds, items, originalItems])
+  }, [isOrderDateChanged, isInvoiceDateChanged, isClientChanged, isStatusChanged, deletedItemIds, items, originalItems])
 
   // Save changes
   const handleSaveChanges = async () => {
@@ -431,6 +443,7 @@ export function OrderDetailsDialog({
 
       const result = await updateOrderAction({
         orderId: order.id,
+        status: isStatusChanged ? selectedStatus : undefined,
         orderDate: formattedOrderDate,
         invoiceDate: isInvoiceDateChanged ? invoiceDateInput || null : undefined,
         clientId: isClientChanged ? selectedClientId || null : undefined,
@@ -469,12 +482,29 @@ export function OrderDetailsDialog({
             <span className="font-mono text-sm px-2.5 py-0.5 rounded-md bg-muted font-semibold text-foreground">
               {order.order_no || order.id}
             </span>
-            <Badge variant={statusBadgeVariants[order.status] || "secondary"} className="ml-auto">
-              {order.status}
-            </Badge>
+            <div className="ml-auto flex items-center gap-2">
+              <span className="text-xs text-muted-foreground font-medium">Status:</span>
+              <Select
+                value={selectedStatus}
+                onValueChange={(val) => {
+                  if (val) setSelectedStatus(val)
+                }}
+              >
+                <SelectTrigger className="h-7 w-[130px] text-xs font-semibold">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {AVAILABLE_STATUSES.map((st) => (
+                    <SelectItem key={st} value={st} className="text-xs font-medium">
+                      {st}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            Edit order date, adjust item quantities and UOM, or add/remove products in real-time.
+            Edit order status, date, adjust item quantities and UOM, or add/remove products in real-time.
           </p>
         </DialogHeader>
 

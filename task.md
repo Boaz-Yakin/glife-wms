@@ -202,3 +202,14 @@
 - [x] 21.5 `OrderDetailsDialog.tsx`: 상단 요약 카드에 `Client` 카드 배치, 화주사 `Select` 드롭다운 제공, 변경 감지(`isClientChanged`, `Modified` 뱃지, `isDirty` 연동) 및 `Save Changes` 클릭 시 주문 일자/품목과 함께 일괄 저장 연동
 - [x] 21.6 `OrderDetailsDialog.tsx` Client 카드 드롭다운 트리거에 UUID 대신 화주사 이름(`Food Depot`, `Cosmetics Co` 등)이 명확히 표시되도록 `SelectValue` 렌더링 보정
 - [x] 21.7 TypeScript 정적 검증(`tsc --noEmit`), Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
+---
+
+## 🏷️ Phase 22: web-app 주문 상태(Order Status) 변경 기능 구현
+- [x] 22.1 `docs/web-app/03_TRD.md` §6.6 주문 상태 변경(Order Status Update) 설계 반영 (지원 상태: `PENDING`, `PICKING`, `PACKED`, `INVOICED`, `SHIPPED`, `CANCELED`)
+- [x] 22.2 `services/orders.service.ts`: `updateOrderStatus(orderId, status)` 단독 상태 변경 서비스 구현 및 `updateOrder(payload)`에 `status` 헤더 갱신 지원 추가 (DB 제약조건 및 유효 상태 검증)
+- [x] 22.3 `(dashboard)/orders/actions.ts`: `updateOrderStatusAction(orderId, status)` Server Action 추가 (`/orders`, `/dashboard` 캐시 재검증 포함)
+- [x] 22.4 `OrdersTable.tsx`: 테이블의 Status 컬럼에 인라인 `<Select>` 드롭다운 컴포넌트(`OrderStatusCell`) 연동 (상태 즉시 변경, 로딩 스피너 및 sonner 토스트 피드백)
+- [x] 22.5 `OrderDetailsDialog.tsx`: 다이얼로그 헤더의 기존 정적 뱃지를 상태 선택 `<Select>` 드롭다운으로 교체, `isStatusChanged` 감지 및 `isDirty` / `Save Changes` 통합 저장 연동
+- [x] 22.6 TypeScript 정적 검증, Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
