@@ -178,5 +178,9 @@
 - [x] 18.4 `services/dashboard.service.ts` 대시보드 KPI 쿼리(출고량, 피킹 완료율 등)에서 실제 상태(`SHIPPED`, `PACKED`, `INVOICED`)가 포함되도록 통계 쿼리 확장
 - [x] 18.5 TypeScript 타입 검증 및 Next.js Turbopack 빌드 검증 완료
 
+---
 
-
+## 🏢 Phase 19: 주문 화주사(Client) 데이터 정합성 보정 (23건 ➔ 24건 일치화)
+- [x] 19.1 WMS vs G-manager 주문 수 불일치 원인 분석 (WMS의 Active Client `Food Depot` 필터링 및 `Cosmetics Co` 소속 주문 1건 확인)
+- [x] 19.2 식품 품목 주문 `ORD-20261014-W78H`의 `client_id`를 `Cosmetics Co`에서 `Food Depot`(`9df4f04d-b4be-4256-bfa5-aa48c4fd5d13`)으로 업데이트
+- [x] 19.3 WMS `Food Depot` 기준 주문 24건 및 DB 전체 24건 100% 일치 확인 완료
