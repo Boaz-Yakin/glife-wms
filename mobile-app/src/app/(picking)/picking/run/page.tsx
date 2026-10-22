@@ -4,10 +4,11 @@ import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, MapPin, Snowflake, Lock, PackageCheck,
-  Loader2, CheckCircle2, XCircle, SkipForward, Undo2, Flag
+  Loader2, CheckCircle2, XCircle, SkipForward, Undo2, Flag, Camera
 } from "lucide-react";
 import type { PickingItem } from "@/services/picking.service";
 import { feedback as audioFeedback } from "@/lib/feedback";
+import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 
 // ──────────────────────────────────────────────
 // Command barcode constants
@@ -31,6 +32,7 @@ function PickingRunInner() {
   const [scanState, setScanState] = useState<ScanState>("WAITING_LOCATION");
   const [feedback, setFeedback] = useState<ScanFeedback>("idle");
   const [isDone, setIsDone] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   // Barcode buffer refs (no re-render)
   const inputRef = useRef<HTMLInputElement>(null);
@@ -171,7 +173,6 @@ function PickingRunInner() {
   // Handle input from the hidden scanner input field
   // ──────────────────────────────────────────────
   const handleScanKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
-    const SCANNER_THRESHOLD_MS = 300;
     const now = Date.now();
     lastKeyTimeRef.current = now;
 
@@ -249,6 +250,17 @@ function PickingRunInner() {
   // ──────────────────────────────────────────────
   return (
     <div className="flex flex-col h-full bg-black text-white font-sans overflow-hidden">
+      {/* ── CAMERA SCANNER MODAL ── */}
+      {isCameraOpen && (
+        <CameraBarcodeScanner
+          onScan={(code) => {
+            processBarcode(code);
+            setIsCameraOpen(false);
+          }}
+          onClose={() => setIsCameraOpen(false)}
+        />
+      )}
+
       {/* ── HIDDEN SCANNER INPUT (always focused) ── */}
       <input
         ref={inputRef}
@@ -264,27 +276,39 @@ function PickingRunInner() {
       />
 
       {/* ── HEADER ── */}
-      <div className="flex items-center justify-between p-4 bg-zinc-950 border-b border-zinc-800 shrink-0">
-        <div className="flex items-center gap-3">
-          <button onClick={() => router.back()} className="text-zinc-500 hover:text-white">
-            <ArrowLeft className="w-8 h-8" />
+      <div className="flex items-center justify-between p-3.5 bg-zinc-950 border-b border-zinc-800 shrink-0 gap-2">
+        <div className="flex items-center gap-2">
+          <button onClick={() => router.back()} className="text-zinc-500 hover:text-white p-1">
+            <ArrowLeft className="w-6 h-6" />
           </button>
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-zinc-500">ORDER</span>
-            <span className="text-sm font-mono truncate max-w-[120px]">{orderId}</span>
+            <span className="text-[10px] font-bold text-zinc-500">ORDER</span>
+            <span className="text-xs font-mono truncate max-w-[90px]">{orderId}</span>
           </div>
         </div>
+
+        {/* Camera Scan Button */}
+        <button
+          onClick={() => setIsCameraOpen(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-transform active:scale-95"
+          title="Open Phone Camera Scanner"
+        >
+          <Camera className="w-4 h-4" />
+          <span>Camera</span>
+        </button>
+
         {/* Scan state badge */}
-        <div className={`px-4 py-2 rounded-full border font-bold text-sm ${
+        <div className={`px-3 py-1.5 rounded-full border font-bold text-xs ${
           scanState === "WAITING_LOCATION"
             ? "bg-amber-950/40 border-amber-800 text-amber-400"
             : "bg-emerald-950/40 border-emerald-800 text-emerald-400"
         }`}>
-          {scanState === "WAITING_LOCATION" ? "📍 SCAN LOCATION" : "📦 SCAN ITEM"}
+          {scanState === "WAITING_LOCATION" ? "📍 LOC" : "📦 ITEM"}
         </div>
-        <div className="bg-zinc-900 px-4 py-2 rounded-full border border-zinc-700 flex items-center gap-2">
+
+        <div className="bg-zinc-900 px-3 py-1.5 rounded-full border border-zinc-700 flex items-center gap-1.5 text-xs">
           <span className="font-bold text-emerald-400">{currentIndex + 1}</span>
-          <span className="text-zinc-500 text-sm">/ {items.length}</span>
+          <span className="text-zinc-500">/ {items.length}</span>
         </div>
       </div>
 

@@ -4,9 +4,10 @@ import { useState } from "react";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, ArrowRight, Package, MapPin } from "lucide-react";
+import { CheckCircle2, ArrowRight, Package, MapPin, Camera } from "lucide-react";
 import { InlineNumberPad } from "@/components/features/inventory/inline-number-pad";
 import { feedback } from "@/lib/feedback";
+import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 
 type TransferStep = "SOURCE" | "ITEM" | "QTY" | "DESTINATION" | "CONFIRM";
 
@@ -17,9 +18,37 @@ export default function TransferPage() {
   const [itemSku, setItemSku] = useState<string | null>(null);
   const [transferQty, setTransferQty] = useState<number>(0);
   const [destLoc, setDestLoc] = useState<string | null>(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   // Mock max qty for now
   const maxQty = 50;
+
+  const handleProcessCode = (code: string) => {
+    const trimmed = code.trim();
+    if (!trimmed) return;
+
+    if (step === "SOURCE") {
+      setSourceLoc(trimmed);
+      setStep("ITEM");
+      feedback.match();
+    } else if (step === "ITEM") {
+      setItemSku(trimmed);
+      setTransferQty(1);
+      setStep("QTY");
+      feedback.match();
+    } else if (step === "DESTINATION") {
+      if (trimmed === sourceLoc) {
+        feedback.error();
+        alert("Destination cannot be the same as source location.");
+        return;
+      }
+      setDestLoc(trimmed);
+      setStep("CONFIRM");
+      feedback.match();
+    } else {
+      feedback.normal();
+    }
+  };
 
   useBarcodeScanner({
     onLocation: (loc) => {
@@ -79,9 +108,30 @@ export default function TransferPage() {
 
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] text-white p-4">
-      <div className="mb-6">
-        <h2 className="text-xl font-bold mb-1">Bin-to-Bin Transfer</h2>
-        <p className="text-zinc-400 text-sm">Move inventory between locations</p>
+      {/* Camera Barcode Scanner Modal */}
+      {isCameraOpen && (
+        <CameraBarcodeScanner
+          onScan={(code) => {
+            handleProcessCode(code);
+            setIsCameraOpen(false);
+          }}
+          onClose={() => setIsCameraOpen(false)}
+        />
+      )}
+
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h2 className="text-xl font-bold mb-0.5">Bin-to-Bin Transfer</h2>
+          <p className="text-zinc-400 text-xs">Move inventory between locations</p>
+        </div>
+        <Button
+          onClick={() => setIsCameraOpen(true)}
+          className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-9 px-3 rounded-full flex items-center gap-1.5 text-xs shadow-md transition-transform active:scale-95"
+          title="Scan with Camera"
+        >
+          <Camera className="w-4 h-4" />
+          <span>Camera</span>
+        </Button>
       </div>
 
       <div className="space-y-3 mb-6 flex-1">

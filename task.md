@@ -276,10 +276,12 @@
   - 좌측 좌표계: 상단 통로/베이(14pt mono bold) + 하단 30pt 대형 단/빈(B01) 수직 스택으로 좁은 너비에서 가독성 극대화
   - 우측 25.5mm 2D QR 코드 컬럼: 상하 지그재그(Top ↔ Bottom) 및 미니 태그 일체형 유지
   - 우측 5.5mm Level 컬러 밴드: SVG 벡터 100% 보존
-- [x] 28.3 US Letter 3열 인쇄 엔진 구현:
-  - 100mm의 2열 출력 대비 65mm는 **3열 × 5행 그리드** 완벽 적용 (장당 10개 → **15개 출력**, 출력 효율 +50%)
-- [x] 28.4 Next.js Turbopack 프로덕션 빌드(`npm run build`), 브라우저 비주얼 검증 및 아키텍처 규칙 검증 통과 완료
-
-
-
-
+## 📷 Phase 29: mobile-app 스마트폰 내장 카메라 바코드/2D QR 스캐너 연동
+- [x] 29.1 `html5-qrcode` 기반 모바일 웹 전용 고성능 카메라 스캐너 컴포넌트(`CameraBarcodeScanner.tsx`) 구현:
+  - 2D QR 코드, Code 128, UPC/EAN 등 물류창고 바코드 멀티 포맷 지원
+  - 플래시/손전등(Torch) 토글 및 전면/후면 카메라 전환 지원
+  - 스캔 레이저 뷰파인더 애니메이션 및 스캔 시 사운드/진동 피드백(`feedback.normal()`) 연동
+- [x] 29.2 피킹 러너(`/picking/run`) 상단 헤더에 `Camera` 스캔 버튼 연동 (로케이션 QR 및 품목 바코드 연속 인식)
+- [x] 29.3 재고 실사 및 조회(`/inventory/lookup`) 메인 카드에 `Start Phone Camera Scan` 전면 배치 및 수동 입력 폴백 지원
+- [x] 29.4 로케이션 간 재고 이동(`/inventory/transfer`) 헤더에 `Camera` 스캔 버튼 연동 (출발지 로케이션 ➔ 품목 ➔ 도착지 로케이션 연속 스캔)
+- [x] 29.5 `mobile-app` ESLint(`npm run lint`) 및 Next.js Turbopack 프로덕션 빌드(`npm run build`) 무결점 통과 완료

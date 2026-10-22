@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +18,6 @@ function CycleCountInner() {
   
   const reqId = searchParams.get('reqId');
   const locId = searchParams.get('locId');
-  const paramItemId = searchParams.get('itemId');
 
   const [isLoading, setIsLoading] = useState(false);
 

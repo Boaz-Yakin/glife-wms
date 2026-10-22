@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getAllocatedOrders } from '@/services/picking.service';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const orders = await getAllocatedOrders();
     

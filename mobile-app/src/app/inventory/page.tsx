@@ -12,7 +12,7 @@ export default function InventoryHomePage() {
       <UrgentQueueBanner count={urgentCount} />
 
       {/* Today's Cycle Count Summary */}
-      <h2 className="text-lg font-bold mb-2">Today's Summary</h2>
+      <h2 className="text-lg font-bold mb-2">Today&apos;s Summary</h2>
       <div className="grid grid-cols-2 gap-3">
         <Card className="bg-zinc-900 border-zinc-800">
           <CardHeader className="p-4 pb-2">

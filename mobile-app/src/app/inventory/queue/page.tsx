@@ -23,25 +23,38 @@ export default function QueuePage() {
   const [activeTab, setActiveTab] = useState<QueueType>("URGENT");
   const [queue, setQueue] = useState<CycleCountRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshIndex, setRefreshIndex] = useState(0);
 
-  const fetchQueue = async () => {
+  const fetchQueue = () => {
     setIsLoading(true);
-    try {
-      const res = await fetch('/api/inventory/queue');
-      const data = await res.json();
-      if (data.success) {
-        setQueue(data.queue);
-      }
-    } catch (err) {
-      console.error('Failed to fetch queue', err);
-    } finally {
-      setIsLoading(false);
-    }
+    setRefreshIndex((prev) => prev + 1);
   };
 
   useEffect(() => {
-    fetchQueue();
-  }, []);
+    let ignore = false;
+
+    const loadQueue = async () => {
+      try {
+        const res = await fetch('/api/inventory/queue');
+        const data = await res.json();
+        if (!ignore && data.success) {
+          setQueue(data.queue);
+        }
+      } catch (err) {
+        console.error('Failed to fetch queue', err);
+      } finally {
+        if (!ignore) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadQueue();
+
+    return () => {
+      ignore = true;
+    };
+  }, [refreshIndex]);
 
   const urgentQueue = queue.filter(q => q.priority === 'URGENT');
   const normalQueue = queue.filter(q => q.priority === 'NORMAL');
