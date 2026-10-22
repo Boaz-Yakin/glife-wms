@@ -346,3 +346,13 @@
 - [x] 35.4 `web-app`, `mobile-app` 버전 `v0.1.1` 태깅 및 Git 메인 브랜치 푸시
 - [x] 35.5 Vercel 프로덕션 배포 완료 (`web-app`: https://glife-web-app.vercel.app, `mobile-app`: https://glife-mobile-app.vercel.app)
 
+---
+
+## 🎯 Phase 36: 이동(Transfer) 후 잔여 0 재고 슬롯 필터링 및 화주사(`client_id`) 일관성 보정 (v0.1.3 배포)
+- [x] 36.1 `web-app` 재고 현황(`Inventory Status`): 이동 후 잔여 수량이 0인 슬롯(`on_hand_qty = 0 && allocated_qty = 0`)이 테이블에 노출되지 않도록 실재고 보유 조건(`on_hand_qty > 0 || allocated_qty > 0`) 필터링 적용
+- [x] 36.2 `mobile-app` 로케이션 및 품목 조회(`lookupByLocation`, `lookupByItem`): 이동 완료로 빈 랙 슬롯이 조회되지 않도록 실재고 보유 조건 추가
+- [x] 36.3 `mobile-app` 적치 및 이동 시 상품의 `client_id` 원자적 전파 및 누락 방지 처리
+- [x] 36.4 DB 내 `client_id` 미지정 잔여 레코드 보정 완료
+- [x] 36.5 `web-app`, `mobile-app` v0.1.3 태깅 및 Vercel 프로덕션 배포 완료
+
+
