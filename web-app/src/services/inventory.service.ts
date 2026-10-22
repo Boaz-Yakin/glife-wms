@@ -28,6 +28,9 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
     query = query.or(`client_id.eq.${activeClientId},client_id.is.null`)
   }
 
+  // Only display active inventory slots (on-hand > 0 or allocated > 0)
+  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0')
+
   if (zone && zone !== 'ALL') {
     query = query.eq('location.zone_type', zone)
   }

@@ -171,7 +171,7 @@ export async function lookupByLocation(
     return null;
   }
 
-  // 2. Find inventory rows for this location
+  // 2. Find inventory rows for this location (only active stock)
   const { data: invRows, error: invErr } = await supabase
     .from('inventory')
     .select(`
@@ -181,7 +181,8 @@ export async function lookupByLocation(
       allocated_qty,
       items:item_id ( id, sku, name_en, upc, uom, category )
     `)
-    .eq('location_id', loc.id);
+    .eq('location_id', loc.id)
+    .or('on_hand_qty.gt.0,allocated_qty.gt.0');
 
   if (invErr) {
     console.error('Error fetching inventory for location:', invErr);
@@ -226,7 +227,7 @@ export async function lookupByItem(
     return null;
   }
 
-  // 2. Find inventory locations storing this item
+  // 2. Find inventory locations storing this item (only active stock)
   const { data: invRows, error: invErr } = await supabase
     .from('inventory')
     .select(`
@@ -236,7 +237,8 @@ export async function lookupByItem(
       allocated_qty,
       locations:location_id ( id, code, zone_type )
     `)
-    .eq('item_id', it.id);
+    .eq('item_id', it.id)
+    .or('on_hand_qty.gt.0,allocated_qty.gt.0');
 
   if (invErr) {
     console.error('Error fetching locations for item:', invErr);
