@@ -285,3 +285,10 @@
 - [x] 29.3 재고 실사 및 조회(`/inventory/lookup`) 메인 카드에 `Start Phone Camera Scan` 전면 배치 및 수동 입력 폴백 지원
 - [x] 29.4 로케이션 간 재고 이동(`/inventory/transfer`) 헤더에 `Camera` 스캔 버튼 연동 (출발지 로케이션 ➔ 품목 ➔ 도착지 로케이션 연속 스캔)
 - [x] 29.5 `mobile-app` ESLint(`npm run lint`) 및 Next.js Turbopack 프로덕션 빌드(`npm run build`) 무결점 통과 완료
+
+---
+
+## 🔢 Phase 30: mobile-app Lookup 및 Queue 실사(Count) 진입 버튼 보강
+- [x] 30.1 `(inventory)/lookup/page.tsx`: 바코드 스캔 결과 카드에 스캔 대상(`locId` / `itemId`) 기반 `Start Count` 버튼 추가 및 최하단 직접 실사 바로가기 버튼 배치
+- [x] 30.2 `(inventory)/queue/page.tsx`: 상단 탭 우측에 `+ Start Count` 고정 버튼 추가 및 대기열 공백 시 직관적인 `Start Direct Count` 액션 카드 표시
+- [x] 30.3 TypeScript 정적 타입 검증(`tsc --noEmit`), 프로덕션 빌드 통과 및 Vercel 프로덕션 배포 완료
