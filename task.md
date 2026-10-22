@@ -222,4 +222,14 @@
 - [x] 23.4 DB 등록 로케이션 일괄 불러오기(`initialDbCodes`), 4단 컬러 밴드 샘플, Zone A/F 원클릭 프리셋 지원
 - [x] 23.5 TypeScript 정적 검증, Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## 📱 Phase 24: web-app 선반 랙 2D QR 코드 라벨 시스템 및 영문화 통합
+- [x] 24.1 `qrcode.react` 라이브러리 도입 및 고해상도 벡터 SVG(`QRCodeSVG`) 기반 2D QR 코드 라벨 렌더링 구현
+- [x] 24.2 라벨 심볼로지 선택 기능 구현 (`symbology: "qr" | "barcode"`, 기본값: `qr` 2D QR 코드)
+- [x] 24.3 100mm × 45mm 실물 규격 최적화: 좌측 휴먼 리더블 좌표계(구역/통로/베이/단/빈 44pt 시각적 계층화) + 우측 34mm 고정밀 정방형 QR 코드 + 우측 7.5mm 단별 컬러 밴드(초록/골드/파랑/보라) 배치
+- [x] 24.4 브라우저 인쇄 미리보기에서 배경 그래픽 옵션 해제 시에도 컬러 밴드가 인쇄되도록 SVG `<rect>` 벡터 처리
+- [x] 24.5 프로젝트 전역 언어 영문화(English Unified) 원칙 적용 및 US Letter(8.5" × 11") 10라벨/시트 절단선 가이드 통합
+- [x] 24.6 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
 
