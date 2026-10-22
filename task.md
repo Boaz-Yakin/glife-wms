@@ -244,4 +244,14 @@
 - [x] 25.3 QR 코드 정렬 모드 컨트롤러 구현 (`⚡ Zig-Zag (Staggered)`, `➡️ All Right`, `⬅️ All Left`)
 - [x] 25.4 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## ↕ Phase 26: 선반 랙 2D QR 코드 상하 지그재그(Vertical Top ↔ Bottom) 교차 배치 구현
+- [x] 26.1 상하 지그재그(Vertical Zig-Zag) 레이아웃 엔진 구현:
+  - **Level A / C (홀수단)**: QR 코드를 **상단(TOP)**에 고정(24mm 벡터 QR) + 하단에 녹색 계열 간이 로케이션 태그(`01-05-A` + `▲ TOP QR`) 배치, 좌측 좌표계 하단 집중
+  - **Level B / D (짝수단)**: 상단에 황색 계열 간이 로케이션 태그(`01-05-B` + `▼ BTM QR`) + QR 코드를 **하단(BOTTOM)**에 고정, 좌측 좌표계 상단 집중
+- [x] 26.2 가로 선반 빔(Shelf Rack Beam) 라벨 연속 부착 시 수평 스캐너 레이저/카메라 오스캔(Crossfire) 완전 차단
+- [x] 26.3 다채널 정렬 모드 컨트롤러 확장 (`↕ Top ↔ Bottom (Vertical Zig-Zag • 기본값)`, `↔ Left ↔ Right (Horizontal)`, `⤡ Diagonal (Corner)`)
+- [x] 26.4 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
 

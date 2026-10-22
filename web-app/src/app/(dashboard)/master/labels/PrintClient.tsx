@@ -11,7 +11,7 @@ import { QRCodeSVG } from "qrcode.react"
 
 export type PaperSize = "letter" | "rack-label" | "compact-label" | "a4"
 export type LabelSymbology = "qr" | "barcode"
-export type QrPlacement = "staggered" | "right" | "left"
+export type QrPlacement = "vertical" | "horizontal" | "diagonal" | "fixed-right" | "fixed-left"
 
 // ─────────────────────────────────────────────────────────────
 // Official Level Physical Color Band Specifications
@@ -220,13 +220,13 @@ function parseLocationCode(code: string): ParsedLocation | null {
 
 // ─────────────────────────────────────────────────────────────
 // Shelf Rack Physical Label Component (100mm × 45mm / 4" × 1.8")
-// Supports Staggered / Zig-Zag QR code positioning to prevent cross-scans
+// Supports Vertical (Top ↔ Bottom) and Horizontal (Left ↔ Right) Zig-Zag
 // ─────────────────────────────────────────────────────────────
 function ShelfRackLabelCard({
   code,
   showCutLines = true,
   symbology = "qr",
-  qrPlacement = "staggered",
+  qrPlacement = "vertical",
   index = 0,
 }: {
   code: string
@@ -237,13 +237,29 @@ function ShelfRackLabelCard({
 }) {
   const loc = parseLocationCode(code)
 
-  // Staggered / Zig-Zag logic:
-  // Level A & C -> QR on RIGHT (Level letter on Left)
-  // Level B & D -> QR on LEFT (Level letter on Right)
+  // Level A & C are considered "Odd" (1st, 3rd)
+  // Level B & D are considered "Even" (2nd, 4th)
+  const isOdd = loc ? loc.level === "A" || loc.level === "C" : index % 2 === 0
+
+  // 1. Vertical shift: is QR placed on the TOP (vs BOTTOM)?
+  const isQrTop =
+    qrPlacement === "vertical"
+      ? isOdd // A/C = TOP, B/D = BOTTOM
+      : qrPlacement === "diagonal"
+      ? isOdd // A/C = TOP, B/D = BOTTOM
+      : false // In horizontal or fixed mode, QR takes full height
+
+  // 2. Horizontal shift: is QR placed on the LEFT (vs RIGHT)?
   const isQrLeft =
-    qrPlacement === "left" ||
-    (qrPlacement === "staggered" &&
-      (loc ? loc.level === "B" || loc.level === "D" : index % 2 === 1))
+    qrPlacement === "fixed-left"
+      ? true
+      : qrPlacement === "fixed-right"
+      ? false
+      : qrPlacement === "horizontal"
+      ? !isOdd // Level B & D on Left, A & C on Right
+      : qrPlacement === "diagonal"
+      ? !isOdd // Level B & D on Bottom-Left, A & C on Top-Right
+      : false // In vertical zig-zag, QR stays on Right column, jumping TOP ↕ BOTTOM
 
   // Standard Product SKU Fallback
   if (!loc) {
@@ -351,8 +367,59 @@ function ShelfRackLabelCard({
   }
 
   // ─── 2D QR Code Layout Blocks ───
-  // High-DPI Vector QR Box with Short Location Code underneath (e.g. 01-05-A)
-  const qrBox = (
+  // A. Vertical Zig-Zag Mode (Top vs Bottom shift)
+  const isVerticalMode = qrPlacement === "vertical" || qrPlacement === "diagonal"
+
+  const qrVerticalColumn = (
+    <div className="w-[34mm] h-[40.5mm] flex flex-col justify-between shrink-0">
+      {isQrTop ? (
+        /* Top QR Mode (Level A, Level C) */
+        <>
+          <div className="w-[34mm] h-[26.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <QRCodeSVG
+              value={loc.raw}
+              size={88}
+              level="M"
+              marginSize={1}
+              className="w-auto h-[23.5mm] block [shape-rendering:crispEdges]"
+            />
+          </div>
+          <div className="w-[34mm] h-[12.5mm] flex flex-col items-center justify-center shrink-0 border border-emerald-300 rounded px-1 py-0.5 bg-emerald-50/70">
+            <span className="text-[10px] font-mono font-black text-emerald-950 tracking-wider leading-none">
+              {loc.shortLocation}
+            </span>
+            <span className="text-[7.5px] font-bold text-emerald-700 bg-white border border-emerald-200 rounded px-1.5 py-0.2 mt-0.5 uppercase tracking-wider leading-none">
+              ▲ TOP QR
+            </span>
+          </div>
+        </>
+      ) : (
+        /* Bottom QR Mode (Level B, Level D) */
+        <>
+          <div className="w-[34mm] h-[12.5mm] flex flex-col items-center justify-center shrink-0 border border-amber-300 rounded px-1 py-0.5 bg-amber-50/70">
+            <span className="text-[7.5px] font-bold text-amber-800 bg-white border border-amber-200 rounded px-1.5 py-0.2 mb-0.5 uppercase tracking-wider leading-none">
+              ▼ BTM QR
+            </span>
+            <span className="text-[10px] font-mono font-black text-amber-950 tracking-wider leading-none">
+              {loc.shortLocation}
+            </span>
+          </div>
+          <div className="w-[34mm] h-[26.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+            <QRCodeSVG
+              value={loc.raw}
+              size={88}
+              level="M"
+              marginSize={1}
+              className="w-auto h-[23.5mm] block [shape-rendering:crispEdges]"
+            />
+          </div>
+        </>
+      )}
+    </div>
+  )
+
+  // B. Standard / Horizontal Full-Height QR Box
+  const qrFullHeightColumn = (
     <div className="w-[34mm] h-[39.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
       <QRCodeSVG
         value={loc.raw}
@@ -367,7 +434,7 @@ function ShelfRackLabelCard({
     </div>
   )
 
-  // Human-Readable Coordinates Block (Aisle/Bay + 38~44pt Level/Bin + Badges)
+  // Coordinates Column (Aisle/Bay + 38~44pt Level/Bin + Badges)
   const coordsBox = (
     <div className="flex-1 h-full flex flex-col justify-between overflow-hidden">
       {/* Top: Zone & Level Badges */}
@@ -440,6 +507,8 @@ function ShelfRackLabelCard({
     </div>
   )
 
+  const activeQrColumn = isVerticalMode ? qrVerticalColumn : qrFullHeightColumn
+
   return (
     <div
       className={`shelf-rack-label-card relative bg-white text-zinc-950 ${
@@ -489,17 +558,17 @@ function ShelfRackLabelCard({
 
       {/* Internal Label Content Area (Uses 92.5mm width) */}
       {symbology === "qr" ? (
-        /* ─── 2D QR Code Staggered / Zig-Zag Industrial Layout ─── */
+        /* ─── 2D QR Code Zig-Zag Industrial Layout ─── */
         <div className="w-[92.5mm] h-full pl-[3.5mm] pr-[2.5mm] py-[2.2mm] box-border flex items-center justify-between gap-2.5">
           {isQrLeft ? (
             <>
-              {qrBox}
+              {activeQrColumn}
               {coordsBox}
             </>
           ) : (
             <>
               {coordsBox}
-              {qrBox}
+              {activeQrColumn}
             </>
           )}
         </div>
@@ -597,7 +666,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
   const [codesInput, setCodesInput] = React.useState(FOUR_LEVEL_PREVIEW_CODES)
   const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
   const [symbology, setSymbology] = React.useState<LabelSymbology>("qr")
-  const [qrPlacement, setQrPlacement] = React.useState<QrPlacement>("staggered")
+  const [qrPlacement, setQrPlacement] = React.useState<QrPlacement>("vertical")
   const [showCutLines, setShowCutLines] = React.useState(true)
 
   const codes = codesInput.split("\n").map((c) => c.trim()).filter(Boolean)
@@ -831,52 +900,59 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               </div>
             </div>
 
-            {/* QR Placement Mode (Zig-Zag vs Fixed) */}
+            {/* QR Placement Mode (Vertical Top/Bottom vs Horizontal vs Diagonal) */}
             {symbology === "qr" && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label className="text-xs font-semibold">QR Code Alignment (Anti-Crossfire)</Label>
                   <span className="text-[10px] text-primary font-semibold">
-                    {qrPlacement === "staggered" ? "⚡ Zig-Zag Active" : "Fixed"}
+                    {qrPlacement === "vertical"
+                      ? "↕ Top ↔ Bottom (Active)"
+                      : qrPlacement === "horizontal"
+                      ? "↔ Left ↔ Right (Active)"
+                      : qrPlacement === "diagonal"
+                      ? "⤡ Diagonal (Active)"
+                      : "Fixed"}
                   </span>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => setQrPlacement("staggered")}
-                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "staggered"
+                    onClick={() => setQrPlacement("vertical")}
+                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "vertical"
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border"
                     }`}
                   >
-                    <span>⚡ Zig-Zag</span>
+                    <span>↕ Top ↔ Bottom</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setQrPlacement("right")}
-                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "right"
+                    onClick={() => setQrPlacement("horizontal")}
+                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "horizontal"
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border"
                     }`}
                   >
-                    <span>➡️ All Right</span>
+                    <span>↔ Left ↔ Right</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setQrPlacement("left")}
-                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "left"
+                    onClick={() => setQrPlacement("diagonal")}
+                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "diagonal"
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
                         : "bg-muted/40 hover:bg-muted text-foreground border-border"
                     }`}
                   >
-                    <span>⬅️ All Left</span>
+                    <span>⤡ Diagonal</span>
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-normal">
-                  • <strong>⚡ Zig-Zag (Staggered)</strong>: Alternates QR codes (Level A Right ↔ Level B Left ↔ Level C Right ↔ Level D Left) to prevent scanner cross-reading when mounted adjacently on rack uprights or beams.
+                  • <strong>↕ Top ↔ Bottom (Vertical Zig-Zag)</strong>: Staggers QR codes between Upper (Level A/C) and Lower (Level B/D) positions. Eliminates horizontal scanner cross-reading when labels are mounted side-by-side along shelf beams.<br />
+                  • <strong>↔ Left ↔ Right</strong>: Alternates between Right and Left for vertical rack posts.
                 </p>
               </div>
             )}
