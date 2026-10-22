@@ -386,7 +386,7 @@ function ShelfRackLabelCard({
 // ─────────────────────────────────────────────────────────────
 export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[] }) {
   const [codesInput, setCodesInput] = React.useState(FOUR_LEVEL_PREVIEW_CODES)
-  const [paperSize, setPaperSize] = React.useState<PaperSize>("rack-label")
+  const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
   const [showCutLines, setShowCutLines] = React.useState(true)
 
   const codes = codesInput.split("\n").map((c) => c.trim()).filter(Boolean)
@@ -403,20 +403,26 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
 
   return (
     <div className="space-y-8">
-      {/* Dynamic Print Stylesheet */}
+      {/* Dynamic Print Stylesheet (US Letter 8.5" x 11" Optimized) */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
           @page {
             size: ${
-              paperSize === "rack-label"
+              paperSize === "letter"
+                ? "letter portrait"
+                : paperSize === "rack-label"
                 ? "100mm 45mm"
                 : paperSize === "compact-label"
                 ? "50mm 30mm"
-                : paperSize === "a4"
-                ? "a4 portrait"
-                : "letter portrait"
+                : "a4 portrait"
             };
-            margin: ${paperSize.includes("label") ? "0" : paperSize === "a4" ? "8mm 5mm" : "0.3in 0.2in"};
+            margin: ${
+              paperSize === "letter"
+                ? "18mm 7mm 15mm 7mm"
+                : paperSize.includes("label")
+                ? "0"
+                : "8mm 5mm"
+            };
           }
           html, body {
             background-color: #ffffff !important;
@@ -460,7 +466,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             .rack-print-container {
               display: grid !important;
               grid-template-columns: repeat(2, 100mm) !important;
-              gap: 3mm 5mm !important;
+              gap: 3mm 4mm !important;
               justify-content: center !important;
             }
           `
@@ -590,17 +596,17 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                   <SelectValue placeholder="용지 규격 선택" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rack-label">
-                    🏷️ 랙 전용 롤 라벨 (100mm × 45mm / 1장씩 연속 출력)
-                  </SelectItem>
-                  <SelectItem value="a4">
-                    📄 A4 용지 (210 × 297mm / 2열 10매 배치)
-                  </SelectItem>
                   <SelectItem value="letter">
-                    📄 Letter 용지 (8.5" × 11" / 2열 10매 배치)
+                    📄 US Letter (8.5" × 11" / 북미 표준 2열 10매 배치)
+                  </SelectItem>
+                  <SelectItem value="rack-label">
+                    🏷️ 4" × 2" (100×45mm) 랙 전용 롤 라벨 (1장씩 연속 출력)
                   </SelectItem>
                   <SelectItem value="compact-label">
-                    🏷️ 소형 롤 라벨 (50mm × 30mm)
+                    🏷️ 소형 롤 라벨 (2" × 1.2" / 50×30mm)
+                  </SelectItem>
+                  <SelectItem value="a4">
+                    📄 A4 용지 (210 × 297mm)
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -620,8 +626,8 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </button>
               </div>
               <p className="text-[11px] text-muted-foreground leading-normal">
-                • <strong>A4 / Letter</strong> 출력 시 가위/재단기용 점선 테두리를 켜두세요.<br />
-                • <strong>100×45mm 다이컷 롤 라벨지</strong> 출력 시 테두리를 끄면 여백 없이 깔끔하게 출력됩니다.
+                • <strong>US Letter (8.5" × 11")</strong> 출력 시 가위/재단기용 점선 테두리를 켜두세요 (1장당 10매 배치).<br />
+                • <strong>4" × 2" (100×45mm) 롤 라벨지</strong> 출력 시 테두리를 끄면 다이컷 경계에 맞춰 여백 없이 깔끔하게 출력됩니다.
               </p>
             </div>
           </div>
