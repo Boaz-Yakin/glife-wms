@@ -265,5 +265,21 @@
 - [x] 27.3 라벨 높이 선택 UI(`CardHeight`: `30mm Compact • Default`, `35mm Medium`, `45mm Full Size`) 및 US Letter 시트 인쇄 효율 60% 향상 (장당 10개 → **16개 출력**)
 - [x] 27.4 Next.js Turbopack 프로덕션 빌드(`npm run build`), 브라우저 비주얼 검증 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## 📏 Phase 28: 바코드/QR 라벨 카드 가로 길이 컴팩트(Compact Width 65mm / 60mm) 최적화
+- [x] 28.1 랙 빔 공간 절약형 컴팩트 가로 너비 구현:
+  - 세로 길이는 안정적인 가독성을 위해 표준 `45mm` 유지
+  - 가로 너비를 기존 100mm(4")에서 **`65mm Compact Width (2.5")` 기본값**으로 전면 최적화
+  - 가로 너비 동적 선택기(`CardWidth`: `60mm Slim`, `65mm Compact • 기본값`, `75mm Medium`, `100mm Full Width`) 구현
+- [x] 28.2 65mm 컴팩트 너비 내 시각 요소 정밀 압축:
+  - 좌측 좌표계: 상단 통로/베이(14pt mono bold) + 하단 30pt 대형 단/빈(B01) 수직 스택으로 좁은 너비에서 가독성 극대화
+  - 우측 25.5mm 2D QR 코드 컬럼: 상하 지그재그(Top ↔ Bottom) 및 미니 태그 일체형 유지
+  - 우측 5.5mm Level 컬러 밴드: SVG 벡터 100% 보존
+- [x] 28.3 US Letter 3열 인쇄 엔진 구현:
+  - 100mm의 2열 출력 대비 65mm는 **3열 × 5행 그리드** 완벽 적용 (장당 10개 → **15개 출력**, 출력 효율 +50%)
+- [x] 28.4 Next.js Turbopack 프로덕션 빌드(`npm run build`), 브라우저 비주얼 검증 및 아키텍처 규칙 검증 통과 완료
+
+
 
 
