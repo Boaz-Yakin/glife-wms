@@ -373,9 +373,9 @@ function PickingRunInner() {
 
       {/* ── COMMAND HINTS ── */}
       <div className="flex gap-2 px-4 pb-3 shrink-0 text-[10px] font-bold text-zinc-600">
-        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-SKIP → 결품</span>
-        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-UNDO → 취소</span>
-        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-DONE → 마감</span>
+        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-SKIP → Skip / Out of Stock</span>
+        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-UNDO → Undo</span>
+        <span className="bg-zinc-900 px-2 py-1 rounded">CMD-DONE → Finish Order</span>
       </div>
 
       {/* ── FOOTER PEEK LIST ── */}

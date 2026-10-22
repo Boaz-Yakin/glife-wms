@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Glife WMS",
-  description: "현장 작업자용 모바일 재고관리 및 피킹 시스템",
+  description: "Mobile Warehouse Inventory Management & High-Speed Picking System",
   manifest: "/manifest.json",
 };
 
@@ -26,7 +26,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="ko"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

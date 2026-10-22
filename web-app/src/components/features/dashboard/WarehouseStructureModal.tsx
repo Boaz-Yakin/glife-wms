@@ -170,7 +170,7 @@ export function WarehouseStructureModal({
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Aisles (통로)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Aisles</Label>
                   <Input
                     type="number"
                     min={1}
@@ -187,7 +187,7 @@ export function WarehouseStructureModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Bays (베이/열)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Bays</Label>
                   <Input
                     type="number"
                     min={1}
@@ -204,7 +204,7 @@ export function WarehouseStructureModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Levels (단/층)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Tiers (Levels)</Label>
                   <Input
                     type="number"
                     min={1}
@@ -219,12 +219,12 @@ export function WarehouseStructureModal({
                     className="h-8 text-xs font-mono"
                   />
                   <span className="text-[9px] text-muted-foreground block">
-                    {config.zoneA.levels === 3 ? "A, B, C (3층)" : `${config.zoneA.levels}단`}
+                    {config.zoneA.levels === 3 ? "A, B, C (3 Tiers)" : `${config.zoneA.levels} Tiers`}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Bins / Level (칸)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Bins / Tier</Label>
                   <Input
                     type="number"
                     min={1}
@@ -258,7 +258,7 @@ export function WarehouseStructureModal({
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Aisles (통로)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Aisles</Label>
                   <Input
                     type="number"
                     min={1}
@@ -275,7 +275,7 @@ export function WarehouseStructureModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Bays (베이/열)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Bays</Label>
                   <Input
                     type="number"
                     min={1}
@@ -292,7 +292,7 @@ export function WarehouseStructureModal({
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Levels (단/층)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Tiers (Levels)</Label>
                   <Input
                     type="number"
                     min={1}
@@ -307,12 +307,12 @@ export function WarehouseStructureModal({
                     className="h-8 text-xs font-mono"
                   />
                   <span className="text-[9px] text-muted-foreground block">
-                    {config.zoneF.levels === 3 ? "A, B, C (3층)" : `${config.zoneF.levels}단`}
+                    {config.zoneF.levels === 3 ? "A, B, C (3 Tiers)" : `${config.zoneF.levels} Tiers`}
                   </span>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-[11px] text-muted-foreground">Bins / Level (칸)</Label>
+                  <Label className="text-[11px] text-muted-foreground">Bins / Tier</Label>
                   <Input
                     type="number"
                     min={1}
