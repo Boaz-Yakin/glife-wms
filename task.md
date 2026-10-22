@@ -336,3 +336,13 @@
 - [x] 34.4 `(inventory)/put-away/page.tsx` 모바일 현장 입고/초기적치 화면 구현 (로케이션 스캔 ➔ 상품 스캔 ➔ 수량 넘버패드 ➔ 즉시 원장 반영, 오디오/진동 피드백 및 연속 적치 지원)
 - [x] 34.5 `(inventory)/layout.tsx` 하단 5대 네비게이션 탭(`Put-away`), 재고 메인 홈 CTA 배너, `/inventory/lookup` 빈 랙 원클릭 연동 배치
 - [x] 34.6 TypeScript 정적 타입 검증, Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
+
+---
+
+## 🚀 Phase 35: 카메라 바코드 스캔 확인성 강화, RLS 예외 보정, 목데이터 원장 초기화 및 v0.1.1 프로덕션 배포
+- [x] 35.1 `CameraBarcodeScanner` 시각적 확정 피드백 강화: 초록색 록온 타겟팅 사각 프레임, 650ms 딜레이 프로그레스 바, 디코딩 코드 프리뷰 뱃지, 오디오/햅틱 피드백 적용
+- [x] 35.2 `mobile-app` Put-away 단계별 UUID 파싱 및 Supabase RLS 권한 수정: `createAdminClient`를 통한 재고 원장(`inventory`) 및 감사 로그(`inventory_adjustments`) 안전 트랜잭션 기록
+- [x] 35.3 DB 시드/목데이터 101개 전량 삭제(`public.inventory` 0건 초기화): `web-app` 로케이션 마스터(56개 랙 전체 `Empty Slot (0 units)`) 및 재고 현황판 클린 상태 전환
+- [x] 35.4 `web-app`, `mobile-app` 버전 `v0.1.1` 태깅 및 Git 메인 브랜치 푸시
+- [x] 35.5 Vercel 프로덕션 배포 완료 (`web-app`: https://glife-web-app.vercel.app, `mobile-app`: https://glife-mobile-app.vercel.app)
+
