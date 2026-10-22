@@ -209,7 +209,7 @@
 - [x] 22.1 `docs/web-app/03_TRD.md` §6.6 주문 상태 변경(Order Status Update) 설계 반영 (지원 상태: `PENDING`, `PICKING`, `PACKED`, `INVOICED`, `SHIPPED`, `CANCELED`)
 - [x] 22.2 `services/orders.service.ts`: `updateOrderStatus(orderId, status)` 단독 상태 변경 서비스 구현 및 `updateOrder(payload)`에 `status` 헤더 갱신 지원 추가 (DB 제약조건 및 유효 상태 검증)
 - [x] 22.3 `(dashboard)/orders/actions.ts`: `updateOrderStatusAction(orderId, status)` Server Action 추가 (`/orders`, `/dashboard` 캐시 재검증 포함)
-- [x] 22.4 `OrdersTable.tsx`: 테이블의 Status 컬럼에 인라인 `<Select>` 드롭다운 컴포넌트(`OrderStatusCell`) 연동 (상태 즉시 변경, 로딩 스피너 및 sonner 토스트 피드백)
-- [x] 22.5 `OrderDetailsDialog.tsx`: 다이얼로그 헤더의 기존 정적 뱃지를 상태 선택 `<Select>` 드롭다운으로 교체, `isStatusChanged` 감지 및 `isDirty` / `Save Changes` 통합 저장 연동
+- [x] 22.4 `OrdersTable.tsx`: 테이블의 Status 컬럼은 고정된 뱃지(Read-Only)로 명확히 표시하여 실수 방지 및 안정성 확보
+- [x] 22.5 `OrderDetailsDialog.tsx`: 다이얼로그 헤더의 기존 정적 뱃지를 상태 선택 `<Select>` 드롭다운으로 교체, `isStatusChanged` 감지 시 `Modified` 표시 및 `isDirty` / `Save Changes` 통합 저장 연동
 - [x] 22.6 TypeScript 정적 검증, Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 

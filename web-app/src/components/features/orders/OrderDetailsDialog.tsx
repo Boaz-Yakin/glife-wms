@@ -484,19 +484,30 @@ export function OrderDetailsDialog({
             </span>
             <div className="ml-auto flex items-center gap-2">
               <span className="text-xs text-muted-foreground font-medium">Status:</span>
+              {isStatusChanged && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                  Modified
+                </Badge>
+              )}
               <Select
                 value={selectedStatus}
                 onValueChange={(val) => {
                   if (val) setSelectedStatus(val)
                 }}
               >
-                <SelectTrigger className="h-7 w-[130px] text-xs font-semibold">
-                  <SelectValue />
+                <SelectTrigger className="h-7 min-w-[125px] text-xs font-semibold gap-1.5 bg-background">
+                  <Badge variant={statusBadgeVariants[selectedStatus] || "secondary"} className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                    {selectedStatus}
+                  </Badge>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="end">
                   {AVAILABLE_STATUSES.map((st) => (
                     <SelectItem key={st} value={st} className="text-xs font-medium">
-                      {st}
+                      <div className="flex items-center gap-2">
+                        <Badge variant={statusBadgeVariants[st] || "secondary"} className="text-[10px] px-1.5 py-0 h-4 font-semibold">
+                          {st}
+                        </Badge>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -124,6 +124,6 @@ src/
   - `orders.service.ts#updateOrderStatus(orderId: string, status: string)`: `orders.status` 갱신 및 `updated_at` 타임스탬프 업데이트.
   - `orders.service.ts#updateOrder`: `UpdateOrderPayload.status` 지원으로 `OrderDetailsDialog`에서 다른 필드와 일괄 저장 가능.
   - `orders/actions.ts#updateOrderStatusAction(orderId: string, status: string)`: 전용 Server Action 제공 및 `revalidatePath('/orders')`, `revalidatePath('/dashboard')` 수행.
-- **UI 제공 위치**:
-  1. `OrdersTable`: 테이블 행의 Status 컬럼에 인라인 `Select` 드롭다운을 적용하여, 목록에서 별도의 다이얼로그 진입 없이 즉시 상태를 변경하고 토스트 알림을 제공.
-  2. `OrderDetailsDialog`: 상단 헤더의 Status 뱃지 영역을 `Select` 드롭다운으로 연동하여 상세 내역 확인 중에도 상태를 수정할 수 있도록 지원.
+- **UI 제공 위치 및 정책**:
+  1. `OrdersTable`: 테이블 행의 Status 컬럼은 고정된 뱃지(Read-Only)로 표시하여 실수로 인한 오작동을 방지하고 명확한 가독성을 유지.
+  2. `OrderDetailsDialog`: 주문 상세 다이얼로그(DETAILS)의 상단 헤더에 Status 선택 드롭다운을 제공하여 주문 상태를 안전하게 확인하고 수정할 수 있도록 지원 (`isDirty` 감지 및 `Save Changes` 통합 반영).
