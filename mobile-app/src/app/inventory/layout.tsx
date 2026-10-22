@@ -69,22 +69,26 @@ export default function InventoryLayout({ children }: { children: ReactNode }) {
 
       {/* Bottom Navigation Tabs */}
       {!isCountPage && (
-        <nav className="fixed bottom-0 w-full h-[80px] bg-zinc-950 border-t border-zinc-800 flex items-center justify-around z-50">
+        <nav className="fixed bottom-0 w-full h-[76px] bg-zinc-950 border-t border-zinc-800 flex items-center justify-around z-50">
           <Link href="/inventory" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
-            <span className="text-2xl mb-1">🏠</span>
-            <span className="text-xs font-medium">Home</span>
+            <span className="text-xl mb-0.5">🏠</span>
+            <span className="text-[11px] font-medium">Home</span>
           </Link>
           <Link href="/inventory/lookup" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
-            <span className="text-2xl mb-1">🔍</span>
-            <span className="text-xs font-medium">Lookup</span>
+            <span className="text-xl mb-0.5">🔍</span>
+            <span className="text-[11px] font-medium">Lookup</span>
           </Link>
-          <Link href="/inventory/queue" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
-            <span className="text-2xl mb-1">📋</span>
-            <span className="text-xs font-medium">Queue</span>
+          <Link href="/inventory/put-away" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
+            <span className="text-xl mb-0.5">📥</span>
+            <span className="text-[11px] font-medium">Put-away</span>
           </Link>
           <Link href="/inventory/transfer" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
-            <span className="text-2xl mb-1">🔄</span>
-            <span className="text-xs font-medium">Transfer</span>
+            <span className="text-xl mb-0.5">🔄</span>
+            <span className="text-[11px] font-medium">Transfer</span>
+          </Link>
+          <Link href="/inventory/queue" className="flex flex-col items-center justify-center w-full h-full text-zinc-400 hover:text-emerald-500 active:text-emerald-400">
+            <span className="text-xl mb-0.5">📋</span>
+            <span className="text-[11px] font-medium">Queue</span>
           </Link>
         </nav>
       )}

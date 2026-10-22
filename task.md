@@ -329,9 +329,10 @@
 
 ---
 
-## 📥 Phase 34: mobile-app 간이 입고 적치 모듈 (F-10 Put-away)
-- [ ] 34.1 `docs/mobile-app/03_TRD.md`에 TRD-003 간이 입고 적치(Put-away) 상세 설계 작성 (Design-First 원칙 준수)
-- [ ] 34.2 `services/inventory.service.ts`에 입고 대기 SKU 조회 및 기본 로케이션(`items.default_location_id`) 안내 로직 구현
-- [ ] 34.3 `(inventory)/put-away/page.tsx` 모바일 입고 적치 화면 구현 (상품 바코드 스캔 ➔ 추천 로케이션 시각 안내 ➔ 로케이션 QR 확인 스캔 ➔ 수량 입력 후 재고 원장 반영)
-- [ ] 34.4 `(inventory)/layout.tsx` 네비게이션 또는 재고 메인 홈에 Put-away 진입점 배치
-- [ ] 34.5 TypeScript 정적 타입 검증, Next.js Turbopack 빌드 및 아키텍처 규칙 검증 통과
+## 📥 Phase 34: mobile-app 간이 입고 적치 및 초기 재고 설정 모듈 (F-10 Put-away & Initial Stock In)
+- [x] 34.1 `docs/mobile-app/03_TRD.md`에 TRD-003 간이 입고 적치 및 초기 재고 설정 상세 설계 작성 (Design-First 원칙 준수)
+- [x] 34.2 `services/inventory.service.ts`에 `putAwayStock` 원자적 신규 등록/가산 로직 및 감사 로그(`inventory_adjustments`) 연동 구현
+- [x] 34.3 `app/api/inventory/put-away/route.ts` API Route Handler 생성 (`POST /api/inventory/put-away`, `requireWorker(INSPECTOR_ROLES)` 세션 검증)
+- [x] 34.4 `(inventory)/put-away/page.tsx` 모바일 현장 입고/초기적치 화면 구현 (로케이션 스캔 ➔ 상품 스캔 ➔ 수량 넘버패드 ➔ 즉시 원장 반영, 오디오/진동 피드백 및 연속 적치 지원)
+- [x] 34.5 `(inventory)/layout.tsx` 하단 5대 네비게이션 탭(`Put-away`), 재고 메인 홈 CTA 배너, `/inventory/lookup` 빈 랙 원클릭 연동 배치
+- [x] 34.6 TypeScript 정적 타입 검증, Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과

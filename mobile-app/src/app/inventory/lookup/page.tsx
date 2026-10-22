@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Camera, QrCode, MapPin, Package, AlertCircle, ClipboardCheck, Loader2, ArrowRight } from "lucide-react";
+import { Camera, QrCode, MapPin, Package, AlertCircle, ClipboardCheck, Loader2, ArrowRight, PlusCircle } from "lucide-react";
 import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 import { feedback } from "@/lib/feedback";
 
@@ -224,8 +224,15 @@ export default function LookupPage() {
               </div>
 
               {lookupResult.items?.length === 0 ? (
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-6 text-center text-xs text-zinc-500">
-                  This location is currently empty (0 items).
+                <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-6 text-center space-y-3">
+                  <p className="text-xs text-zinc-500 font-medium">This location is currently empty (0 items).</p>
+                  <Link
+                    href={`/inventory/put-away?loc=${lookupResult.location.code}`}
+                    className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all active:scale-[0.98]"
+                  >
+                    <PlusCircle className="w-4 h-4" />
+                    <span>+ Put Away Items to this Rack</span>
+                  </Link>
                 </div>
               ) : (
                 lookupResult.items?.map((it) => (

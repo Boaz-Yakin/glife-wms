@@ -434,3 +434,132 @@ export async function reportPickingShortage(
   }
   return data;
 }
+
+export interface PutAwayParams {
+  locationCodeOrId: string;
+  itemCodeOrId: string;
+  qty: number;
+  operatorId: string;
+  reason?: string;
+}
+
+export interface PutAwayResult {
+  inventoryId: string;
+  locationId: string;
+  locationCode: string;
+  itemId: string;
+  sku: string;
+  name: string;
+  uom: string;
+  previousQty: number;
+  newQty: number;
+  allocatedQty: number;
+}
+
+/**
+ * 간이 입고 적치 및 초기 재고 설정 (Put-away & Initial Stock In)
+ */
+export async function putAwayStock(
+  supabase: SupabaseClient,
+  params: PutAwayParams
+): Promise<PutAwayResult> {
+  const { locationCodeOrId, itemCodeOrId, qty, operatorId, reason } = params;
+
+  if (qty <= 0) {
+    throw new Error('Quantity to put away must be greater than zero.');
+  }
+
+  // 1. Validate location
+  const cleanLoc = locationCodeOrId.trim();
+  const { data: loc, error: locErr } = await supabase
+    .from('locations')
+    .select('id, code, zone_type')
+    .or(`code.eq.${cleanLoc},id.eq.${cleanLoc}`)
+    .maybeSingle();
+
+  if (locErr || !loc) {
+    throw new Error(`Location not found: "${cleanLoc}"`);
+  }
+
+  // 2. Validate item
+  const cleanItem = itemCodeOrId.trim();
+  const { data: itm, error: itmErr } = await supabase
+    .from('items')
+    .select('id, sku, name_en, upc, uom')
+    .or(`sku.eq.${cleanItem},upc.eq.${cleanItem},id.eq.${cleanItem}`)
+    .maybeSingle();
+
+  if (itmErr || !itm) {
+    throw new Error(`Item not found: "${cleanItem}"`);
+  }
+
+  // 3. Find or create inventory row
+  const { data: existingInv } = await supabase
+    .from('inventory')
+    .select('id, on_hand_qty, allocated_qty')
+    .eq('location_id', loc.id)
+    .eq('item_id', itm.id)
+    .maybeSingle();
+
+  let inventoryId: string;
+  let previousQty = 0;
+  let allocatedQty = 0;
+  let newQty = qty;
+
+  if (existingInv) {
+    inventoryId = existingInv.id;
+    previousQty = existingInv.on_hand_qty || 0;
+    allocatedQty = existingInv.allocated_qty || 0;
+    newQty = previousQty + qty;
+
+    const { error: updErr } = await supabase
+      .from('inventory')
+      .update({ on_hand_qty: newQty, updated_at: new Date().toISOString() })
+      .eq('id', inventoryId);
+
+    if (updErr) throw updErr;
+  } else {
+    previousQty = 0;
+    allocatedQty = 0;
+    newQty = qty;
+
+    const { data: newInv, error: insErr } = await supabase
+      .from('inventory')
+      .insert({
+        location_id: loc.id,
+        item_id: itm.id,
+        on_hand_qty: newQty,
+        allocated_qty: 0,
+      })
+      .select('id')
+      .single();
+
+    if (insErr || !newInv) throw insErr || new Error('Failed to insert inventory record');
+    inventoryId = newInv.id;
+  }
+
+  // 4. Log adjustment
+  await supabase.from('inventory_adjustments').insert([
+    {
+      inventory_id: inventoryId,
+      adjusted_by: operatorId,
+      previous_qty: previousQty,
+      new_qty: newQty,
+      reason: reason || `PUT_AWAY: Stored ${qty} ${itm.uom || 'units'} into ${loc.code}`,
+    },
+  ]);
+
+  return {
+    inventoryId,
+    locationId: loc.id,
+    locationCode: loc.code,
+    itemId: itm.id,
+    sku: itm.sku,
+    name: itm.name_en,
+    uom: itm.uom || 'BOX',
+    previousQty,
+    newQty,
+    allocatedQty,
+  };
+}
+

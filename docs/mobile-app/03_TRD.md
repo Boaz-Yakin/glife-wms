@@ -301,3 +301,67 @@ ALTER TABLE public.auth_login_attempts ENABLE ROW LEVEL SECURITY; -- 정책 없�
 4. PIN 5회 실패 → 423, 15분 후 해제.
 5. `inventory_adjustments.inspector_id`가 실제 로그인 사용자로 기록 (본문 `userId` 위조 무시).
 6. 오프라인 큐: 다른 사용자로 재로그인 시 기존 큐 전송 보류 + 경고 표시.
+
+---
+
+# TRD-003: 간이 입고 적치 및 초기 재고 설정 (Put-away & Initial Stock In)
+
+**Status**: `Approved`  
+**작성일**: 2026-10-22  
+**관련 PRD 기능**: [F-10 간이 입고 적치](01_PRD.md#42-재고검사자-inspector-전용-모듈-inventory)  
+**관련 ADR**: [ADR-001, ADR-002, ADR-006, ADR-007](02_ADR.md)
+
+## 1. 개요 (Overview)
+창고 오픈 초기 또는 신규 상품 입고 시, 현장 작업자(`INSPECTOR`, `ADMIN`)가 빈 랙이나 기존 보관 랙에 서서 **로케이션 바코드/QR과 상품 바코드를 스캔하고 수량을 입력하여 즉시 전산 재고를 생성/증대(Put-away & Stock In)**하는 현장 전용 모듈입니다.
+
+## 2. 사용자 플로우 (Workflow)
+```
+[1. 로케이션 스캔] ➔ [2. 상품 바코드 스캔] ➔ [3. 적치 수량 입력] ➔ [4. 적치 확정 및 DB 저장]
+```
+- **Step 1 (로케이션 스캔)**: 목표 선반 랙의 2D QR 또는 바코드(`LOC-...`) 스캔 (유효한 위치인지 검증, `/lookup` 화면에서 빈 랙 발견 시 1클릭 프리셋 진입 지원)
+- **Step 2 (상품 스캔)**: 적치할 상품의 UPC/EAN 바코드 또는 `SKU-...` 스캔 (마스터 품목명, 규격 자동 매핑)
+- **Step 3 (수량 입력)**: 인라인 넘버패드 및 퀵 증감 버튼(`+1`, `+10`, `+50`)으로 현장 실물 수량 입력
+- **Step 4 (확정 및 반영)**: 원자적 API 호출 ➔ `inventory` 레코드 신규 생성(`INSERT`) 또는 기존 수량 가산(`UPDATE`), `inventory_adjustments`에 작업자 ID와 사유(`INITIAL_STOCK_IN` 또는 `PUT_AWAY`) 감사 로그 기록
+
+## 3. API 명세 (API Specification)
+
+### `POST /api/inventory/put-away`
+- **보안**: `requireWorker(INSPECTOR_ROLES)` 세션 검증 (작업자 ID는 세션에서 추출)
+- **Request Body**:
+  ```json
+  {
+    "locationCode": "LOC-A0101A01",
+    "itemCode": "8801234567890",
+    "qty": 50,
+    "reason": "INITIAL_STOCK_IN"
+  }
+  ```
+- **Response Success (200)**:
+  ```json
+  {
+    "success": true,
+    "inventory": {
+      "inventoryId": "uuid-...",
+      "locationCode": "A01-01-A01",
+      "sku": "SKU-APPLE-01",
+      "name": "Fresh Apple 1kg",
+      "previousQty": 0,
+      "newQty": 50,
+      "allocatedQty": 0
+    }
+  }
+  ```
+- **Response Error (400/404/500)**:
+  - 400: 필수 값 누락 또는 유효하지 않은 수량 (`qty <= 0`)
+  - 404: 유효하지 않은 로케이션 또는 미등록 상품
+  - 401/403: 권한 없음
+
+## 4. UI 명세
+- **진입점**:
+  1. `/inventory` 홈 화면 내 [Put-away (신규 입고 적치)] 메인 액션 카드
+  2. `/inventory/lookup`에서 로케이션 스캔 후 빈 랙(Empty Bin) 상태일 때 노출되는 [+ Put Away Items Here] 원클릭 버튼
+- **화면 구조** (`/inventory/put-away`):
+  - 상단 진행 인디케이터 (1. Location ➔ 2. Item ➔ 3. Quantity)
+  - 스캔 성공 시 도-미 화음 및 진동 피드백
+  - 장갑 착용 대응 56px 대형 넘버패드 및 즉시 확정 버튼
+

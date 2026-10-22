@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getInventorySummary } from "@/services/inventory.service";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UrgentQueueBanner } from "@/components/features/inventory/urgent-queue-banner";
-import { MapPin, Package, CheckCircle2, Clock, ShieldAlert } from "lucide-react";
+import { MapPin, Package, CheckCircle2, Clock, ShieldAlert, PlusCircle, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 export default async function InventoryHomePage() {
@@ -81,6 +81,27 @@ export default async function InventoryHomePage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Quick Put-away CTA Banner */}
+      <Link href="/inventory/put-away" className="block">
+        <div className="bg-gradient-to-r from-emerald-950/70 to-slate-900 border border-emerald-500/40 hover:border-emerald-500 rounded-xl p-3.5 flex items-center justify-between transition-all active:scale-[0.99] shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">
+              <PlusCircle className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="text-sm font-black text-white flex items-center gap-1.5">
+                <span>Put-away & Stock In</span>
+                <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded">신규/초기적치</span>
+              </div>
+              <p className="text-[11px] text-zinc-400 mt-0.5">
+                빈 랙 스캔 ➔ 상품 스캔 ➔ 초기 재고 즉시 등록
+              </p>
+            </div>
+          </div>
+          <ArrowRight className="w-4 h-4 text-emerald-400 shrink-0" />
+        </div>
+      </Link>
 
       {/* Guidelines & Quick Action Info */}
       <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-4 text-xs text-zinc-400 space-y-2 mt-2">
