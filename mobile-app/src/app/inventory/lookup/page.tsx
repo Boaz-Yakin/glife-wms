@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Camera, QrCode, MapPin, Package, AlertCircle } from "lucide-react";
+import { Camera, QrCode, MapPin, Package, AlertCircle, ClipboardCheck } from "lucide-react";
 import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 
 export default function LookupPage() {
@@ -162,9 +163,31 @@ export default function LookupPage() {
                 <p className="text-zinc-400 text-[11px]">Valid warehouse code registered.</p>
               )}
             </div>
+
+            {/* Start Count for scanned target */}
+            <div className="mt-3 pt-3 border-t border-zinc-800 flex justify-end">
+              <Link
+                href={`/inventory/count?${mode === "LOCATION" ? `locId=${encodeURIComponent(lastScanned)}` : `itemId=${encodeURIComponent(lastScanned)}`}`}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs shadow-md transition-all active:scale-[0.98]"
+              >
+                <ClipboardCheck className="w-4 h-4" />
+                <span>Start Count for this {mode === "LOCATION" ? "Location" : "Item"} (실사 시작)</span>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}
+
+      {/* Bottom shortcut to Cycle Count */}
+      <div className="mt-auto pt-4 border-t border-zinc-800/80 flex flex-col gap-2">
+        <Link
+          href="/inventory/count"
+          className="w-full bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-800 font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 text-xs transition-all active:scale-[0.98] shadow-sm"
+        >
+          <ClipboardCheck className="w-4 h-4 text-emerald-400" />
+          <span>Direct Cycle Count (직접 실사 시작)</span>
+        </Link>
+      </div>
     </div>
   );
 }

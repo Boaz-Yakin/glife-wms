@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertTriangle, Clock, RefreshCw } from "lucide-react";
+import { AlertTriangle, Clock, RefreshCw, ClipboardCheck } from "lucide-react";
 
 type QueueType = "URGENT" | "NORMAL";
 
@@ -95,10 +95,23 @@ export default function QueuePage() {
         </button>
         <button 
           onClick={fetchQueue}
-          className="px-4 border-b-2 border-transparent text-zinc-500 hover:text-white"
+          className="px-3 border-b-2 border-transparent text-zinc-500 hover:text-white"
+          title="Refresh"
         >
           <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
         </button>
+
+        {/* Persistent Start Direct Count Shortcut */}
+        <div className="flex items-center pr-2 border-b-2 border-transparent">
+          <Link
+            href="/inventory/count"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-2.5 py-1.5 rounded-md flex items-center gap-1 shadow-sm active:scale-95 transition-all"
+            title="Start Direct Count"
+          >
+            <ClipboardCheck className="w-3.5 h-3.5" />
+            <span>Start Count</span>
+          </Link>
+        </div>
       </div>
 
       {/* List Area */}
@@ -106,7 +119,22 @@ export default function QueuePage() {
         {isLoading ? (
           <div className="text-center text-zinc-500 py-8">Loading queue...</div>
         ) : displayedQueue.length === 0 ? (
-          <div className="text-center text-zinc-500 py-8">No pending items.</div>
+          <div className="text-center py-12 px-4 flex flex-col items-center justify-center bg-zinc-900/40 border border-zinc-800/80 rounded-xl my-4">
+            <div className="w-12 h-12 rounded-full bg-zinc-800/80 flex items-center justify-center text-zinc-400 mb-3">
+              <Clock className="w-6 h-6" />
+            </div>
+            <p className="text-zinc-200 font-semibold text-sm mb-1">No pending items in queue</p>
+            <p className="text-zinc-500 text-xs mb-5 max-w-xs">
+              대기 중인 실사 요청이 없습니다. 필요 시 임의 실사(Direct Count)를 바로 시작할 수 있습니다.
+            </p>
+            <Link
+              href="/inventory/count"
+              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-lg shadow-emerald-900/30 transition-all active:scale-95"
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              <span>Start Direct Count (실사 시작)</span>
+            </Link>
+          </div>
         ) : (
           displayedQueue.map(item => (
             <QueueItem 
@@ -149,9 +177,10 @@ function QueueItem({
           </span>
           <Link 
             href={`/inventory/count?reqId=${id}&locId=${locationId}&itemId=${itemId}`} 
-            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm active:scale-95 transition-all"
           >
-            Start Count
+            <ClipboardCheck className="w-3.5 h-3.5" />
+            <span>Start Count</span>
           </Link>
         </div>
       </CardContent>
