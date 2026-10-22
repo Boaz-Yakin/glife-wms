@@ -65,6 +65,100 @@ export interface ItemLookupResult {
   }>;
 }
 
+function isUUID(str: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+}
+
+/**
+ * Robust location finder supporting:
+ * - Direct UUID
+ * - Exact code: 'LOC-A0105A01'
+ * - Without LOC- prefix: 'A0105A01'
+ * - Human-readable format: 'A01-05-A01'
+ * - Case-insensitive trimmed input
+ */
+export async function findLocationRecord(
+  supabase: SupabaseClient,
+  codeOrId: string
+): Promise<{ id: string; code: string; zone_type: string } | null> {
+  const clean = codeOrId.trim().toUpperCase();
+  if (!clean) return null;
+
+  if (isUUID(clean)) {
+    const { data } = await supabase
+      .from('locations')
+      .select('id, code, zone_type')
+      .eq('id', clean)
+      .maybeSingle();
+    return data;
+  }
+
+  const variants = new Set<string>();
+  variants.add(clean);
+  if (clean.startsWith('LOC-')) {
+    variants.add(clean.replace(/^LOC-/, ''));
+  } else {
+    variants.add(`LOC-${clean}`);
+  }
+
+  // Handle unhyphenated vs hyphenated: A01-05-A01 <-> A0105A01
+  const unhyphenated = clean.replace(/-/g, '');
+  variants.add(unhyphenated);
+  variants.add(`LOC-${unhyphenated.replace(/^LOC/, '')}`);
+
+  const { data, error } = await supabase
+    .from('locations')
+    .select('id, code, zone_type')
+    .in('code', Array.from(variants))
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    return null;
+  }
+  return data[0];
+}
+
+/**
+ * Robust item finder supporting:
+ * - Direct UUID
+ * - Exact UPC match
+ * - Case-insensitive SKU match (exact or partial)
+ */
+export async function findItemRecord(
+  supabase: SupabaseClient,
+  skuOrUpcOrId: string
+): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string } | null> {
+  const clean = skuOrUpcOrId.trim();
+  if (!clean) return null;
+
+  if (isUUID(clean)) {
+    const { data } = await supabase
+      .from('items')
+      .select('id, sku, name_en, upc, uom, category')
+      .eq('id', clean)
+      .maybeSingle();
+    return data;
+  }
+
+  // 1. Try exact UPC match
+  const { data: byUpc } = await supabase
+    .from('items')
+    .select('id, sku, name_en, upc, uom, category')
+    .eq('upc', clean)
+    .maybeSingle();
+  if (byUpc) return byUpc;
+
+  // 2. Try exact or case-insensitive SKU match
+  const { data: bySku } = await supabase
+    .from('items')
+    .select('id, sku, name_en, upc, uom, category')
+    .ilike('sku', clean)
+    .maybeSingle();
+  if (bySku) return bySku;
+
+  return null;
+}
+
 /**
  * 로케이션 바코드/ID 기반 실데이터 재고 조회 (Real Database)
  */
@@ -72,16 +166,8 @@ export async function lookupByLocation(
   supabase: SupabaseClient,
   locationCodeOrId: string
 ): Promise<LocationLookupResult | null> {
-  const cleanCode = locationCodeOrId.trim();
-
-  // 1. Find location
-  const { data: loc, error: locErr } = await supabase
-    .from('locations')
-    .select('id, code, zone_type')
-    .or(`code.eq.${cleanCode},id.eq.${cleanCode}`)
-    .maybeSingle();
-
-  if (locErr || !loc) {
+  const loc = await findLocationRecord(supabase, locationCodeOrId);
+  if (!loc) {
     return null;
   }
 
@@ -135,16 +221,8 @@ export async function lookupByItem(
   supabase: SupabaseClient,
   skuOrUpcOrId: string
 ): Promise<ItemLookupResult | null> {
-  const clean = skuOrUpcOrId.trim();
-
-  // 1. Find item by sku, upc, or id
-  const { data: it, error: itErr } = await supabase
-    .from('items')
-    .select('id, sku, name_en, upc, uom, category')
-    .or(`sku.ilike.%${clean}%,upc.eq.${clean},id.eq.${clean}`)
-    .maybeSingle();
-
-  if (itErr || !it) {
+  const it = await findItemRecord(supabase, skuOrUpcOrId);
+  if (!it) {
     return null;
   }
 
@@ -470,27 +548,15 @@ export async function putAwayStock(
   }
 
   // 1. Validate location
-  const cleanLoc = locationCodeOrId.trim();
-  const { data: loc, error: locErr } = await supabase
-    .from('locations')
-    .select('id, code, zone_type')
-    .or(`code.eq.${cleanLoc},id.eq.${cleanLoc}`)
-    .maybeSingle();
-
-  if (locErr || !loc) {
-    throw new Error(`Location not found: "${cleanLoc}"`);
+  const loc = await findLocationRecord(supabase, locationCodeOrId);
+  if (!loc) {
+    throw new Error(`Location not found: "${locationCodeOrId}"`);
   }
 
   // 2. Validate item
-  const cleanItem = itemCodeOrId.trim();
-  const { data: itm, error: itmErr } = await supabase
-    .from('items')
-    .select('id, sku, name_en, upc, uom')
-    .or(`sku.eq.${cleanItem},upc.eq.${cleanItem},id.eq.${cleanItem}`)
-    .maybeSingle();
-
-  if (itmErr || !itm) {
-    throw new Error(`Item not found: "${cleanItem}"`);
+  const itm = await findItemRecord(supabase, itemCodeOrId);
+  if (!itm) {
+    throw new Error(`Item not found: "${itemCodeOrId}"`);
   }
 
   // 3. Find or create inventory row
