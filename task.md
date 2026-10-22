@@ -232,4 +232,16 @@
 - [x] 24.5 프로젝트 전역 언어 영문화(English Unified) 원칙 적용 및 US Letter(8.5" × 11") 10라벨/시트 절단선 가이드 통합
 - [x] 24.6 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## ⚡ Phase 25: 선반 랙 2D QR 코드 지그재그(Staggered / Anti-Crossfire) 배치 및 LEVEL 용어 통일
+- [x] 25.1 용어 전면 통일: 기존 `Tier` 용어를 글로벌 물류창고 표준인 `Level`로 전체 교체 (`LEVEL A/B/C/D`, `Level A • Bin 01` 등)
+- [x] 25.2 오스캔 방지(Anti-Crossfire) 지그재그(Staggered) 교차 배치 구현:
+  - **Level A (1단/바닥)**: 좌측 좌표계/뱃지, 우측 정방형 QR 코드 + 하단 간이 로케이션 코드(`01-05-A`)
+  - **Level B (2단/골든존)**: 좌측 정방형 QR 코드 + 하단 간이 로케이션 코드(`01-05-B`), 우측 좌표계/뱃지
+  - **Level C (3단/상단)**: 좌측 좌표계/뱃지, 우측 정방형 QR 코드 + 하단 간이 로케이션 코드(`01-05-C`)
+  - **Level D (4단/최상단)**: 좌측 정방형 QR 코드 + 하단 간이 로케이션 코드(`01-05-D`), 우측 좌표계/뱃지
+- [x] 25.3 QR 코드 정렬 모드 컨트롤러 구현 (`⚡ Zig-Zag (Staggered)`, `➡️ All Right`, `⬅️ All Left`)
+- [x] 25.4 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
 

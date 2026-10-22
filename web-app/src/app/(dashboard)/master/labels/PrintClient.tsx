@@ -11,16 +11,17 @@ import { QRCodeSVG } from "qrcode.react"
 
 export type PaperSize = "letter" | "rack-label" | "compact-label" | "a4"
 export type LabelSymbology = "qr" | "barcode"
+export type QrPlacement = "staggered" | "right" | "left"
 
 // ─────────────────────────────────────────────────────────────
-// Official Tier Physical Color Band Specifications
+// Official Level Physical Color Band Specifications
 // (Barcode_System_Guide.md §2.2 / §7.1)
 // ─────────────────────────────────────────────────────────────
 interface LevelStyle {
   levelLetter: string
   name: string
   shortName: string
-  englishTier: string
+  englishLevel: string
   bandName: string
   colorHex: string
   bgHex: string
@@ -31,9 +32,9 @@ interface LevelStyle {
 const LEVEL_STYLES: Record<string, LevelStyle> = {
   A: {
     levelLetter: "A",
-    name: "Tier A (Level 1 / Bottom)",
-    shortName: "Tier A",
-    englishTier: "Tier A",
+    name: "Level A (Floor / 1st)",
+    shortName: "Level A",
+    englishLevel: "Level A",
     bandName: "Green Band",
     colorHex: "#10B981",
     bgHex: "#ecfdf5",
@@ -42,9 +43,9 @@ const LEVEL_STYLES: Record<string, LevelStyle> = {
   },
   B: {
     levelLetter: "B",
-    name: "Tier B (Level 2 / Middle)",
-    shortName: "Tier B",
-    englishTier: "Tier B",
+    name: "Level B (Middle / 2nd)",
+    shortName: "Level B",
+    englishLevel: "Level B",
     bandName: "Gold Band",
     colorHex: "#F59E0B",
     bgHex: "#fffbeb",
@@ -53,9 +54,9 @@ const LEVEL_STYLES: Record<string, LevelStyle> = {
   },
   C: {
     levelLetter: "C",
-    name: "Tier C (Level 3 / Upper)",
-    shortName: "Tier C",
-    englishTier: "Tier C",
+    name: "Level C (Upper / 3rd)",
+    shortName: "Level C",
+    englishLevel: "Level C",
     bandName: "Blue Band",
     colorHex: "#3B82F6",
     bgHex: "#eff6ff",
@@ -64,9 +65,9 @@ const LEVEL_STYLES: Record<string, LevelStyle> = {
   },
   D: {
     levelLetter: "D",
-    name: "Tier D (Level 4 / Top)",
-    shortName: "Tier D",
-    englishTier: "Tier D",
+    name: "Level D (Top / 4th)",
+    shortName: "Level D",
+    englishLevel: "Level D",
     bandName: "Purple Band",
     colorHex: "#8B5CF6",
     bgHex: "#f5f3ff",
@@ -151,6 +152,7 @@ interface ParsedLocation {
   bin: string
   humanAisleBay: string // e.g. "A01 - 05 -"
   humanLevelBin: string // e.g. "B01"
+  shortLocation: string // e.g. "01-05-B"
   levelStyle: LevelStyle
   zoneStyle: { label: string; sub: string; badgeBg: string; badgeText: string; badgeBorder: string; colorHex: string }
 }
@@ -210,6 +212,7 @@ function parseLocationCode(code: string): ParsedLocation | null {
     bin,
     humanAisleBay: `${zoneLetter}${aisle} - ${bay} -`,
     humanLevelBin: `${level}${bin}`,
+    shortLocation: `${aisle}-${bay}-${level}`,
     levelStyle,
     zoneStyle,
   }
@@ -217,21 +220,63 @@ function parseLocationCode(code: string): ParsedLocation | null {
 
 // ─────────────────────────────────────────────────────────────
 // Shelf Rack Physical Label Component (100mm × 45mm / 4" × 1.8")
+// Supports Staggered / Zig-Zag QR code positioning to prevent cross-scans
 // ─────────────────────────────────────────────────────────────
 function ShelfRackLabelCard({
   code,
   showCutLines = true,
   symbology = "qr",
+  qrPlacement = "staggered",
+  index = 0,
 }: {
   code: string
   showCutLines?: boolean
   symbology?: LabelSymbology
+  qrPlacement?: QrPlacement
+  index?: number
 }) {
   const loc = parseLocationCode(code)
+
+  // Staggered / Zig-Zag logic:
+  // Level A & C -> QR on RIGHT (Level letter on Left)
+  // Level B & D -> QR on LEFT (Level letter on Right)
+  const isQrLeft =
+    qrPlacement === "left" ||
+    (qrPlacement === "staggered" &&
+      (loc ? loc.level === "B" || loc.level === "D" : index % 2 === 1))
 
   // Standard Product SKU Fallback
   if (!loc) {
     if (symbology === "qr") {
+      const qrSkuBox = (
+        <div className="w-[33mm] h-[38mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white">
+          <QRCodeSVG
+            value={code}
+            size={96}
+            level="M"
+            marginSize={1}
+            className="w-full h-auto max-h-[30mm] block [shape-rendering:crispEdges]"
+          />
+          <span className="text-[7.5px] font-mono font-bold text-zinc-600 uppercase tracking-wider mt-0.5">
+            SCAN SKU
+          </span>
+        </div>
+      )
+
+      const infoSkuBox = (
+        <div className="flex-1 flex flex-col justify-between h-full overflow-hidden">
+          <div>
+            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Product SKU</span>
+            <span className="font-mono font-black text-lg tracking-tight uppercase block text-zinc-900 mt-1 break-all">
+              {code}
+            </span>
+          </div>
+          <div className="border-t border-zinc-200 pt-1">
+            <span className="text-[9px] text-zinc-500 font-medium">Standard Inventory Item</span>
+          </div>
+        </div>
+      )
+
       return (
         <div
           className={`shelf-rack-label-card relative bg-white text-zinc-950 ${
@@ -250,29 +295,17 @@ function ShelfRackLabelCard({
             WebkitPrintColorAdjust: "exact",
           }}
         >
-          <div className="flex-1 flex flex-col justify-between h-full overflow-hidden">
-            <div>
-              <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Product SKU</span>
-              <span className="font-mono font-black text-lg tracking-tight uppercase block text-zinc-900 mt-1 break-all">
-                {code}
-              </span>
-            </div>
-            <div className="border-t border-zinc-200 pt-1">
-              <span className="text-[9px] text-zinc-500 font-medium">Standard Inventory Item</span>
-            </div>
-          </div>
-          <div className="w-[33mm] h-[38mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white">
-            <QRCodeSVG
-              value={code}
-              size={96}
-              level="M"
-              marginSize={1}
-              className="w-full h-auto max-h-[30mm] block [shape-rendering:crispEdges]"
-            />
-            <span className="text-[7.5px] font-mono font-bold text-zinc-600 uppercase tracking-wider mt-0.5">
-              SCAN SKU
-            </span>
-          </div>
+          {isQrLeft ? (
+            <>
+              {qrSkuBox}
+              {infoSkuBox}
+            </>
+          ) : (
+            <>
+              {infoSkuBox}
+              {qrSkuBox}
+            </>
+          )}
         </div>
       )
     }
@@ -317,6 +350,96 @@ function ShelfRackLabelCard({
     )
   }
 
+  // ─── 2D QR Code Layout Blocks ───
+  // High-DPI Vector QR Box with Short Location Code underneath (e.g. 01-05-A)
+  const qrBox = (
+    <div className="w-[34mm] h-[39.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+      <QRCodeSVG
+        value={loc.raw}
+        size={100}
+        level="M"
+        marginSize={1}
+        className="w-full h-auto max-h-[30.5mm] block [shape-rendering:crispEdges]"
+      />
+      <span className="text-[8.5px] font-mono font-black text-zinc-900 tracking-wider mt-0.5">
+        {loc.shortLocation}
+      </span>
+    </div>
+  )
+
+  // Human-Readable Coordinates Block (Aisle/Bay + 38~44pt Level/Bin + Badges)
+  const coordsBox = (
+    <div className="flex-1 h-full flex flex-col justify-between overflow-hidden">
+      {/* Top: Zone & Level Badges */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <div
+          className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border uppercase leading-none"
+          style={{
+            backgroundColor: loc.zoneStyle.badgeBg,
+            color: loc.zoneStyle.badgeText,
+            borderColor: loc.zoneStyle.badgeBorder,
+            printColorAdjust: "exact",
+            WebkitPrintColorAdjust: "exact",
+          }}
+        >
+          {loc.zoneName}
+        </div>
+        <div
+          className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border flex items-center gap-1 leading-none"
+          style={{
+            backgroundColor: loc.levelStyle.bgHex,
+            color: loc.levelStyle.textHex,
+            borderColor: loc.levelStyle.borderHex,
+            printColorAdjust: "exact",
+            WebkitPrintColorAdjust: "exact",
+          }}
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full inline-block shrink-0"
+            style={{ backgroundColor: loc.levelStyle.colorHex }}
+          />
+          <span>{loc.levelStyle.englishLevel}</span>
+        </div>
+      </div>
+
+      {/* Middle: 3-Chunk Visual Hierarchy Coordinates */}
+      <div className="flex items-baseline justify-between gap-1 my-auto">
+        {/* Upper Coordinates (Aisle & Bay) */}
+        <div className="flex flex-col">
+          <span className="font-mono font-bold text-[19px] text-zinc-800 tracking-tight leading-none">
+            {loc.humanAisleBay}
+          </span>
+          <span className="text-[8px] font-semibold text-zinc-500 uppercase tracking-tight mt-0.5">
+            Aisle {loc.aisle} • Bay {loc.bay}
+          </span>
+        </div>
+
+        {/* Main Pick Coordinate: Level & Bin (38~44pt Bold) */}
+        <div className="flex flex-col items-end">
+          <span
+            className="font-mono font-black text-[38px] leading-none text-zinc-950 tracking-tighter"
+            style={{ fontFamily: "'Geist Mono', monospace, sans-serif" }}
+          >
+            {loc.humanLevelBin}
+          </span>
+          <span className="text-[8.5px] font-bold text-zinc-700 tracking-tight mt-0.5 uppercase">
+            Level {loc.level} • Bin {loc.bin}
+          </span>
+        </div>
+      </div>
+
+      {/* Bottom: Raw Machine Location String */}
+      <div className="flex items-center justify-between border-t border-zinc-200 pt-1">
+        <span className="font-mono font-bold text-[10.5px] text-zinc-800 tracking-wider">
+          {loc.raw}
+        </span>
+        <span className="text-[7.5px] font-bold tracking-wider uppercase text-zinc-500">
+          LOCATION 2D
+        </span>
+      </div>
+    </div>
+  )
+
   return (
     <div
       className={`shelf-rack-label-card relative bg-white text-zinc-950 ${
@@ -336,7 +459,7 @@ function ShelfRackLabelCard({
       }}
     >
       {/* 
-        Right-Edge Physical Tier Color Band (7.5mm Solid Strip)
+        Right-Edge Physical Level Color Band (7.5mm Solid Strip)
         Uses inline SVG rect to GUARANTEE full-color printing on all browsers
         even if the user's print preview has 'Background graphics' unchecked!
       */}
@@ -359,99 +482,26 @@ function ShelfRackLabelCard({
               letterSpacing: "0.15em",
             }}
           >
-            {loc.levelStyle.englishTier}
+            {loc.levelStyle.englishLevel}
           </span>
         </div>
       </div>
 
       {/* Internal Label Content Area (Uses 92.5mm width) */}
       {symbology === "qr" ? (
-        /* ─── 2D QR Code Modern High-DPI Industrial Layout ─── */
+        /* ─── 2D QR Code Staggered / Zig-Zag Industrial Layout ─── */
         <div className="w-[92.5mm] h-full pl-[3.5mm] pr-[2.5mm] py-[2.2mm] box-border flex items-center justify-between gap-2.5">
-          {/* Left Column: Human-Readable Coordinates (~54mm) */}
-          <div className="flex-1 h-full flex flex-col justify-between overflow-hidden">
-            {/* Top: Zone & Tier Badges */}
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <div
-                className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border uppercase leading-none"
-                style={{
-                  backgroundColor: loc.zoneStyle.badgeBg,
-                  color: loc.zoneStyle.badgeText,
-                  borderColor: loc.zoneStyle.badgeBorder,
-                  printColorAdjust: "exact",
-                  WebkitPrintColorAdjust: "exact",
-                }}
-              >
-                {loc.zoneName}
-              </div>
-              <div
-                className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border flex items-center gap-1 leading-none"
-                style={{
-                  backgroundColor: loc.levelStyle.bgHex,
-                  color: loc.levelStyle.textHex,
-                  borderColor: loc.levelStyle.borderHex,
-                  printColorAdjust: "exact",
-                  WebkitPrintColorAdjust: "exact",
-                }}
-              >
-                <span
-                  className="w-1.5 h-1.5 rounded-full inline-block shrink-0"
-                  style={{ backgroundColor: loc.levelStyle.colorHex }}
-                />
-                <span>{loc.levelStyle.englishTier}</span>
-              </div>
-            </div>
-
-            {/* Middle: 3-Chunk Visual Hierarchy Coordinates */}
-            <div className="flex items-baseline justify-between gap-1 my-auto">
-              {/* Upper Coordinates (Aisle & Bay) */}
-              <div className="flex flex-col">
-                <span className="font-mono font-bold text-[19px] text-zinc-800 tracking-tight leading-none">
-                  {loc.humanAisleBay}
-                </span>
-                <span className="text-[8px] font-semibold text-zinc-500 uppercase tracking-tight mt-0.5">
-                  Aisle {loc.aisle} • Bay {loc.bay}
-                </span>
-              </div>
-
-              {/* Main Pick Coordinate: Tier & Bin (38~44pt Bold) */}
-              <div className="flex flex-col items-end">
-                <span
-                  className="font-mono font-black text-[38px] leading-none text-zinc-950 tracking-tighter"
-                  style={{ fontFamily: "'Geist Mono', monospace, sans-serif" }}
-                >
-                  {loc.humanLevelBin}
-                </span>
-                <span className="text-[8.5px] font-bold text-zinc-700 tracking-tight mt-0.5 uppercase">
-                  Tier {loc.level} • Bin {loc.bin}
-                </span>
-              </div>
-            </div>
-
-            {/* Bottom: Raw Machine Location String */}
-            <div className="flex items-center justify-between border-t border-zinc-200 pt-1">
-              <span className="font-mono font-bold text-[10.5px] text-zinc-800 tracking-wider">
-                {loc.raw}
-              </span>
-              <span className="text-[7.5px] font-bold tracking-wider uppercase text-zinc-500">
-                LOCATION 2D
-              </span>
-            </div>
-          </div>
-
-          {/* Right Column: High-DPI Vector QR Code (~34mm) */}
-          <div className="w-[34mm] h-[39.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white">
-            <QRCodeSVG
-              value={loc.raw}
-              size={102}
-              level="M"
-              marginSize={1}
-              className="w-full h-auto max-h-[31.5mm] block [shape-rendering:crispEdges]"
-            />
-            <span className="text-[7.5px] font-mono font-bold text-zinc-600 uppercase tracking-wider mt-0.5">
-              SCAN QR
-            </span>
-          </div>
+          {isQrLeft ? (
+            <>
+              {qrBox}
+              {coordsBox}
+            </>
+          ) : (
+            <>
+              {coordsBox}
+              {qrBox}
+            </>
+          )}
         </div>
       ) : (
         /* ─── 1D Barcode (Code 128) Legacy Layout ─── */
@@ -469,7 +519,7 @@ function ShelfRackLabelCard({
                 </span>
               </div>
 
-              {/* Center: Main Final Position (Tier & Bin) — 38~44pt Bold */}
+              {/* Center: Main Final Position (Level & Bin) — 38~44pt Bold */}
               <div className="flex flex-col items-center -mt-0.5">
                 <span
                   className="font-mono font-black text-[38px] leading-none text-zinc-950 tracking-tighter"
@@ -478,7 +528,7 @@ function ShelfRackLabelCard({
                   {loc.humanLevelBin}
                 </span>
                 <span className="text-[9px] font-bold text-zinc-700 tracking-tight mt-0.5 uppercase">
-                  Tier {loc.level} • Bin {loc.bin}
+                  Level {loc.level} • Bin {loc.bin}
                 </span>
               </div>
 
@@ -510,7 +560,7 @@ function ShelfRackLabelCard({
                     className="w-2 h-2 rounded-full inline-block shrink-0"
                     style={{ backgroundColor: loc.levelStyle.colorHex }}
                   />
-                  <span>{loc.levelStyle.englishTier}</span>
+                  <span>{loc.levelStyle.englishLevel}</span>
                 </div>
               </div>
             </div>
@@ -547,6 +597,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
   const [codesInput, setCodesInput] = React.useState(FOUR_LEVEL_PREVIEW_CODES)
   const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
   const [symbology, setSymbology] = React.useState<LabelSymbology>("qr")
+  const [qrPlacement, setQrPlacement] = React.useState<QrPlacement>("staggered")
   const [showCutLines, setShowCutLines] = React.useState(true)
 
   const codes = codesInput.split("\n").map((c) => c.trim()).filter(Boolean)
@@ -645,7 +696,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Glife WMS Standard: 44pt visual hierarchy, Tier color bands (Green / Gold / Blue / Purple), and {symbology === "qr" ? "High-DPI 2D QR Codes" : "Code 128 Barcodes"}.
+              Glife WMS Standard: 44pt visual hierarchy, Level color bands (Green / Gold / Blue / Purple), and {symbology === "qr" ? "Anti-Crossfire 2D QR Codes" : "Code 128 Barcodes"}.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -656,33 +707,33 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
           </div>
         </div>
 
-        {/* 4 Tier Color Bands Legend Banner */}
+        {/* 4 Level Color Bands Legend Banner */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
           <div className="flex items-center gap-2.5 p-2 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900">
             <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0" />
             <div>
-              <span className="font-bold block">Tier A (Bottom / 1st)</span>
+              <span className="font-bold block">Level A (Floor / 1st)</span>
               <span className="text-[10px] text-emerald-700">Green Band (#10B981)</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-950">
             <span className="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0" />
             <div>
-              <span className="font-bold block">Tier B (Middle / 2nd)</span>
+              <span className="font-bold block">Level B (Middle / 2nd)</span>
               <span className="text-[10px] text-amber-700">Gold Band (#F59E0B)</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-2 rounded-lg bg-blue-50 border border-blue-300 text-blue-950">
             <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shrink-0" />
             <div>
-              <span className="font-bold block">Tier C (Upper / 3rd)</span>
+              <span className="font-bold block">Level C (Upper / 3rd)</span>
               <span className="text-[10px] text-blue-700">Blue Band (#3B82F6)</span>
             </div>
           </div>
           <div className="flex items-center gap-2.5 p-2 rounded-lg bg-purple-50 border border-purple-300 text-purple-950">
             <span className="w-3.5 h-3.5 rounded-full bg-purple-500 shrink-0" />
             <div>
-              <span className="font-bold block">Tier D (Top / 4th)</span>
+              <span className="font-bold block">Level D (Top / 4th)</span>
               <span className="text-[10px] text-purple-700">Purple Band (#8B5CF6)</span>
             </div>
           </div>
@@ -702,7 +753,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
               className="text-xs h-7 px-2.5 font-medium"
             >
-              🌈 4 Tier Color Bands (A~D)
+              🌈 4 Level Color Bands (A~D)
             </Button>
             <Button
               type="button"
@@ -779,6 +830,56 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </button>
               </div>
             </div>
+
+            {/* QR Placement Mode (Zig-Zag vs Fixed) */}
+            {symbology === "qr" && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold">QR Code Alignment (Anti-Crossfire)</Label>
+                  <span className="text-[10px] text-primary font-semibold">
+                    {qrPlacement === "staggered" ? "⚡ Zig-Zag Active" : "Fixed"}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setQrPlacement("staggered")}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "staggered"
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                    }`}
+                  >
+                    <span>⚡ Zig-Zag</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrPlacement("right")}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "right"
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                    }`}
+                  >
+                    <span>➡️ All Right</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setQrPlacement("left")}
+                    className={`flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
+                      qrPlacement === "left"
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                    }`}
+                  >
+                    <span>⬅️ All Left</span>
+                  </button>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-normal">
+                  • <strong>⚡ Zig-Zag (Staggered)</strong>: Alternates QR codes (Level A Right ↔ Level B Left ↔ Level C Right ↔ Level D Left) to prevent scanner cross-reading when mounted adjacently on rack uprights or beams.
+                </p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="paper-size" className="text-xs font-semibold">Paper Size</Label>
@@ -863,7 +964,13 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 key={`preview-${index}`}
                 className="shadow-sm rounded overflow-hidden bg-white hover:shadow-md transition-shadow shrink-0"
               >
-                <ShelfRackLabelCard code={code} showCutLines={showCutLines} symbology={symbology} />
+                <ShelfRackLabelCard
+                  code={code}
+                  showCutLines={showCutLines}
+                  symbology={symbology}
+                  qrPlacement={qrPlacement}
+                  index={index}
+                />
               </div>
             ))}
           </div>
@@ -873,7 +980,14 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
       {/* Actual Print Media Area (Hidden on screen, Active during Window Print) */}
       <div className="hidden print:block rack-print-container">
         {codes.map((code, index) => (
-          <ShelfRackLabelCard key={`print-${index}`} code={code} showCutLines={showCutLines} symbology={symbology} />
+          <ShelfRackLabelCard
+            key={`print-${index}`}
+            code={code}
+            showCutLines={showCutLines}
+            symbology={symbology}
+            qrPlacement={qrPlacement}
+            index={index}
+          />
         ))}
       </div>
     </div>
