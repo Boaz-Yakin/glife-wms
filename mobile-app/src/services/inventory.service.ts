@@ -127,14 +127,14 @@ export async function findLocationRecord(
 export async function findItemRecord(
   supabase: SupabaseClient,
   skuOrUpcOrId: string
-): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string } | null> {
+): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string; client_id?: string | null } | null> {
   const clean = skuOrUpcOrId.trim();
   if (!clean) return null;
 
   if (isUUID(clean)) {
     const { data } = await supabase
       .from('items')
-      .select('id, sku, name_en, upc, uom, category')
+      .select('id, sku, name_en, upc, uom, category, client_id')
       .eq('id', clean)
       .maybeSingle();
     return data;
@@ -143,7 +143,7 @@ export async function findItemRecord(
   // 1. Try exact UPC match
   const { data: byUpc } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category')
+    .select('id, sku, name_en, upc, uom, category, client_id')
     .eq('upc', clean)
     .maybeSingle();
   if (byUpc) return byUpc;
@@ -151,7 +151,7 @@ export async function findItemRecord(
   // 2. Try exact or case-insensitive SKU match
   const { data: bySku } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category')
+    .select('id, sku, name_en, upc, uom, category, client_id')
     .ilike('sku', clean)
     .maybeSingle();
   if (bySku) return bySku;
@@ -373,7 +373,7 @@ export async function transferInventoryStock(
   // 1. Verify source inventory
   const { data: sourceInv, error: srcErr } = await supabase
     .from('inventory')
-    .select('id, on_hand_qty, allocated_qty')
+    .select('id, on_hand_qty, allocated_qty, client_id')
     .eq('location_id', fromLocationId)
     .eq('item_id', itemId)
     .single();
@@ -398,15 +398,22 @@ export async function transferInventoryStock(
   // 3. Increase target inventory (upsert)
   const { data: targetInv } = await supabase
     .from('inventory')
-    .select('id, on_hand_qty')
+    .select('id, on_hand_qty, client_id')
     .eq('location_id', toLocationId)
     .eq('item_id', itemId)
     .maybeSingle();
 
   if (targetInv) {
+    const updateTgtPayload: Record<string, any> = {
+      on_hand_qty: targetInv.on_hand_qty + qty,
+      updated_at: new Date().toISOString(),
+    };
+    if (!targetInv.client_id && sourceInv.client_id) {
+      updateTgtPayload.client_id = sourceInv.client_id;
+    }
     const { error: updateTgtErr } = await supabase
       .from('inventory')
-      .update({ on_hand_qty: targetInv.on_hand_qty + qty, updated_at: new Date().toISOString() })
+      .update(updateTgtPayload)
       .eq('id', targetInv.id);
     if (updateTgtErr) throw updateTgtErr;
   } else {
@@ -417,6 +424,7 @@ export async function transferInventoryStock(
         item_id: itemId,
         on_hand_qty: qty,
         allocated_qty: 0,
+        client_id: sourceInv.client_id || null,
       });
     if (insertTgtErr) throw insertTgtErr;
   }
@@ -562,7 +570,7 @@ export async function putAwayStock(
   // 3. Find or create inventory row
   const { data: existingInv } = await supabase
     .from('inventory')
-    .select('id, on_hand_qty, allocated_qty')
+    .select('id, on_hand_qty, allocated_qty, client_id')
     .eq('location_id', loc.id)
     .eq('item_id', itm.id)
     .maybeSingle();
@@ -578,9 +586,17 @@ export async function putAwayStock(
     allocatedQty = existingInv.allocated_qty || 0;
     newQty = previousQty + qty;
 
+    const updatePayload: Record<string, any> = {
+      on_hand_qty: newQty,
+      updated_at: new Date().toISOString(),
+    };
+    if (!existingInv.client_id && itm.client_id) {
+      updatePayload.client_id = itm.client_id;
+    }
+
     const { error: updErr } = await supabase
       .from('inventory')
-      .update({ on_hand_qty: newQty, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', inventoryId);
 
     if (updErr) throw new Error(updErr.message || 'Failed to update inventory quantity');
@@ -596,6 +612,7 @@ export async function putAwayStock(
         item_id: itm.id,
         on_hand_qty: newQty,
         allocated_qty: 0,
+        client_id: itm.client_id || null,
       })
       .select('id')
       .single();

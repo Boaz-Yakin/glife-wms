@@ -25,7 +25,7 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
   
   const activeClientId = await getActiveClientAction()
   if (activeClientId) {
-    query = query.eq('client_id', activeClientId)
+    query = query.or(`client_id.eq.${activeClientId},client_id.is.null`)
   }
 
   if (zone && zone !== 'ALL') {
