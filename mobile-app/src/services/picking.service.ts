@@ -13,48 +13,40 @@ export interface Order {
 }
 
 /**
- * 할당된(ALLOCATED) 피킹 대기 주문 목록 조회
+ * 피킹 대기/진행 중인 활성 주문 목록 조회 (Real Database)
  */
-export async function getAllocatedOrders(supabase: SupabaseClient) {
+export async function getAllocatedOrders(supabase: SupabaseClient): Promise<Order[]> {
   const { data, error } = await supabase
     .from('orders')
     .select(`
-      *,
+      id,
+      order_no,
+      status,
+      created_at,
+      store_id,
       stores:store_id ( name )
     `)
-    .eq('status', 'ALLOCATED')
-    .order('created_at', { ascending: true });
+    .in('status', ['PENDING', 'PICKING', 'ALLOCATED'])
+    .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Database query failed for orders, using fallback:', error);
-    // Don't throw, allow fallback below
+    console.error('Database query error for active orders:', error);
+    return [];
   }
-  
-  if (!data || data.length === 0 || error) {
-    // Fallback Mock Data for testing
-    return [
-      {
-        id: 'mock-order-1',
-        order_number: 'ORD-20260909-001',
-        status: 'ALLOCATED',
-        priority: 'URGENT',
-        store_id: 'store-1',
-        created_at: new Date().toISOString(),
-        stores: { name: 'Gangnam Branch' }
-      },
-      {
-        id: 'mock-order-2',
-        order_number: 'ORD-20260909-002',
-        status: 'ALLOCATED',
-        priority: 'NORMAL',
-        store_id: 'store-2',
-        created_at: new Date(Date.now() - 3600000).toISOString(),
-        stores: { name: 'Hongdae Branch' }
-      }
-    ] as Order[];
+
+  if (!data || data.length === 0) {
+    return [];
   }
-  
-  return data as Order[];
+
+  return data.map((o: any) => ({
+    id: o.id,
+    order_number: o.order_no || 'ORD-UNKNOWN',
+    status: o.status,
+    priority: 'NORMAL',
+    store_id: o.store_id,
+    created_at: o.created_at,
+    stores: o.stores ? { name: o.stores.name } : undefined,
+  })) as Order[];
 }
 
 export interface PickingItem {
@@ -81,73 +73,119 @@ export interface PickingItem {
 }
 
 /**
- * 특정 주문의 피킹 품목 조회 및 S-Shape / Cold Chain 정렬
+ * 표준 로케이션 바코드(LOC-A0105B01)를 파싱하여 좌표 객체로 반환
  */
-export async function getOrderPickingItems(supabase: SupabaseClient, orderId: string) {
-  // 실제 DB에서는 order_items 테이블과 locations, items 테이블을 JOIN 합니다.
-  const { data, error } = await supabase
+function parseLocationCoordinates(locId: string, code: string, zoneType?: string) {
+  // Pattern: LOC-Zone(1)Aisle(2)Bay(2)Level(1)Bin(2) e.g. LOC-A0105B01
+  const match = code.match(/^LOC-([A-Z])(\d{2})(\d{2})([A-Z])(\d{2})$/i);
+  if (match) {
+    return {
+      id: locId,
+      code,
+      zone: match[1].toUpperCase(),
+      aisle: parseInt(match[2], 10),
+      bay: parseInt(match[3], 10),
+      level: match[4].toUpperCase(),
+      bin: parseInt(match[5], 10),
+    };
+  }
+  return {
+    id: locId,
+    code,
+    zone: zoneType || 'A',
+    aisle: 1,
+    bay: 1,
+    level: 'A',
+    bin: 1,
+  };
+}
+
+/**
+ * 특정 주문의 피킹 품목 조회 및 S-Shape / Cold Chain 정렬 (Real Database)
+ */
+export async function getOrderPickingItems(supabase: SupabaseClient, orderId: string): Promise<PickingItem[]> {
+  // 1. Fetch real order_items
+  const { data: rawItems, error } = await supabase
     .from('order_items')
     .select(`
-      *,
-      locations:location_id ( id, code, zone, aisle, bay, level, bin ),
-      items:item_id ( sku, name, upc )
+      id,
+      order_id,
+      item_id,
+      qty,
+      picked_qty,
+      items:item_id ( id, sku, name_en, upc, category, zone_type )
     `)
     .eq('order_id', orderId);
 
-  if (error) {
-    console.error('Database query failed for order_items, using fallback:', error);
-    // Don't throw, allow fallback below
+  if (error || !rawItems || rawItems.length === 0) {
+    if (error) console.error('Database query failed for order_items:', error);
+    return [];
   }
 
-  let items = (data as PickingItem[]) || [];
+  // 2. Fetch inventory locations for the items in this order
+  const itemIds = rawItems.map((ri: any) => ri.item_id).filter(Boolean);
+  const { data: invRows } = await supabase
+    .from('inventory')
+    .select(`
+      item_id,
+      location_id,
+      on_hand_qty,
+      locations:location_id ( id, code, zone_type )
+    `)
+    .in('item_id', itemIds);
 
-  if (items.length === 0 || error) {
-    // Fallback Mock Data for testing
-    items = [
-      {
-        id: 'mock-item-1',
-        order_id: orderId,
-        item_id: 'item-uuid-1',
-        qty: 12,
-        picked_qty: 0,
-        status: 'PENDING',
-        locations: { id: 'loc-1', code: 'A01-05-B01', zone: 'A', aisle: 1, bay: 5, level: 'B', bin: 1 },
-        items: { sku: 'SKU-APPLE-01', name: 'Fresh Apple 1kg', upc: '8801234567890' }
-      },
-      {
-        id: 'mock-item-2',
-        order_id: orderId,
-        item_id: 'item-uuid-2',
-        qty: 5,
-        picked_qty: 0,
-        status: 'PENDING',
-        locations: { id: 'loc-2', code: 'A02-12-C02', zone: 'A', aisle: 2, bay: 12, level: 'C', bin: 2 },
-        items: { sku: 'SKU-BANANA-02', name: 'Organic Banana 500g', upc: '8801234567891' }
-      },
-      {
-        id: 'mock-item-3',
-        order_id: orderId,
-        item_id: 'item-uuid-3',
-        qty: 2,
-        picked_qty: 0,
-        status: 'PENDING',
-        locations: { id: 'loc-3', code: 'F01-02-A01', zone: 'F', aisle: 1, bay: 2, level: 'A', bin: 1 },
-        items: { sku: 'SKU-BEEF-05', name: 'Frozen Beef 500g', upc: '8801234567892' }
+  // Map of item_id -> first available location with stock
+  const locByItem = new Map<string, any>();
+  if (invRows) {
+    for (const inv of invRows) {
+      if (inv.locations && (!locByItem.has(inv.item_id) || inv.on_hand_qty > 0)) {
+        locByItem.set(inv.item_id, inv.locations);
       }
-    ] as PickingItem[];
+    }
   }
 
-  // S-Shape & Cold Chain 정렬 알고리즘
+  // 3. Build PickingItem objects
+  const items: PickingItem[] = rawItems.map((row: any) => {
+    const itemData = row.items;
+    const locData = locByItem.get(row.item_id);
+
+    return {
+      id: row.id,
+      order_id: row.order_id,
+      item_id: row.item_id,
+      qty: row.qty || 1,
+      picked_qty: row.picked_qty || 0,
+      status: row.picked_qty && row.picked_qty >= row.qty ? 'PICKED' : 'PENDING',
+      locations: locData
+        ? parseLocationCoordinates(locData.id, locData.code, locData.zone_type)
+        : {
+            id: 'unassigned',
+            code: 'LOC-A0101A01',
+            zone: itemData?.zone_type || 'A',
+            aisle: 1,
+            bay: 1,
+            level: 'A',
+            bin: 1,
+          },
+      items: itemData
+        ? {
+            sku: itemData.sku || 'SKU-UNKNOWN',
+            name: itemData.name_en || 'Unnamed Item',
+            upc: itemData.upc || '',
+          }
+        : { sku: 'SKU-UNKNOWN', name: 'Unknown Item', upc: '' },
+    };
+  });
+
+  // 4. S-Shape & Cold Chain 정렬 알고리즘
   items.sort((a, b) => {
     const locA = a.locations;
     const locB = b.locations;
 
-    // 로케이션 정보가 없는 경우 최하단으로 보냄
     if (!locA) return 1;
     if (!locB) return -1;
 
     // 1. Cold Chain Gate: Zone A(상온) 우선, Zone F(냉동) 나중
-    // Zone 알파벳 순으로 처리 (A가 먼저 오게 됨)
     if (locA.zone !== locB.zone) {
       return locA.zone.localeCompare(locB.zone);
     }
@@ -163,7 +201,7 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
       return isOddAisle ? locA.bay - locB.bay : locB.bay - locA.bay;
     }
 
-    // 4. Level (층): 아래에서 위로 (A, B, C...) 혹은 위에서 아래로 정책에 따라 다름. 여기선 오름차순.
+    // 4. Level (단): 오름차순
     if (locA.level !== locB.level) {
       return locA.level.localeCompare(locB.level);
     }

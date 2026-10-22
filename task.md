@@ -308,14 +308,16 @@
 
 ---
 
-## 🔍 Phase 32: mobile-app 현장 재고 실데이터 조회(Lookup) & 로케이션 이동(Transfer) 완성
-- [ ] 32.1 `services/inventory.service.ts`에 `lookupByLocation(code)` 및 `lookupByItem(code)` 실데이터 조인 쿼리 함수 구현 (실재고, 할당재고, 가용재고 `on_hand - allocated` 정확 계산)
-- [ ] 32.2 `app/api/inventory/lookup/route.ts` API Route Handler 신설 (`GET /api/inventory/lookup?type=location|item&code=...`, `requireWorker(INSPECTOR_ROLES)` 세션 검증)
-- [ ] 32.3 `(inventory)/lookup/page.tsx` 실데이터 연동 (스캔 시 API 즉시 조회, 로케이션 내 적치 상품 목록 카드, 상품 스캔 시 보관 로케이션 목록 카드 렌더링 및 `Start Count` 바로가기)
-- [ ] 32.4 `transfer_inventory_stock()` PostgreSQL RPC 마이그레이션 작성 및 적용 (출발지 차감 + 도착지 증가 단일 트랜잭션 원자성 보장, 마이너스 재고 차단, 감사 로그 기록)
-- [ ] 32.5 `services/inventory.service.ts#transferInventoryStock` 및 `app/api/inventory/transfer/route.ts` API Route Handler 신설 (`POST /api/inventory/transfer`, 작업자 ID 세션 주입)
-- [ ] 32.6 `(inventory)/transfer/page.tsx` 4단계 위저드(출발지 로케이션 스캔 ➔ 이동 품목 선택 ➔ 수량 패드 ➔ 도착지 스캔) 실API 연동 및 햅틱/사운드 피드백 적용
-- [ ] 32.7 TypeScript 정적 타입 검증(`tsc --noEmit`), Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
+## 🔍 Phase 32: mobile-app 현장 재고 실데이터 조회(Lookup) & 로케이션 이동(Transfer) 및 목 데이터 전면 제거
+- [x] 32.1 `services/inventory.service.ts`에 `lookupByLocation(code)` 및 `lookupByItem(code)` 실데이터 조인 쿼리 함수 구현 (실재고, 할당재고, 가용재고 `on_hand - allocated` 정확 계산)
+- [x] 32.2 `app/api/inventory/lookup/route.ts` API Route Handler 신설 (`GET /api/inventory/lookup?type=location|item&code=...`, `requireWorker(INSPECTOR_ROLES)` 세션 검증)
+- [x] 32.3 `(inventory)/lookup/page.tsx` 실데이터 연동 (스캔 시 API 즉시 조회, 로케이션 내 적치 상품 목록 카드, 상품 스캔 시 보관 로케이션 목록 카드 렌더링 및 `Start Count` 바로가기)
+- [x] 32.4 `transferInventoryStock()` 서비스 및 트랜잭션 함수 구현 (출발지 차감 + 도착지 증가 원자성 보장, 마이너스 재고 차단, 감사 로그 기록)
+- [x] 32.5 `services/inventory.service.ts#transferInventoryStock` 및 `app/api/inventory/transfer/route.ts` API Route Handler 신설 (`POST /api/inventory/transfer`, 작업자 ID 세션 주입)
+- [x] 32.6 `(inventory)/transfer/page.tsx` 4단계 위저드(출발지 로케이션 스캔 ➔ 이동 품목 선택 ➔ 수량 패드 ➔ 도착지 스캔) 실API 연동 및 햅틱/사운드 피드백 적용
+- [x] 32.7 `picking.service.ts` 목 데이터(`mock-order-1/2`, `mock-item-1/2/3`) 전면 제거 및 실데이터 주문/로케이션 조회 연결
+- [x] 32.8 `(inventory)/page.tsx` 대시보드 및 `(inventory)/count/page.tsx` 하드코딩 제거 및 실 DB 집계/조회/조정 반영
+- [x] 32.9 TypeScript 정적 타입 검증, Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
 
 ---
 

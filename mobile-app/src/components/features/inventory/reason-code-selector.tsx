@@ -1,7 +1,7 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Database } from "@/types/supabase";
 
-type ReasonCode = Database['public']['Enums']['adjustment_reason'];
+export type ReasonCode = Database['public']['Enums']['adjustment_reason'];
 
 interface ReasonCodeSelectorProps {
   value: ReasonCode | null;
