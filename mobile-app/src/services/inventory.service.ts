@@ -583,7 +583,7 @@ export async function putAwayStock(
       .update({ on_hand_qty: newQty, updated_at: new Date().toISOString() })
       .eq('id', inventoryId);
 
-    if (updErr) throw updErr;
+    if (updErr) throw new Error(updErr.message || 'Failed to update inventory quantity');
   } else {
     previousQty = 0;
     allocatedQty = 0;
@@ -600,12 +600,13 @@ export async function putAwayStock(
       .select('id')
       .single();
 
-    if (insErr || !newInv) throw insErr || new Error('Failed to insert inventory record');
+    if (insErr) throw new Error(insErr.message || 'Failed to insert inventory record');
+    if (!newInv) throw new Error('Failed to insert inventory record: no record returned');
     inventoryId = newInv.id;
   }
 
   // 4. Log adjustment
-  await supabase.from('inventory_adjustments').insert([
+  const { error: adjErr } = await supabase.from('inventory_adjustments').insert([
     {
       inventory_id: inventoryId,
       adjusted_by: operatorId,
@@ -614,6 +615,9 @@ export async function putAwayStock(
       reason: reason || `PUT_AWAY: Stored ${qty} ${itm.uom || 'units'} into ${loc.code}`,
     },
   ]);
+  if (adjErr) {
+    console.warn('Inventory adjustment log notice:', adjErr.message);
+  }
 
   return {
     inventoryId,

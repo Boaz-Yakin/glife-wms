@@ -178,15 +178,29 @@ function PutAwayContent() {
 
       if (!res.ok || !data.success) {
         feedback.error();
-        setError(data.error || "Failed to stock item into rack.");
+        const errStr =
+          typeof data.error === "string"
+            ? data.error
+            : typeof data.error === "object" && data.error !== null && "message" in data.error
+            ? String(data.error.message)
+            : data.error
+            ? JSON.stringify(data.error)
+            : "Failed to stock item into rack.";
+        setError(errStr);
         return;
       }
 
       feedback.complete();
       setSuccessData(data.inventory);
-    } catch (e) {
+    } catch (e: unknown) {
       feedback.error();
-      setError("An unexpected error occurred while saving inventory.");
+      const errStr =
+        e instanceof Error
+          ? e.message
+          : typeof e === "string"
+          ? e
+          : "An unexpected error occurred while saving inventory.";
+      setError(errStr);
     } finally {
       setIsSubmitting(false);
     }
