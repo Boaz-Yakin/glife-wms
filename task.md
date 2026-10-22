@@ -213,3 +213,13 @@
 - [x] 22.5 `OrderDetailsDialog.tsx`: 다이얼로그 헤더의 기존 정적 뱃지를 상태 선택 `<Select>` 드롭다운으로 교체, `isStatusChanged` 감지 시 `Modified` 표시 및 `isDirty` / `Save Changes` 통합 저장 연동
 - [x] 22.6 TypeScript 정적 검증, Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## 🏷️ Phase 23: web-app 선반 랙 실물 라벨 인쇄(Shelf Rack Labels) 규격 구현
+- [x] 23.1 선반 랙 공식 물리적 라벨 규격(100mm × 45mm, 단별 컬러 밴드, 44pt 시각적 계층화) 컴포넌트(`ShelfRackLabelCard`) 구현
+- [x] 23.2 4대 단(Level) 컬러 밴드(A단 초록, B단 노랑/골드, C단 파랑, D단 보라) 및 구역(Zone A 상온, Zone F 냉동) 뱃지 스타일링 반영
+- [x] 23.3 브라우저 인쇄 CSS 및 `@page` 설정에 `-webkit-print-color-adjust: exact` 적용하여 컬러 밴드 색상 누락 방지 및 롤 라벨지(100×45mm), A4(2열 그리드), Letter(2열 그리드) 완벽 호환
+- [x] 23.4 DB 등록 로케이션 일괄 불러오기(`initialDbCodes`), 4단 컬러 밴드 샘플, Zone A/F 원클릭 프리셋 지원
+- [x] 23.5 TypeScript 정적 검증, Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
+
+
