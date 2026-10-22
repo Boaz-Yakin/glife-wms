@@ -1,4 +1,4 @@
-import { supabase } from './supabase.client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface Location {
   id: string;
@@ -29,7 +29,7 @@ export interface CycleCountRequest {
 /**
  * 재고 및 로케이션 정보 조회
  */
-export async function getInventoryLocations() {
+export async function getInventoryLocations(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from('locations')
     .select('*');
@@ -45,6 +45,7 @@ export async function getInventoryLocations() {
  * 실사(Inspection) 또는 조정 시 재고 수량 변경 RPC 호출
  */
 export async function adjustInventoryStock(
+  supabase: SupabaseClient,
   inventoryId: string, 
   newQty: number, 
   userId: string, 
@@ -86,7 +87,7 @@ export async function adjustInventoryStock(
 /**
  * 대기 중인 실사 큐 목록 반환
  */
-export async function getPendingCycleCountQueue(status: string = 'PENDING') {
+export async function getPendingCycleCountQueue(supabase: SupabaseClient, status: string = 'PENDING') {
   const { data, error } = await supabase
     .from('cycle_count_requests')
     .select(`
@@ -108,7 +109,12 @@ export async function getPendingCycleCountQueue(status: string = 'PENDING') {
 /**
  * 피킹 중 결품(CMD-SKIP) 발생 시 긴급 실사 요청 생성
  */
-export async function reportPickingShortage(locationId: string, itemId: string, userId: string) {
+export async function reportPickingShortage(
+  supabase: SupabaseClient,
+  locationId: string,
+  itemId: string,
+  userId: string
+) {
   const { data, error } = await supabase
     .from('cycle_count_requests')
     .insert([

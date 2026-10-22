@@ -197,7 +197,9 @@ export function UsersTable({ data }: { data: UserData[] }) {
 
   const handleResetPassword = async () => {
     if (!editingUser) return
-    if (!confirm(`Are you sure you want to reset the password for ${editingUser.first_name} ${editingUser.last_name}?\n\nThe initial password will be set to 'password123', and they must change it upon their next login.`)) return
+    const isWorker = editingUser.role === 'PICKER' || editingUser.role === 'INSPECTOR'
+    const targetSecret = isWorker ? "6-digit PIN '123456'" : "password 'password123'"
+    if (!confirm(`Are you sure you want to reset the credentials for ${editingUser.first_name} ${editingUser.last_name}?\n\nThe temporary ${targetSecret} will be assigned, and any login lockouts will be cleared.`)) return
 
     setLoading(true)
     const result = await resetUserPasswordAction(editingUser.id)
@@ -206,7 +208,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success("Password has been reset.")
+      toast.success(isWorker ? "Temporary PIN '123456' issued & lock cleared." : "Password reset to 'password123'.")
       setIsEditOpen(false)
     }
   }

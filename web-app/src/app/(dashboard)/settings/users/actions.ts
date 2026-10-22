@@ -24,12 +24,13 @@ export async function createUserAction(formData: FormData) {
   if (phone.length < 10) return { error: "Please enter a valid 10-digit US phone number." }
 
   const email = `${phone}@glife.com`
-  const password = "password123" // Common initial password
+  const isWorker = role === 'PICKER' || role === 'INSPECTOR'
+  const password = isWorker ? "123456" : "password123" // 6-digit PIN for workers, password for managers
 
   // 1. Create in auth.users
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
     email,
-    password: "password123",
+    password,
     email_confirm: true,
     user_metadata: { role, requires_password_change: true }
   })
@@ -52,7 +53,8 @@ export async function createUserAction(formData: FormData) {
       first_name,
       last_name,
       role,
-      status: "ACTIVE"
+      status: "ACTIVE",
+      must_change_pin: isWorker ? true : false
     }
   ])
 
@@ -186,9 +188,14 @@ export async function resetUserPasswordAction(userId: string) {
     auth: { autoRefreshToken: false, persistSession: false }
   })
 
-  // Update password and force change on next login
+  // 1. Fetch user to check role & phone
+  const { data: pubUser } = await adminClient.from("users").select("role, phone").eq("id", userId).maybeSingle()
+  const isWorker = pubUser?.role === 'PICKER' || pubUser?.role === 'INSPECTOR'
+  const newPassword = isWorker ? "123456" : "password123"
+
+  // 2. Update password and force change on next login
   const { error } = await adminClient.auth.admin.updateUserById(userId, {
-    password: "password123",
+    password: newPassword,
     user_metadata: { requires_password_change: true }
   })
 
@@ -197,5 +204,14 @@ export async function resetUserPasswordAction(userId: string) {
     return { error: "Failed to reset password: " + error.message }
   }
 
-  return { success: true }
+  // 3. If worker, set must_change_pin = true and unlock any failed login lock
+  if (isWorker) {
+    await adminClient.from("users").update({ must_change_pin: true }).eq("id", userId)
+    if (pubUser?.phone) {
+      await adminClient.from("auth_login_attempts").delete().eq("phone", pubUser.phone)
+    }
+  }
+
+  revalidatePath("/settings/users")
+  return { success: true, temporarySecret: newPassword, isWorker }
 }

@@ -123,8 +123,7 @@ function PickingRunInner() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             locationId: target.locations?.id || target.item_id,
-            itemId: target.item_id,
-            userId: "USR-TEST-1"
+            itemId: target.item_id
           })
         }).catch(console.error);
 

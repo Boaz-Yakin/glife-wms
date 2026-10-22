@@ -21,24 +21,46 @@ export function usePWA() {
         });
     }
 
-    // Flush IndexedDB queue when network comes back online
-    const handleOnline = async () => {
-      console.info("[PWA] Network restored — flushing scan queue...");
+    const flushWithCurrentUser = async () => {
       try {
-        const result = await flushScanQueue();
+        let currentUserId: string | undefined;
+        try {
+          const res = await fetch("/api/auth/me");
+          if (res.ok) {
+            const data = await res.json();
+            if (data.success) {
+              currentUserId = data.userId;
+            }
+          }
+        } catch {
+          // If offline or unauthenticated, attempt flush without userId match
+        }
+
+        const result = await flushScanQueue(currentUserId);
         if (result.sent > 0) {
           console.info(`[PWA] Flushed ${result.sent} queued scan(s).`);
+        }
+        if (result.suspended > 0) {
+          console.warn(
+            `[PWA] ${result.suspended} offline scan(s) were recorded by a different worker and kept suspended.`
+          );
         }
       } catch (err) {
         console.warn("[PWA] Queue flush failed:", err);
       }
     };
 
+    // Flush IndexedDB queue when network comes back online
+    const handleOnline = () => {
+      console.info("[PWA] Network restored — flushing scan queue...");
+      flushWithCurrentUser();
+    };
+
     window.addEventListener("online", handleOnline);
 
     // Also flush on mount in case we reconnected while app was closed
     if (navigator.onLine) {
-      flushScanQueue().catch(() => {});
+      flushWithCurrentUser();
     }
 
     return () => {

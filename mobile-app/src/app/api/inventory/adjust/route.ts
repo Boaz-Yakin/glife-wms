@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
 import { adjustInventoryStock } from '@/services/inventory.service';
+import { INSPECTOR_ROLES, requireWorker } from '@/services/auth.service';
+import { authErrorResponse } from '@/lib/api-auth';
 
 export async function POST(request: Request) {
   try {
-    // In a real production app, we should verify the user's JWT token here.
-    // e.g. const supabase = createRouteHandlerClient({ cookies });
-    // const { data: { session } } = await supabase.auth.getSession();
-    // if (!session || session.user.user_metadata.role !== 'INSPECTOR') throw Error...
+    // TRD-002: INSPECTOR/ADMIN only; inspector id comes from the session, never the body.
+    const { userId, supabase } = await requireWorker(INSPECTOR_ROLES);
 
     const body = await request.json();
-    const { inventoryId, newQty, userId, reason, requestId } = body;
+    const { inventoryId, newQty, reason, requestId } = body;
 
-    if (!inventoryId || newQty === undefined || !userId) {
+    if (!inventoryId || newQty === undefined) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: inventoryId, newQty, userId' },
+        { success: false, error: 'Missing required fields: inventoryId, newQty' },
         { status: 400 }
       );
     }
@@ -26,10 +26,13 @@ export async function POST(request: Request) {
     }
 
     // Call the service layer which invokes the PostgreSQL RPC (Single Transaction)
-    await adjustInventoryStock(inventoryId, newQty, userId, reason || 'COUNT_MISMATCH', requestId);
+    await adjustInventoryStock(supabase, inventoryId, newQty, userId, reason || 'COUNT_MISMATCH', requestId);
 
     return NextResponse.json({ success: true, adjustedQty: newQty }, { status: 200 });
   } catch (error: unknown) {
+    const authResponse = authErrorResponse(error);
+    if (authResponse) return authResponse;
+
     console.error('API Error /api/inventory/adjust:', error);
     
     // Handle Supabase constraint violations or custom RPC errors
@@ -49,5 +52,3 @@ export async function POST(request: Request) {
     );
   }
 }
-
-

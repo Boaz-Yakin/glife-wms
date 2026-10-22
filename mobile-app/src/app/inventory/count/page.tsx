@@ -62,9 +62,8 @@ function CycleCountInner() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          inventoryId: item.inventoryId, // In real app, resolved from location/item
+          inventoryId: item.inventoryId,
           newQty: actualQty,
-          userId: 'USR-TEST-1', // Mock user id
           reason: isMatched ? 'COUNT_MISMATCH' : reason,
           requestId: reqId
         })

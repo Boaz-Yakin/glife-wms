@@ -292,3 +292,44 @@
 - [x] 30.1 `(inventory)/lookup/page.tsx`: 바코드 스캔 결과 카드에 스캔 대상(`locId` / `itemId`) 기반 `Start Count` 버튼 추가 및 최하단 직접 실사 바로가기 버튼 배치
 - [x] 30.2 `(inventory)/queue/page.tsx`: 상단 탭 우측에 `+ Start Count` 고정 버튼 추가 및 대기열 공백 시 직관적인 `Start Direct Count` 액션 카드 표시
 - [x] 30.3 TypeScript 정적 타입 검증(`tsc --noEmit`), 프로덕션 빌드 통과 및 Vercel 프로덕션 배포 완료
+
+---
+
+## 🔐 Phase 31: mobile-app 작업자 인증 & 역할 기반 접근 제어 (F-11, TRD-002)
+- [x] 31.1 `/grill-me` 설계 인터뷰 (Q1~Q11) 및 `docs/mobile-app/03_TRD.md` TRD-002 작성
+- [x] 31.2 DB 마이그레이션: `users.must_change_pin`, `auth_login_attempts` (RLS, service_role 전용)
+- [x] 31.3 `@supabase/ssr` 도입, `lib/supabase/server.ts`·`client.ts`, `services/auth.service.ts#requireWorker`
+- [x] 31.4 `src/proxy.ts` 라우트 가드 (Next.js 16 proxy, 역할별 리다이렉트, PIN 변경 강제)
+- [x] 31.5 `/login` (전화번호 + 6자리 PIN 키패드), `/api/auth/login` (5회 실패 15분 잠금), `/login/change-pin`, ADMIN `/mode`
+- [x] 31.6 API 보호: `adjust`·`queue`·`picking/*`에 `requireWorker` 적용, 본문 `userId` 제거 (`USR-TEST-1` 삭제)
+- [x] 31.7 오프라인 스캔 큐에 `userId` 저장 및 사용자 불일치 시 전송 보류 + 경고
+- [x] 31.8 web-app: PICKER/INSPECTOR 로그인 차단, Users 화면 6자리 PIN 검증 + 임시 PIN 발급
+- [x] 31.9 TRD-002 §6 수용 기준 QA, lint/build, `validate-arch.ps1` 통과
+
+---
+
+## 🔍 Phase 32: mobile-app 현장 재고 실데이터 조회(Lookup) & 로케이션 이동(Transfer) 완성
+- [ ] 32.1 `services/inventory.service.ts`에 `lookupByLocation(code)` 및 `lookupByItem(code)` 실데이터 조인 쿼리 함수 구현 (실재고, 할당재고, 가용재고 `on_hand - allocated` 정확 계산)
+- [ ] 32.2 `app/api/inventory/lookup/route.ts` API Route Handler 신설 (`GET /api/inventory/lookup?type=location|item&code=...`, `requireWorker(INSPECTOR_ROLES)` 세션 검증)
+- [ ] 32.3 `(inventory)/lookup/page.tsx` 실데이터 연동 (스캔 시 API 즉시 조회, 로케이션 내 적치 상품 목록 카드, 상품 스캔 시 보관 로케이션 목록 카드 렌더링 및 `Start Count` 바로가기)
+- [ ] 32.4 `transfer_inventory_stock()` PostgreSQL RPC 마이그레이션 작성 및 적용 (출발지 차감 + 도착지 증가 단일 트랜잭션 원자성 보장, 마이너스 재고 차단, 감사 로그 기록)
+- [ ] 32.5 `services/inventory.service.ts#transferInventoryStock` 및 `app/api/inventory/transfer/route.ts` API Route Handler 신설 (`POST /api/inventory/transfer`, 작업자 ID 세션 주입)
+- [ ] 32.6 `(inventory)/transfer/page.tsx` 4단계 위저드(출발지 로케이션 스캔 ➔ 이동 품목 선택 ➔ 수량 패드 ➔ 도착지 스캔) 실API 연동 및 햅틱/사운드 피드백 적용
+- [ ] 32.7 TypeScript 정적 타입 검증(`tsc --noEmit`), Next.js Turbopack 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과
+
+---
+
+## ⏱️ Phase 33: mobile-app 피킹 작업자 감사 추적 & 생산성 연동 (F-12 Audit Trail)
+- [ ] 33.1 `services/picking.service.ts`에 피킹 품목 확정 및 세션 작업자(`picker_id`), 완료시각(`picked_at`) 기록 RPC/서비스 함수 구현
+- [ ] 33.2 `app/api/picking/complete/route.ts` API Route Handler 생성 및 `(picking)/picking/run/page.tsx` 피킹 완료(`CMD-DONE` 및 전체 품목 완료) 시 실세션 `picker_id` 연계 저장
+- [ ] 33.3 `web-app` 주문 상세(`OrderDetailsDialog`) 및 대시보드 지표에서 실제 피킹 작업자(`first_name`, `phone`) 및 리드타임 표출 연동
+- [ ] 33.4 TypeScript 정적 타입 검증, Next.js Turbopack 빌드 및 아키텍처 규칙 검증 통과
+
+---
+
+## 📥 Phase 34: mobile-app 간이 입고 적치 모듈 (F-10 Put-away)
+- [ ] 34.1 `docs/mobile-app/03_TRD.md`에 TRD-003 간이 입고 적치(Put-away) 상세 설계 작성 (Design-First 원칙 준수)
+- [ ] 34.2 `services/inventory.service.ts`에 입고 대기 SKU 조회 및 기본 로케이션(`items.default_location_id`) 안내 로직 구현
+- [ ] 34.3 `(inventory)/put-away/page.tsx` 모바일 입고 적치 화면 구현 (상품 바코드 스캔 ➔ 추천 로케이션 시각 안내 ➔ 로케이션 QR 확인 스캔 ➔ 수량 입력 후 재고 원장 반영)
+- [ ] 34.4 `(inventory)/layout.tsx` 네비게이션 또는 재고 메인 홈에 Put-away 진입점 배치
+- [ ] 34.5 TypeScript 정적 타입 검증, Next.js Turbopack 빌드 및 아키텍처 규칙 검증 통과

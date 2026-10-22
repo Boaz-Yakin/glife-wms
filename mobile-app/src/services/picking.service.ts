@@ -1,4 +1,4 @@
-import { supabase } from './supabase.client';
+import type { SupabaseClient } from '@supabase/supabase-js';
 
 export interface Order {
   id: string;
@@ -15,7 +15,7 @@ export interface Order {
 /**
  * 할당된(ALLOCATED) 피킹 대기 주문 목록 조회
  */
-export async function getAllocatedOrders() {
+export async function getAllocatedOrders(supabase: SupabaseClient) {
   const { data, error } = await supabase
     .from('orders')
     .select(`
@@ -83,7 +83,7 @@ export interface PickingItem {
 /**
  * 특정 주문의 피킹 품목 조회 및 S-Shape / Cold Chain 정렬
  */
-export async function getOrderPickingItems(orderId: string) {
+export async function getOrderPickingItems(supabase: SupabaseClient, orderId: string) {
   // 실제 DB에서는 order_items 테이블과 locations, items 테이블을 JOIN 합니다.
   const { data, error } = await supabase
     .from('order_items')

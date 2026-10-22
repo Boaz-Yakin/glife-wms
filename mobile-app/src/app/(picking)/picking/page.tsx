@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Package, Clock, Loader2, Play } from "lucide-react";
+import { Package, Clock, Loader2, Play, LogOut } from "lucide-react";
 import type { Order } from "@/services/picking.service";
 
 export default function PickingDashboard() {
@@ -36,16 +36,57 @@ export default function PickingDashboard() {
     router.push(`/picking/run?orderId=${orderId}`);
   };
 
+  const [isManager, setIsManager] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.isManager) setIsManager(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogout = async () => {
+    if (!confirm("Are you sure you want to log out?")) return;
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      router.replace("/login");
+      router.refresh();
+    } catch {
+      router.replace("/login");
+    }
+  };
+
   return (
     <div className="flex flex-col h-full bg-[#0a0a0a] text-white">
       {/* PWA Header (Minimal) */}
-      <div className="px-4 py-5 border-b border-zinc-800 bg-zinc-950 sticky top-0 z-10 flex justify-between items-center">
+      <div className="px-4 py-4 border-b border-zinc-800 bg-zinc-950 sticky top-0 z-10 flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-black tracking-tight text-white">READY TO PICK</h1>
-          <p className="text-sm text-zinc-400 font-medium mt-1">Select an order to start runner</p>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-black tracking-tight text-white">READY TO PICK</h1>
+            {isManager && (
+              <button
+                onClick={() => router.push("/mode")}
+                className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 flex items-center gap-1 hover:bg-purple-500/20"
+              >
+                Mode
+              </button>
+            )}
+          </div>
+          <p className="text-xs text-zinc-400 font-medium mt-0.5">Select an order to start runner</p>
         </div>
-        <div className="bg-zinc-900 px-3 py-1.5 rounded-full text-xs font-bold text-emerald-400 border border-zinc-800">
-          {orders.length} PENDING
+        <div className="flex items-center gap-2">
+          <div className="bg-zinc-900 px-2.5 py-1 rounded-full text-xs font-bold text-emerald-400 border border-zinc-800">
+            {orders.length} PENDING
+          </div>
+          <button
+            onClick={handleLogout}
+            title="Log out"
+            className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-900 transition-colors"
+          >
+            <LogOut className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
