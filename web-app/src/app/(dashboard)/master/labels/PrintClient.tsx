@@ -12,6 +12,7 @@ import { QRCodeSVG } from "qrcode.react"
 export type PaperSize = "letter" | "rack-label" | "compact-label" | "a4"
 export type LabelSymbology = "qr" | "barcode"
 export type QrPlacement = "vertical" | "horizontal" | "diagonal" | "fixed-right" | "fixed-left"
+export type CardHeight = "30mm" | "35mm" | "45mm"
 
 // ─────────────────────────────────────────────────────────────
 // Official Level Physical Color Band Specifications
@@ -219,7 +220,7 @@ function parseLocationCode(code: string): ParsedLocation | null {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Shelf Rack Physical Label Component (100mm × 45mm / 4" × 1.8")
+// Shelf Rack Physical Label Component (100mm × 30mm Compact Default, 35mm, 45mm)
 // Supports Vertical (Top ↔ Bottom) and Horizontal (Left ↔ Right) Zig-Zag
 // ─────────────────────────────────────────────────────────────
 function ShelfRackLabelCard({
@@ -227,12 +228,14 @@ function ShelfRackLabelCard({
   showCutLines = true,
   symbology = "qr",
   qrPlacement = "vertical",
+  cardHeight = "30mm",
   index = 0,
 }: {
   code: string
   showCutLines?: boolean
   symbology?: LabelSymbology
   qrPlacement?: QrPlacement
+  cardHeight?: CardHeight
   index?: number
 }) {
   const loc = parseLocationCode(code)
@@ -259,21 +262,28 @@ function ShelfRackLabelCard({
       ? !isOdd // Level B & D on Left, A & C on Right
       : qrPlacement === "diagonal"
       ? !isOdd // Level B & D on Bottom-Left, A & C on Top-Right
-      : false // In vertical zig-zag, QR stays on Right column, jumping TOP ↕ BOTTOM
+      : false // In vertical zig-zag, QR stays on Right column, jumping TOP ↔ BOTTOM
+
+  const isCompact = cardHeight === "30mm"
+  const isMedium = cardHeight === "35mm"
 
   // Standard Product SKU Fallback
   if (!loc) {
     if (symbology === "qr") {
       const qrSkuBox = (
-        <div className="w-[33mm] h-[38mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white">
+        <div
+          className={`${
+            isCompact ? "w-[26mm] h-[26.5mm] p-0.5" : isMedium ? "w-[29mm] h-[31mm] p-1" : "w-[33mm] h-[38mm] p-1"
+          } flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded bg-white`}
+        >
           <QRCodeSVG
             value={code}
-            size={96}
+            size={isCompact ? 68 : isMedium ? 80 : 96}
             level="M"
             marginSize={1}
-            className="w-full h-auto max-h-[30mm] block [shape-rendering:crispEdges]"
+            className={`w-full h-auto ${isCompact ? "max-h-[20mm]" : isMedium ? "max-h-[25mm]" : "max-h-[30mm]"} block [shape-rendering:crispEdges]`}
           />
-          <span className="text-[7.5px] font-mono font-bold text-zinc-600 uppercase tracking-wider mt-0.5">
+          <span className={`${isCompact ? "text-[6.5px]" : "text-[7.5px]"} font-mono font-bold text-zinc-600 uppercase tracking-wider mt-0.5`}>
             SCAN SKU
           </span>
         </div>
@@ -282,13 +292,17 @@ function ShelfRackLabelCard({
       const infoSkuBox = (
         <div className="flex-1 flex flex-col justify-between h-full overflow-hidden">
           <div>
-            <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Product SKU</span>
-            <span className="font-mono font-black text-lg tracking-tight uppercase block text-zinc-900 mt-1 break-all">
+            <span className={`${isCompact ? "text-[8px]" : "text-[10px]"} text-zinc-500 font-bold uppercase tracking-wider block`}>
+              Product SKU
+            </span>
+            <span className={`font-mono font-black ${isCompact ? "text-sm" : "text-lg"} tracking-tight uppercase block text-zinc-900 mt-0.5 break-all`}>
               {code}
             </span>
           </div>
-          <div className="border-t border-zinc-200 pt-1">
-            <span className="text-[9px] text-zinc-500 font-medium">Standard Inventory Item</span>
+          <div className="border-t border-zinc-200 pt-0.5">
+            <span className={`${isCompact ? "text-[7.5px]" : "text-[9px]"} text-zinc-500 font-medium`}>
+              Standard Inventory Item
+            </span>
           </div>
         </div>
       )
@@ -297,14 +311,14 @@ function ShelfRackLabelCard({
         <div
           className={`shelf-rack-label-card relative bg-white text-zinc-950 ${
             showCutLines ? "border border-dashed border-zinc-400" : "border border-transparent"
-          } flex flex-row items-center justify-between overflow-hidden p-3 box-border select-none gap-2`}
+          } flex flex-row items-center justify-between overflow-hidden ${isCompact ? "p-1.5 gap-1.5" : "p-3 gap-2"} box-border select-none`}
           style={{
             width: "100mm",
-            height: "45mm",
+            height: cardHeight,
             minWidth: "100mm",
             maxWidth: "100mm",
-            minHeight: "45mm",
-            maxHeight: "45mm",
+            minHeight: cardHeight,
+            maxHeight: cardHeight,
             backgroundColor: "#ffffff",
             color: "#000000",
             printColorAdjust: "exact",
@@ -330,33 +344,33 @@ function ShelfRackLabelCard({
       <div
         className={`shelf-rack-label-card relative bg-white text-zinc-950 ${
           showCutLines ? "border border-dashed border-zinc-400" : "border border-transparent"
-        } flex flex-col justify-between overflow-hidden p-2.5 box-border select-none`}
+        } flex flex-col justify-between overflow-hidden ${isCompact ? "p-1.5" : "p-2.5"} box-border select-none`}
         style={{
           width: "100mm",
-          height: "45mm",
+          height: cardHeight,
           minWidth: "100mm",
           maxWidth: "100mm",
-          minHeight: "45mm",
-          maxHeight: "45mm",
+          minHeight: cardHeight,
+          maxHeight: cardHeight,
           backgroundColor: "#ffffff",
           color: "#000000",
           printColorAdjust: "exact",
           WebkitPrintColorAdjust: "exact",
         }}
       >
-        <div className="flex items-center justify-between border-b pb-1">
-          <span className="font-mono font-bold text-sm tracking-wider uppercase">{code}</span>
-          <span className="text-[10px] text-zinc-500 font-semibold uppercase">Product SKU</span>
+        <div className="flex items-center justify-between border-b pb-0.5">
+          <span className={`font-mono font-bold ${isCompact ? "text-xs" : "text-sm"} tracking-wider uppercase`}>{code}</span>
+          <span className={`${isCompact ? "text-[8px]" : "text-[10px]"} text-zinc-500 font-semibold uppercase`}>Product SKU</span>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center overflow-hidden py-1">
+        <div className="flex-1 flex flex-col items-center justify-center overflow-hidden py-0.5">
           <Barcode
             value={code}
-            width={1.35}
-            height={44}
-            fontSize={12}
+            width={isCompact ? 1.2 : 1.35}
+            height={isCompact ? 28 : 44}
+            fontSize={isCompact ? 9 : 12}
             font="monospace"
             displayValue={true}
-            margin={4}
+            margin={2}
             background="#ffffff"
             lineColor="#000000"
             className="max-w-full h-auto block [shape-rendering:crispEdges]"
@@ -367,50 +381,59 @@ function ShelfRackLabelCard({
   }
 
   // ─── 2D QR Code Layout Blocks ───
-  // A. Vertical Zig-Zag Mode (Top vs Bottom shift)
   const isVerticalMode = qrPlacement === "vertical" || qrPlacement === "diagonal"
 
+  // Sizing definitions according to Card Height
+  const qrColWidth = isCompact ? "w-[28mm]" : isMedium ? "w-[31mm]" : "w-[34mm]"
+  const qrColHeight = isCompact ? "h-[26.8mm]" : isMedium ? "h-[31.5mm]" : "h-[40.5mm]"
+  const qrBoxHeight = isCompact ? "h-[18.2mm]" : isMedium ? "h-[21.5mm]" : "h-[26.5mm]"
+  const tagBoxHeight = isCompact ? "h-[7.5mm]" : isMedium ? "h-[8.8mm]" : "h-[12.5mm]"
+  const qrSvgHeight = isCompact ? "h-[16.5mm]" : isMedium ? "h-[19.5mm]" : "h-[23.5mm]"
+  const qrSvgSize = isCompact ? 64 : isMedium ? 74 : 88
+  const qrFullSvgHeight = isCompact ? "max-h-[20.5mm]" : isMedium ? "max-h-[25mm]" : "max-h-[30.5mm]"
+  const qrFullSvgSize = isCompact ? 76 : isMedium ? 88 : 100
+
   const qrVerticalColumn = (
-    <div className="w-[34mm] h-[40.5mm] flex flex-col justify-between shrink-0">
+    <div className={`${qrColWidth} ${qrColHeight} flex flex-col justify-between shrink-0`}>
       {isQrTop ? (
         /* Top QR Mode (Level A, Level C) */
         <>
-          <div className="w-[34mm] h-[26.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className={`${qrColWidth} ${qrBoxHeight} flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-0.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}>
             <QRCodeSVG
               value={loc.raw}
-              size={88}
+              size={qrSvgSize}
               level="M"
               marginSize={1}
-              className="w-auto h-[23.5mm] block [shape-rendering:crispEdges]"
+              className={`w-auto ${qrSvgHeight} block [shape-rendering:crispEdges]`}
             />
           </div>
-          <div className="w-[34mm] h-[12.5mm] flex flex-col items-center justify-center shrink-0 border border-emerald-300 rounded px-1 py-0.5 bg-emerald-50/70">
-            <span className="text-[10px] font-mono font-black text-emerald-950 tracking-wider leading-none">
+          <div className={`${qrColWidth} ${tagBoxHeight} flex flex-col items-center justify-center shrink-0 border border-emerald-300 rounded px-1 py-0.2 bg-emerald-50/70 leading-none`}>
+            <span className={`${isCompact ? "text-[8.5px]" : "text-[10px]"} font-mono font-black text-emerald-950 tracking-wider leading-none`}>
               {loc.shortLocation}
             </span>
-            <span className="text-[7.5px] font-bold text-emerald-700 bg-white border border-emerald-200 rounded px-1.5 py-0.2 mt-0.5 uppercase tracking-wider leading-none">
-              ▲ TOP QR
+            <span className={`${isCompact ? "text-[6.5px] px-1 py-0.2 mt-0.5" : "text-[7.5px] px-1.5 py-0.2 mt-0.5"} font-bold text-emerald-700 bg-white border border-emerald-200 rounded uppercase tracking-wider leading-none`}>
+              ▲ TOP
             </span>
           </div>
         </>
       ) : (
         /* Bottom QR Mode (Level B, Level D) */
         <>
-          <div className="w-[34mm] h-[12.5mm] flex flex-col items-center justify-center shrink-0 border border-amber-300 rounded px-1 py-0.5 bg-amber-50/70">
-            <span className="text-[7.5px] font-bold text-amber-800 bg-white border border-amber-200 rounded px-1.5 py-0.2 mb-0.5 uppercase tracking-wider leading-none">
-              ▼ BTM QR
+          <div className={`${qrColWidth} ${tagBoxHeight} flex flex-col items-center justify-center shrink-0 border border-amber-300 rounded px-1 py-0.2 bg-amber-50/70 leading-none`}>
+            <span className={`${isCompact ? "text-[6.5px] px-1 py-0.2 mb-0.5" : "text-[7.5px] px-1.5 py-0.2 mb-0.5"} font-bold text-amber-800 bg-white border border-amber-200 rounded uppercase tracking-wider leading-none`}>
+              ▼ BTM
             </span>
-            <span className="text-[10px] font-mono font-black text-amber-950 tracking-wider leading-none">
+            <span className={`${isCompact ? "text-[8.5px]" : "text-[10px]"} font-mono font-black text-amber-950 tracking-wider leading-none`}>
               {loc.shortLocation}
             </span>
           </div>
-          <div className="w-[34mm] h-[26.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <div className={`${qrColWidth} ${qrBoxHeight} flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-0.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}>
             <QRCodeSVG
               value={loc.raw}
-              size={88}
+              size={qrSvgSize}
               level="M"
               marginSize={1}
-              className="w-auto h-[23.5mm] block [shape-rendering:crispEdges]"
+              className={`w-auto ${qrSvgHeight} block [shape-rendering:crispEdges]`}
             />
           </div>
         </>
@@ -420,27 +443,27 @@ function ShelfRackLabelCard({
 
   // B. Standard / Horizontal Full-Height QR Box
   const qrFullHeightColumn = (
-    <div className="w-[34mm] h-[39.5mm] flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-1 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+    <div className={`${qrColWidth} ${isCompact ? "h-[26.8mm]" : isMedium ? "h-[31.5mm]" : "h-[39.5mm]"} flex flex-col items-center justify-center shrink-0 border border-zinc-200 rounded p-0.5 bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)]`}>
       <QRCodeSVG
         value={loc.raw}
-        size={100}
+        size={qrFullSvgSize}
         level="M"
         marginSize={1}
-        className="w-full h-auto max-h-[30.5mm] block [shape-rendering:crispEdges]"
+        className={`w-full h-auto ${qrFullSvgHeight} block [shape-rendering:crispEdges]`}
       />
-      <span className="text-[8.5px] font-mono font-black text-zinc-900 tracking-wider mt-0.5">
+      <span className={`${isCompact ? "text-[7.5px]" : "text-[8.5px]"} font-mono font-black text-zinc-900 tracking-wider mt-0.5 leading-none`}>
         {loc.shortLocation}
       </span>
     </div>
   )
 
-  // Coordinates Column (Aisle/Bay + 38~44pt Level/Bin + Badges)
+  // Coordinates Column (Aisle/Bay + 28pt~44pt Level/Bin + Badges)
   const coordsBox = (
-    <div className="flex-1 h-full flex flex-col justify-between overflow-hidden">
+    <div className="flex-1 h-full flex flex-col justify-between overflow-hidden pr-0.5">
       {/* Top: Zone & Level Badges */}
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="flex items-center gap-1 flex-wrap leading-none">
         <div
-          className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border uppercase leading-none"
+          className={`${isCompact ? "px-1.5 py-0.2 text-[7px]" : "px-1.5 py-0.5 text-[8px]"} rounded font-bold tracking-tight border uppercase leading-none`}
           style={{
             backgroundColor: loc.zoneStyle.badgeBg,
             color: loc.zoneStyle.badgeText,
@@ -452,7 +475,7 @@ function ShelfRackLabelCard({
           {loc.zoneName}
         </div>
         <div
-          className="px-1.5 py-0.5 rounded text-[8px] font-bold tracking-tight border flex items-center gap-1 leading-none"
+          className={`${isCompact ? "px-1.5 py-0.2 text-[7px]" : "px-1.5 py-0.5 text-[8px]"} rounded font-bold tracking-tight border flex items-center gap-1 leading-none`}
           style={{
             backgroundColor: loc.levelStyle.bgHex,
             color: loc.levelStyle.textHex,
@@ -462,7 +485,7 @@ function ShelfRackLabelCard({
           }}
         >
           <span
-            className="w-1.5 h-1.5 rounded-full inline-block shrink-0"
+            className={`${isCompact ? "w-1 h-1" : "w-1.5 h-1.5"} rounded-full inline-block shrink-0`}
             style={{ backgroundColor: loc.levelStyle.colorHex }}
           />
           <span>{loc.levelStyle.englishLevel}</span>
@@ -473,34 +496,40 @@ function ShelfRackLabelCard({
       <div className="flex items-baseline justify-between gap-1 my-auto">
         {/* Upper Coordinates (Aisle & Bay) */}
         <div className="flex flex-col">
-          <span className="font-mono font-bold text-[19px] text-zinc-800 tracking-tight leading-none">
+          <span
+            className={`font-mono font-bold ${
+              isCompact ? "text-[15px]" : isMedium ? "text-[17px]" : "text-[19px]"
+            } text-zinc-800 tracking-tight leading-none`}
+          >
             {loc.humanAisleBay}
           </span>
-          <span className="text-[8px] font-semibold text-zinc-500 uppercase tracking-tight mt-0.5">
+          <span className={`${isCompact ? "text-[6.5px]" : "text-[8px]"} font-semibold text-zinc-500 uppercase tracking-tight mt-0.5 leading-none`}>
             Aisle {loc.aisle} • Bay {loc.bay}
           </span>
         </div>
 
-        {/* Main Pick Coordinate: Level & Bin (38~44pt Bold) */}
+        {/* Main Pick Coordinate: Level & Bin (28pt in compact, 38~44pt in full) */}
         <div className="flex flex-col items-end">
           <span
-            className="font-mono font-black text-[38px] leading-none text-zinc-950 tracking-tighter"
+            className={`font-mono font-black ${
+              isCompact ? "text-[27px]" : isMedium ? "text-[32px]" : "text-[38px]"
+            } leading-none text-zinc-950 tracking-tighter`}
             style={{ fontFamily: "'Geist Mono', monospace, sans-serif" }}
           >
             {loc.humanLevelBin}
           </span>
-          <span className="text-[8.5px] font-bold text-zinc-700 tracking-tight mt-0.5 uppercase">
+          <span className={`${isCompact ? "text-[7px]" : "text-[8.5px]"} font-bold text-zinc-700 tracking-tight mt-0.5 uppercase leading-none`}>
             Level {loc.level} • Bin {loc.bin}
           </span>
         </div>
       </div>
 
       {/* Bottom: Raw Machine Location String */}
-      <div className="flex items-center justify-between border-t border-zinc-200 pt-1">
-        <span className="font-mono font-bold text-[10.5px] text-zinc-800 tracking-wider">
+      <div className="flex items-center justify-between border-t border-zinc-200 pt-0.5 leading-none">
+        <span className={`font-mono font-bold ${isCompact ? "text-[8.5px]" : "text-[10.5px]"} text-zinc-800 tracking-wider leading-none`}>
           {loc.raw}
         </span>
-        <span className="text-[7.5px] font-bold tracking-wider uppercase text-zinc-500">
+        <span className={`${isCompact ? "text-[6.5px]" : "text-[7.5px]"} font-bold tracking-wider uppercase text-zinc-500 leading-none`}>
           LOCATION 2D
         </span>
       </div>
@@ -508,6 +537,8 @@ function ShelfRackLabelCard({
   )
 
   const activeQrColumn = isVerticalMode ? qrVerticalColumn : qrFullHeightColumn
+  const bandWidth = isCompact ? "w-[6.5mm]" : isMedium ? "w-[7mm]" : "w-[7.5mm]"
+  const contentWidth = isCompact ? "w-[93.5mm]" : isMedium ? "w-[93mm]" : "w-[92.5mm]"
 
   return (
     <div
@@ -516,11 +547,11 @@ function ShelfRackLabelCard({
       } flex flex-col justify-between overflow-hidden box-border select-none`}
       style={{
         width: "100mm",
-        height: "45mm",
+        height: cardHeight,
         minWidth: "100mm",
         maxWidth: "100mm",
-        minHeight: "45mm",
-        maxHeight: "45mm",
+        minHeight: cardHeight,
+        maxHeight: cardHeight,
         backgroundColor: "#ffffff",
         color: "#09090b",
         printColorAdjust: "exact",
@@ -528,11 +559,10 @@ function ShelfRackLabelCard({
       }}
     >
       {/* 
-        Right-Edge Physical Level Color Band (7.5mm Solid Strip)
+        Right-Edge Physical Level Color Band
         Uses inline SVG rect to GUARANTEE full-color printing on all browsers
-        even if the user's print preview has 'Background graphics' unchecked!
       */}
-      <div className="absolute top-0 right-0 bottom-0 w-[7.5mm] h-full overflow-hidden select-none">
+      <div className={`absolute top-0 right-0 bottom-0 ${bandWidth} h-full overflow-hidden select-none`}>
         <svg
           width="100%"
           height="100%"
@@ -544,11 +574,11 @@ function ShelfRackLabelCard({
         </svg>
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <span
-            className="text-white font-black text-[9px] tracking-widest uppercase whitespace-nowrap"
+            className={`text-white font-black ${isCompact ? "text-[7.5px]" : "text-[9px]"} tracking-widest uppercase whitespace-nowrap`}
             style={{
               writingMode: "vertical-rl",
               transform: "rotate(180deg)",
-              letterSpacing: "0.15em",
+              letterSpacing: isCompact ? "0.1em" : "0.15em",
             }}
           >
             {loc.levelStyle.englishLevel}
@@ -556,10 +586,14 @@ function ShelfRackLabelCard({
         </div>
       </div>
 
-      {/* Internal Label Content Area (Uses 92.5mm width) */}
+      {/* Internal Label Content Area */}
       {symbology === "qr" ? (
         /* ─── 2D QR Code Zig-Zag Industrial Layout ─── */
-        <div className="w-[92.5mm] h-full pl-[3.5mm] pr-[2.5mm] py-[2.2mm] box-border flex items-center justify-between gap-2.5">
+        <div
+          className={`${contentWidth} h-full ${
+            isCompact ? "pl-[2.5mm] pr-[2mm] py-[1.5mm] gap-2" : "pl-[3.5mm] pr-[2.5mm] py-[2.2mm] gap-2.5"
+          } box-border flex items-center justify-between`}
+        >
           {isQrLeft ? (
             <>
               {activeQrColumn}
@@ -574,29 +608,31 @@ function ShelfRackLabelCard({
         </div>
       ) : (
         /* ─── 1D Barcode (Code 128) Legacy Layout ─── */
-        <div className="pr-[9mm] pl-[3mm] pt-[2.2mm] pb-[1.5mm] h-full flex flex-col justify-between">
-          {/* Top: Human-Readable 3-Chunk Visual Hierarchy */}
+        <div
+          className={`${isCompact ? "pr-[7.5mm] pl-[2.5mm] pt-[1.5mm] pb-[1mm]" : "pr-[9mm] pl-[3mm] pt-[2.2mm] pb-[1.5mm]"} h-full flex flex-col justify-between`}
+        >
+          {/* Top: Human-Readable Coordinates */}
           <div>
             <div className="flex items-start justify-between gap-1 leading-none">
-              {/* Left: Upper Coordinates (Aisle & Bay) */}
+              {/* Left: Upper Coordinates */}
               <div className="flex flex-col">
-                <span className="font-mono font-bold text-[19px] text-zinc-800 tracking-tight leading-tight">
+                <span className={`font-mono font-bold ${isCompact ? "text-[14px]" : "text-[19px]"} text-zinc-800 tracking-tight leading-tight`}>
                   {loc.humanAisleBay}
                 </span>
-                <span className="text-[8.5px] font-semibold text-zinc-500 uppercase tracking-tight mt-0.5">
+                <span className={`${isCompact ? "text-[7px]" : "text-[8.5px]"} font-semibold text-zinc-500 uppercase tracking-tight mt-0.5`}>
                   Aisle {loc.aisle} • Bay {loc.bay}
                 </span>
               </div>
 
-              {/* Center: Main Final Position (Level & Bin) — 38~44pt Bold */}
+              {/* Center: Main Final Position (Level & Bin) */}
               <div className="flex flex-col items-center -mt-0.5">
                 <span
-                  className="font-mono font-black text-[38px] leading-none text-zinc-950 tracking-tighter"
+                  className={`font-mono font-black ${isCompact ? "text-[26px]" : "text-[38px]"} leading-none text-zinc-950 tracking-tighter`}
                   style={{ fontFamily: "'Geist Mono', monospace, sans-serif" }}
                 >
                   {loc.humanLevelBin}
                 </span>
-                <span className="text-[9px] font-bold text-zinc-700 tracking-tight mt-0.5 uppercase">
+                <span className={`${isCompact ? "text-[7.5px]" : "text-[9px]"} font-bold text-zinc-700 tracking-tight mt-0.5 uppercase`}>
                   Level {loc.level} • Bin {loc.bin}
                 </span>
               </div>
@@ -604,7 +640,7 @@ function ShelfRackLabelCard({
               {/* Right: Zone Badge & Level Color Indicator */}
               <div className="flex flex-col items-end gap-1">
                 <div
-                  className="px-2 py-0.5 rounded text-[8px] font-bold tracking-tight border uppercase"
+                  className={`${isCompact ? "px-1.5 py-0.2 text-[7px]" : "px-2 py-0.5 text-[8px]"} rounded font-bold tracking-tight border uppercase`}
                   style={{
                     backgroundColor: loc.zoneStyle.badgeBg,
                     color: loc.zoneStyle.badgeText,
@@ -616,7 +652,7 @@ function ShelfRackLabelCard({
                   {loc.zoneName}
                 </div>
                 <div
-                  className="px-2 py-0.5 rounded text-[8px] font-bold tracking-tight border flex items-center gap-1.5"
+                  className={`${isCompact ? "px-1.5 py-0.2 text-[7px]" : "px-2 py-0.5 text-[8px]"} rounded font-bold tracking-tight border flex items-center gap-1`}
                   style={{
                     backgroundColor: loc.levelStyle.bgHex,
                     color: loc.levelStyle.textHex,
@@ -626,7 +662,7 @@ function ShelfRackLabelCard({
                   }}
                 >
                   <span
-                    className="w-2 h-2 rounded-full inline-block shrink-0"
+                    className={`${isCompact ? "w-1.5 h-1.5" : "w-2 h-2"} rounded-full inline-block shrink-0`}
                     style={{ backgroundColor: loc.levelStyle.colorHex }}
                   />
                   <span>{loc.levelStyle.englishLevel}</span>
@@ -635,16 +671,16 @@ function ShelfRackLabelCard({
             </div>
 
             {/* Thin Horizontal Divider */}
-            <div className="w-full h-[1px] bg-zinc-300 mt-1 mb-0.5" />
+            <div className="w-full h-[1px] bg-zinc-300 mt-0.5 mb-0.5" />
           </div>
 
           {/* Bottom: Machine-Readable Code 128 Barcode */}
           <div className="flex-1 flex flex-col items-center justify-center -mt-0.5">
             <Barcode
               value={loc.raw}
-              width={1.35}
-              height={42}
-              fontSize={12}
+              width={isCompact ? 1.2 : 1.35}
+              height={isCompact ? 28 : 42}
+              fontSize={isCompact ? 9 : 12}
               font="monospace"
               displayValue={true}
               margin={0}
@@ -664,6 +700,7 @@ function ShelfRackLabelCard({
 // ─────────────────────────────────────────────────────────────
 export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[] }) {
   const [codesInput, setCodesInput] = React.useState(FOUR_LEVEL_PREVIEW_CODES)
+  const [cardHeight, setCardHeight] = React.useState<CardHeight>("30mm")
   const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
   const [symbology, setSymbology] = React.useState<LabelSymbology>("qr")
   const [qrPlacement, setQrPlacement] = React.useState<QrPlacement>("vertical")
@@ -691,14 +728,14 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               paperSize === "letter"
                 ? "letter portrait"
                 : paperSize === "rack-label"
-                ? "100mm 45mm"
+                ? `100mm ${cardHeight}`
                 : paperSize === "compact-label"
                 ? "50mm 30mm"
                 : "a4 portrait"
             };
             margin: ${
               paperSize === "letter"
-                ? "16mm 6mm 14mm 6mm"
+                ? (cardHeight === "30mm" ? "12mm 6mm 10mm 6mm" : "16mm 6mm 14mm 6mm")
                 : paperSize.includes("label")
                 ? "0"
                 : "8mm 5mm"
@@ -746,7 +783,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             .rack-print-container {
               display: grid !important;
               grid-template-columns: repeat(2, 100mm) !important;
-              gap: 3mm 4mm !important;
+              gap: ${cardHeight === "30mm" ? "2.5mm 4mm" : "3mm 4mm"} !important;
               justify-content: center !important;
             }
           `
@@ -761,11 +798,11 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             <div className="flex items-center gap-2">
               <h3 className="font-bold text-lg text-foreground">Shelf Rack Label Print Settings</h3>
               <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                Standard 100mm × 45mm (4" × 1.8") • {symbology === "qr" ? "QR Code (2D)" : "Barcode (1D)"}
+                100mm × {cardHeight} ({cardHeight === "30mm" ? "4\" × 1.2\" Compact" : cardHeight === "35mm" ? "4\" × 1.4\" Medium" : "4\" × 1.8\" Full"}) • {symbology === "qr" ? "QR Code (2D)" : "Barcode (1D)"}
               </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Glife WMS Standard: 44pt visual hierarchy, Level color bands (Green / Gold / Blue / Purple), and {symbology === "qr" ? "Anti-Crossfire 2D QR Codes" : "Code 128 Barcodes"}.
+              Glife WMS Standard: Visual hierarchy, Level color bands (Green / Gold / Blue / Purple), and {symbology === "qr" ? "Anti-Crossfire 2D QR Codes" : "Code 128 Barcodes"}.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -869,6 +906,65 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
         {/* Settings Form */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
+            {/* Label Height Selector (Beam Fit) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-semibold">Label Card Height (Beam Face Fit)</Label>
+                <span className="text-[10px] text-primary font-semibold">
+                  {cardHeight === "30mm"
+                    ? "30mm Compact (Beam Fit • Default)"
+                    : cardHeight === "35mm"
+                    ? "35mm Medium"
+                    : "45mm Full Size"}
+                </span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCardHeight("30mm")}
+                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
+                    cardHeight === "30mm"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                  }`}
+                >
+                  <span className="flex items-center gap-1">
+                    <span>30mm Compact</span>
+                    <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/20 text-emerald-300">Default</span>
+                  </span>
+                  <span className="text-[10px] font-normal opacity-80 mt-0.5">4" × 1.2" • 16 / Letter sheet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCardHeight("35mm")}
+                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
+                    cardHeight === "35mm"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                  }`}
+                >
+                  <span>35mm Medium</span>
+                  <span className="text-[10px] font-normal opacity-80 mt-0.5">4" × 1.4" • 14 / Letter sheet</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCardHeight("45mm")}
+                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
+                    cardHeight === "45mm"
+                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
+                  }`}
+                >
+                  <span>45mm Full Size</span>
+                  <span className="text-[10px] font-normal opacity-80 mt-0.5">4" × 1.8" • 10 / Letter sheet</span>
+                </button>
+              </div>
+              <p className="text-[11px] text-muted-foreground leading-normal">
+                • <strong>30mm Compact</strong>: Fits universal standard warehouse shelf beams (1.2" step/box beams) without overhang.<br />
+                • Yields <strong>16 labels per US Letter sheet</strong> with zero margins wasted!
+              </p>
+            </div>
+
             {/* Symbology Toggle (QR Code 2D vs Barcode 1D) */}
             <div className="space-y-2">
               <Label className="text-xs font-semibold">Symbology (Code Type)</Label>
@@ -951,7 +1047,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                   </button>
                 </div>
                 <p className="text-[11px] text-muted-foreground leading-normal">
-                  • <strong>↕ Top ↔ Bottom (Vertical Zig-Zag)</strong>: Staggers QR codes between Upper (Level A/C) and Lower (Level B/D) positions. Eliminates horizontal scanner cross-reading when labels are mounted side-by-side along shelf beams.<br />
+                  • <strong>↕ Top ↔ Bottom (Vertical Zig-Zag)</strong>: Staggers QR codes between Upper (Level A/C) and Lower (Level B/D) positions. Eliminates scanner cross-reading when labels are mounted side-by-side along shelf beams.<br />
                   • <strong>↔ Left ↔ Right</strong>: Alternates between Right and Left for vertical rack posts.
                 </p>
               </div>
@@ -965,16 +1061,16 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="letter">
-                    📄 US Letter (8.5" × 11" - 2 cols × 5 rows, 10 labels/sheet)
+                    📄 US Letter (8.5" × 11" - 2 cols × {cardHeight === "30mm" ? "8 rows, 16" : cardHeight === "35mm" ? "7 rows, 14" : "5 rows, 10"} labels/sheet)
                   </SelectItem>
                   <SelectItem value="rack-label">
-                    🏷️ 4" × 2" (100×45mm) Dedicated Roll Label (Continuous)
+                    🏷️ 4" × {cardHeight === "30mm" ? "1.2\" (100×30mm)" : cardHeight === "35mm" ? "1.4\" (100×35mm)" : "1.8\" (100×45mm)"} Roll Label (Continuous)
                   </SelectItem>
                   <SelectItem value="compact-label">
-                    🏷️ Compact Roll Label (2" × 1.2" / 50×30mm)
+                    🏷️ Small Roll Label (2" × 1.2" / 50×30mm)
                   </SelectItem>
                   <SelectItem value="a4">
-                    📄 A4 Paper (210 × 297mm - 2 cols × 5 rows)
+                    📄 A4 Paper (210 × 297mm - 2 cols × {cardHeight === "30mm" ? "9 rows" : cardHeight === "35mm" ? "8 rows" : "5 rows"})
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -994,8 +1090,8 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </button>
               </div>
               <p className="text-[11px] text-muted-foreground leading-normal">
-                • Turn <strong>ON</strong> for <strong>US Letter</strong> or <strong>A4</strong> paper to guide scissor / paper trimmer cutting (10 labels per sheet).<br />
-                • Turn <strong>OFF</strong> for <strong>4" × 2" die-cut roll labels</strong> to remove borders.
+                • Turn <strong>ON</strong> for <strong>US Letter</strong> or <strong>A4</strong> paper to guide scissor / paper trimmer cutting.<br />
+                • Turn <strong>OFF</strong> for continuous or die-cut roll labels.
               </p>
             </div>
           </div>
@@ -1029,7 +1125,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             </h4>
           </div>
           <span className="text-xs text-muted-foreground">
-            Official Size: 100mm × 45mm (approx 4" × 1.8")
+            Current Size: 100mm × {cardHeight} ({cardHeight === "30mm" ? "4\" × 1.2\" Compact Beam Fit" : cardHeight === "35mm" ? "4\" × 1.4\" Medium" : "4\" × 1.8\" Full Size"})
           </span>
         </div>
 
@@ -1045,6 +1141,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                   showCutLines={showCutLines}
                   symbology={symbology}
                   qrPlacement={qrPlacement}
+                  cardHeight={cardHeight}
                   index={index}
                 />
               </div>
@@ -1062,6 +1159,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             showCutLines={showCutLines}
             symbology={symbology}
             qrPlacement={qrPlacement}
+            cardHeight={cardHeight}
             index={index}
           />
         ))}
@@ -1069,3 +1167,4 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
     </div>
   )
 }
+

@@ -254,4 +254,16 @@
 - [x] 26.3 다채널 정렬 모드 컨트롤러 확장 (`↕ Top ↔ Bottom (Vertical Zig-Zag • 기본값)`, `↔ Left ↔ Right (Horizontal)`, `⤡ Diagonal (Corner)`)
 - [x] 26.4 Next.js Turbopack 프로덕션 빌드(`npm run build`) 및 아키텍처 규칙 검증 통과 완료
 
+---
+
+## 📐 Phase 27: 바코드/QR 라벨 카드 세로 길이 컴팩트(Compact Beam Fit) 최적화
+- [x] 27.1 선반 랙 빔 규격에 맞춘 컴팩트 세로 길이 축소 (기존 45mm → **30mm 컴팩트 기본값**, 35mm 미디엄, 45mm 풀사이즈 동적 지원)
+- [x] 27.2 100mm × 30mm 슬림 폼팩터 내 요소 정밀 재배치:
+  - 우측 6.5mm 수직 Level 컬러 밴드(A 초록 / B 골드 / C 파랑 / D 보라, SVG 벡터)
+  - 28mm 정밀 2D QR 코드 컬럼: 상단(Level A/C) ↔ 하단(Level B/D) 상하 지그재그 유지, `01-05-A` 간이 태그 및 `▲ TOP` / `▼ BTM` 미니 뱃지 일체형 배치
+  - 좌측 좌표계 계층 구조: 통로/베이(15pt bold) + 단/빈(27pt black mono) + 기계 판독용 로케이션 코드(`LOC-A0105B01`) 및 뱃지 완벽 압축
+- [x] 27.3 라벨 높이 선택 UI(`CardHeight`: `30mm Compact • Default`, `35mm Medium`, `45mm Full Size`) 및 US Letter 시트 인쇄 효율 60% 향상 (장당 10개 → **16개 출력**)
+- [x] 27.4 Next.js Turbopack 프로덕션 빌드(`npm run build`), 브라우저 비주얼 검증 및 아키텍처 규칙 검증 통과 완료
+
+
 

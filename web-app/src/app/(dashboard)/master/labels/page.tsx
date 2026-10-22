@@ -11,7 +11,7 @@ export default async function MasterLabelsPage() {
       <div className="print:hidden">
         <h2 className="text-2xl font-bold tracking-tight">Shelf Rack Physical Labels (Location QR Codes)</h2>
         <p className="text-muted-foreground mt-1 text-sm">
-          Generate and print official warehouse shelf rack labels (100mm × 45mm / 4" × 1.8") with Tier color bands and 2D QR codes (or 1D barcodes).
+          Generate and print official warehouse shelf rack labels (100mm × 30mm Compact / 4" × 1.2" beam fit) with Level color bands and anti-crossfire 2D QR codes (or 1D barcodes).
         </p>
       </div>
 
