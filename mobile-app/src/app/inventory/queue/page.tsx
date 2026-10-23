@@ -16,7 +16,7 @@ interface CycleCountRequest {
   status: string;
   created_at: string;
   locations?: { code: string };
-  items?: { sku: string; name: string };
+  items?: { sku: string; name?: string; name_en?: string };
 }
 
 export default function QueuePage() {
@@ -145,7 +145,7 @@ export default function QueuePage() {
               status={item.priority} 
               location={item.locations?.code || item.location_id} 
               sku={item.items?.sku || 'Unknown'} 
-              itemName={item.items?.name || 'Unknown'} 
+              itemName={item.items?.name || item.items?.name_en || 'Unknown'} 
               requestedAt={new Date(item.created_at).toLocaleString()} 
               reason={item.priority === 'URGENT' ? "Picking Skip" : "Regular Cycle Count"} 
             />

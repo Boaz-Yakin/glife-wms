@@ -23,7 +23,7 @@ export interface CycleCountRequest {
   reported_by: string;
   created_at: string;
   locations?: { code: string };
-  items?: { sku: string; name_en: string; uom?: string };
+  items?: { sku: string; name?: string; name_en?: string; uom?: string };
 }
 
 export interface LocationLookupResult {
@@ -486,6 +486,7 @@ export async function getPendingCycleCountQueue(
     items: row.items
       ? {
           sku: row.items.sku,
+          name: row.items.name_en,
           name_en: row.items.name_en,
           uom: row.items.uom,
         }
