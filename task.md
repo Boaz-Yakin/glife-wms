@@ -368,5 +368,13 @@
 - [x] 37.5 `mobile-app` 피킹 완료 API(`POST /api/picking/complete`) 신설 및 피킹 화면(`CMD-DONE` 및 전체 완료) 상태 연동
 - [x] 37.6 `web-app`, `mobile-app` v0.1.4 릴리스 및 프로덕션 배포
 
+---
 
-
+## 🛒 Phase 38: OrderAPP 실시간 창고 가용 재고 연동 및 백오더(B안) 안내 체계 구축
+- [x] 38.1 `OrderAPP` 재고 정책 설정 모듈 신설 ([`stockPolicy.ts`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/utils/stockPolicy.ts)): B안(`BACKORDER_ALLOWED`) 기본 적용 및 A안(`HARD_LIMIT`) 전환 토글 구조 확립
+- [x] 38.2 `OrderAPP` 상품 API([`GET /api/items`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/items/route.ts)): `inventory` 테이블 병렬 조회를 통한 품목별 실시간 가용 재고(`available_qty = Math.max(0, on_hand - allocated)`) 산출 및 반환
+- [x] 38.3 상품 카드 UI 재고 상태 뱃지([`StockBadge`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/app/page.tsx)): 재고 여유(`>10`), 잔여(`1~10`), 품절(`<=0`) 3단계 상태 시각화
+- [x] 38.4 수량 선택 위젯([`QtyWidget`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/app/page.tsx)): 가용 재고 초과 시 백오더(초과 예약발주) 실시간 인디케이터 표시 (A안 활성화 시 증량 버튼 자동 차단)
+- [x] 38.5 주문 검토 모달 백오더 배너 및 품목별 분할 안내: 초과 품목에 대해 즉시 출고 가능 수량과 예약발주(백오더) 수량 분리 명시 및 주문 메모 자동 태깅(`[백오더 발생: ...]`)
+- [x] 38.6 주문 API([`POST /api/order`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/order/route.ts)): A안(`HARD_LIMIT`) 전환 시 레이스 컨디션을 방지하는 서버사이드 재고 최종 검증 가드 구현
+- [x] 38.7 빌드 검증 및 `OrderAPP` GitHub `master` 푸시 배포 완료
