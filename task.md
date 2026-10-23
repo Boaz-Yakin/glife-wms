@@ -355,4 +355,18 @@
 - [x] 36.4 DB 내 `client_id` 미지정 잔여 레코드 보정 완료
 - [x] 36.5 `web-app`, `mobile-app` v0.1.3 태깅 및 Vercel 프로덕션 배포 완료
 
+---
+
+## 🔄 Phase 37: 4대 앱 통합 재고 라이프사이클 엔진 구축 (OrderAPP, G-manager, WMS Web & Mobile)
+- [x] 37.1 DB 테이블 `order_item_allocations` 구축: 주문 품목별 할당 로케이션(`inventory_id`), 수량(`allocated_qty`) 정밀 추적
+- [x] 37.2 주문 자동 소프트 할당 RPC(`allocate_single_order_item`, `allocate_order_stock`) 및 트리거(`trg_order_items_inventory_sync`): 주문 인입 즉시 가용 재고 한도 내 로케이션별 `allocated_qty` 자동 증가
+- [x] 37.3 주문 상태별 자동 라이프사이클 트리거(`trg_orders_inventory_sync`):
+  - `CANCELED` 전환 시: 묶여 있던 `allocated_qty` 자동 환원 (`deallocate_order_stock`)
+  - `SHIPPED` 출고 전환 시: `allocated_qty` 해제 + `on_hand_qty` 실물 확정 차감 + `inventory_adjustments` 출고 감사 로그 기록 (`fulfill_order_stock`)
+  - `PENDING`/`PICKING` 복구 시: 재할당 자동 실행
+- [x] 37.4 기존 활성 주문(`ORD-20261022-C4V8` 등) 미할당 데이터 일괄 동기화 완료 (`sync_all_active_order_allocations`: Shin Cups Black 3박스 할당 정합성 복원)
+- [x] 37.5 `mobile-app` 피킹 완료 API(`POST /api/picking/complete`) 신설 및 피킹 화면(`CMD-DONE` 및 전체 완료) 상태 연동
+- [x] 37.6 `web-app`, `mobile-app` v0.1.4 릴리스 및 프로덕션 배포
+
+
 

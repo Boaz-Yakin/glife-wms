@@ -212,3 +212,45 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
 
   return items;
 }
+
+/**
+ * 피킹 완료 확정 및 상태 갱신 (Real Database)
+ */
+export async function completeOrderPicking(
+  supabase: SupabaseClient,
+  orderId: string,
+  pickerId: string,
+  targetStatus: 'PACKED' | 'SHIPPED' = 'PACKED'
+): Promise<{ success: boolean; orderId: string; status: string }> {
+  // 1. Mark all pending order_items as fully picked
+  const { data: items } = await supabase
+    .from('order_items')
+    .select('id, qty, picked_qty')
+    .eq('order_id', orderId);
+
+  if (items && items.length > 0) {
+    for (const it of items) {
+      if ((it.picked_qty || 0) < it.qty) {
+        await supabase
+          .from('order_items')
+          .update({ picked_qty: it.qty, updated_at: new Date().toISOString() })
+          .eq('id', it.id);
+      }
+    }
+  }
+
+  // 2. Update order status to targetStatus (PACKED / SHIPPED)
+  const { error: orderErr } = await supabase
+    .from('orders')
+    .update({
+      status: targetStatus,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', orderId);
+
+  if (orderErr) {
+    throw new Error(orderErr.message || 'Failed to update order status');
+  }
+
+  return { success: true, orderId, status: targetStatus };
+}

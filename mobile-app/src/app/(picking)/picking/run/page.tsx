@@ -82,6 +82,25 @@ function PickingRunInner() {
   }, []);
 
   // ──────────────────────────────────────────────
+  // ──────────────────────────────────────────────
+  // Finish picking helper
+  // ──────────────────────────────────────────────
+  const handleFinishPicking = useCallback(async () => {
+    setIsDone(true);
+    if (orderId) {
+      try {
+        await fetch("/api/picking/complete", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ orderId, targetStatus: "PACKED" }),
+        });
+      } catch (err) {
+        console.error("Failed to mark order picking as complete:", err);
+      }
+    }
+  }, [orderId]);
+
+  // ──────────────────────────────────────────────
   // Core barcode processor
   // ──────────────────────────────────────────────
   const processBarcode = useCallback((code: string) => {
@@ -90,7 +109,7 @@ function PickingRunInner() {
 
     // ── CMD-DONE ──
     if (trimmed === CMD_DONE) {
-      setIsDone(true);
+      handleFinishPicking();
       return;
     }
 
@@ -133,7 +152,7 @@ function PickingRunInner() {
         flashFeedback("skipped");
         audioFeedback.command();
 
-        if (next >= currentItems.length) setIsDone(true);
+        if (next >= currentItems.length) handleFinishPicking();
         return currentItems;
       }
 
@@ -157,7 +176,7 @@ function PickingRunInner() {
           setCurrentIndex(next);
           setScanState("WAITING_LOCATION");
 
-          if (next >= currentItems.length) setIsDone(true);
+          if (next >= currentItems.length) handleFinishPicking();
         } else {
           flashFeedback("item_err");
           audioFeedback.error();        // 🔊 저음 버저 2회 + 긴 진동
@@ -166,7 +185,7 @@ function PickingRunInner() {
 
       return currentItems;
     });
-  }, [currentIndex, scanState, flashFeedback]);
+  }, [currentIndex, scanState, flashFeedback, handleFinishPicking]);
 
   // ──────────────────────────────────────────────
   // Handle input from the hidden scanner input field
