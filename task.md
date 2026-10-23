@@ -400,3 +400,13 @@
 - [x] 40.3 적치 및 로케이션 이동 화면 연동 ([`put-away/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/put-away/page.tsx), [`transfer/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/transfer/page.tsx)):
   - 스캔 대상(`LOCATION` vs `ITEM`) 타입 판별 및 등록 정보 검증 후 녹색/적색 오버랩 적용
 - [x] 40.4 모바일 앱 프로덕션 빌드 타입 검증 및 번들 정합성 확인 완료
+
+---
+
+## 🏷️ Phase 41: Item (SKU) Master 품목명 및 Description 병기 표시
+- [x] 41.1 품목 마스터 테이블 UI 개선 ([`ItemsTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/ItemsTable.tsx)):
+  - `Item Name` 컬럼에 `desc_en`이 존재할 경우 `Item Name (Description)` 형식으로 병기 렌더링
+  - 검색창 플레이스홀더를 `Search Item Name, SKU, or Description...`으로 확장
+- [x] 41.2 마스터 서비스 검색 쿼리 확장 ([`master.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/master.service.ts)):
+  - `getItems` 검색 시 `desc_en` 필드도 OR 검색 조건에 포함하여 설명(규격, 용량 등)으로도 품목 검색 지원
+- [x] 41.3 `web-app` Next.js 16 프로덕션 빌드 검증 완료

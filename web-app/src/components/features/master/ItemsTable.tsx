@@ -105,6 +105,18 @@ const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => 
   {
     accessorKey: "name_en",
     header: "Item Name",
+    cell: ({ row }) => {
+      const name = row.original.name_en
+      const desc = row.original.desc_en?.trim()
+      return (
+        <div className="font-medium">
+          {name}
+          {desc ? (
+            <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
+          ) : null}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "uom",
@@ -281,7 +293,7 @@ export function ItemsTable({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
           <Input 
-            placeholder="Search Item Name or SKU..." 
+            placeholder="Search Item Name, SKU, or Description..." 
             className="max-w-sm bg-background" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

@@ -43,7 +43,7 @@ export async function getItems({ page = 1, limit = 20, search = '' }) {
   }
 
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%`)
+    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%,desc_en.ilike.%${search}%`)
   }
   
   const from = (page - 1) * limit
