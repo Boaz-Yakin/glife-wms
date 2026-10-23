@@ -359,10 +359,30 @@ function PutAwayContent() {
                     <code className="text-emerald-300">LOC-A0101A01</code>)를 스캔하십시오.
                   </p>
 
-                  <div className="flex gap-2">
+                  {/* Prominent Full-Width Camera Scan Button */}
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCameraTarget("LOC");
+                      setIsCameraOpen(true);
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-950/40 text-sm active:scale-[0.98] transition-all"
+                  >
+                    <Camera className="w-5 h-5" />
+                    <span>Open Camera Scanner (QR / Barcode)</span>
+                  </Button>
+
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="flex-1 h-[1px] bg-slate-800" />
+                    <span className="text-[11px] text-slate-500 font-semibold tracking-wider">OR ENTER MANUALLY</span>
+                    <div className="flex-1 h-[1px] bg-slate-800" />
+                  </div>
+
+                  {/* Manual Type & Verify Row */}
+                  <div className="flex gap-2 items-center">
                     <input
                       type="text"
-                      placeholder="Scan or type LOC-..."
+                      placeholder="e.g. LOC-A0101A01"
                       value={inputVal}
                       onChange={(e) => setInputVal(e.target.value)}
                       onKeyDown={(e) => {
@@ -370,26 +390,15 @@ function PutAwayContent() {
                           handleScanLocation(inputVal);
                         }
                       }}
-                      className="flex-1 bg-[#1E2333] border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-base focus:border-emerald-500 focus:outline-none"
+                      className="flex-1 min-w-0 bg-[#1E2333] border border-slate-700 rounded-xl px-3.5 py-3 text-white font-mono text-sm focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
                     />
                     <Button
                       type="button"
                       onClick={() => handleScanLocation(inputVal)}
                       disabled={isLoading || !inputVal.trim()}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-xl h-auto"
+                      className="shrink-0 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 font-bold px-4 py-3 rounded-xl h-auto text-sm"
                     >
-                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setCameraTarget("LOC");
-                        setIsCameraOpen(true);
-                      }}
-                      className="border-slate-700 bg-slate-900 text-slate-300 px-3 rounded-xl h-auto"
-                    >
-                      <Camera className="w-5 h-5" />
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
                     </Button>
                   </div>
                 </CardContent>
@@ -443,11 +452,31 @@ function PutAwayContent() {
                     이 랙에 적치할 상품의 단품 바코드(UPC) 또는 SKU를 스캔하십시오.
                   </p>
 
-                  <div className="flex gap-2">
+                  {/* Prominent Full-Width Camera Scan Button */}
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setCameraTarget("ITEM");
+                      setIsCameraOpen(true);
+                    }}
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-xl flex items-center justify-center gap-2.5 shadow-lg shadow-emerald-950/40 text-sm active:scale-[0.98] transition-all"
+                  >
+                    <Camera className="w-5 h-5" />
+                    <span>Open Camera Scanner (Barcode)</span>
+                  </Button>
+
+                  <div className="flex items-center gap-2 py-1">
+                    <div className="flex-1 h-[1px] bg-slate-800" />
+                    <span className="text-[11px] text-slate-500 font-semibold tracking-wider">OR ENTER MANUALLY</span>
+                    <div className="flex-1 h-[1px] bg-slate-800" />
+                  </div>
+
+                  {/* Manual Type & Verify Row */}
+                  <div className="flex gap-2 items-center">
                     <input
                       type="text"
                       autoFocus
-                      placeholder="Scan UPC or SKU..."
+                      placeholder="Scan or type UPC / SKU..."
                       value={inputVal}
                       onChange={(e) => setInputVal(e.target.value)}
                       onKeyDown={(e) => {
@@ -455,26 +484,15 @@ function PutAwayContent() {
                           handleScanItem(inputVal);
                         }
                       }}
-                      className="flex-1 bg-[#1E2333] border border-slate-700 rounded-xl px-4 py-3 text-white font-mono text-base focus:border-emerald-500 focus:outline-none"
+                      className="flex-1 min-w-0 bg-[#1E2333] border border-slate-700 rounded-xl px-3.5 py-3 text-white font-mono text-sm focus:border-emerald-500 focus:outline-none placeholder:text-slate-500"
                     />
                     <Button
                       type="button"
                       onClick={() => handleScanItem(inputVal)}
                       disabled={isLoading || !inputVal.trim()}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 rounded-xl h-auto"
+                      className="shrink-0 bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-slate-700 font-bold px-4 py-3 rounded-xl h-auto text-sm"
                     >
-                      {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Verify"}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setCameraTarget("ITEM");
-                        setIsCameraOpen(true);
-                      }}
-                      className="border-slate-700 bg-slate-900 text-slate-300 px-3 rounded-xl h-auto"
-                    >
-                      <Camera className="w-5 h-5" />
+                      {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
                     </Button>
                   </div>
                 </CardContent>
