@@ -103,6 +103,14 @@ const ZONE_STYLES: Record<string, { label: string; sub: string; badgeBg: string;
     badgeBorder: "#d8b4fe",
     colorHex: "#7e22ce",
   },
+  S: {
+    label: "Zone S • Staging / Floor",
+    sub: "Staging Floor",
+    badgeBg: "#fef3c7",
+    badgeText: "#b45309",
+    badgeBorder: "#fcd34d",
+    colorHex: "#d97706",
+  },
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -134,6 +142,19 @@ const ZONE_F_LOCATION_CODES = [
   "LOC-F0102A01",
   "LOC-F0102B01",
   "LOC-F0102C01",
+].join("\n")
+
+const ZONE_S_LOCATION_CODES = [
+  "LOC-S0101A01",
+  "LOC-S0102A01",
+  "LOC-S0103A01",
+  "LOC-S0104A01",
+  "LOC-S0105A01",
+  "LOC-S0106A01",
+  "LOC-S0107A01",
+  "LOC-S0108A01",
+  "LOC-S0109A01",
+  "LOC-S0110A01",
 ].join("\n")
 
 const SAMPLE_SKU_CODES = [
@@ -878,6 +899,15 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               className="text-xs h-7 px-2.5 font-medium"
             >
               Cold Storage Rack 01 (Zone F)
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setCodesInput(ZONE_S_LOCATION_CODES)}
+              className="text-xs h-7 px-2.5 font-medium text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700"
+            >
+              📦 Staging Floor 01~10 (Zone S)
             </Button>
             {initialDbCodes.length > 0 && (
               <Button

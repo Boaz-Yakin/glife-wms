@@ -378,3 +378,11 @@
 - [x] 38.5 주문 검토 모달 백오더 배너 및 품목별 분할 안내: 초과 품목에 대해 즉시 출고 가능 수량과 예약발주(백오더) 수량 분리 명시 및 주문 메모 자동 태깅(`[백오더 발생: ...]`)
 - [x] 38.6 주문 API([`POST /api/order`](file:///C:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/order/route.ts)): A안(`HARD_LIMIT`) 전환 시 레이스 컨디션을 방지하는 서버사이드 재고 최종 검증 가드 구현
 - [x] 38.7 빌드 검증 및 `OrderAPP` GitHub `master` 푸시 배포 완료
+
+---
+
+## 📦 Phase 39: 스테이징(바닥 적치) 로케이션(LOC-S****) 체계 구축 및 Cross-docking(A안) 연동
+- [x] 39.1 스테이징 바닥 로케이션 DB 마이그레이션 신설 및 적용 ([`20261023180500_add_staging_locations.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261023180500_add_staging_locations.sql)): 표준 10자리 규격 준수 `LOC-S0101A01` ~ `LOC-S0110A01` (총 10개 구획, `zone_type='A'`) DB upsert 완료
+- [x] 39.2 A안(실시간 가용 / Cross-docking) 자동 연동 확인: `inventory`에 등록 시 `available_qty` 즉시 반영 및 주문 자동 소프트 할당(`allocate_single_order_item`) 정합성 검증
+- [x] 39.3 `web-app` 라벨 인쇄 시스템 연동 ([`PrintClient.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/%28dashboard%29/master/labels/PrintClient.tsx)): `Zone S (Staging Floor)` 전용 앰버 뱃지 스타일링 및 원클릭 바코드 인쇄 프리셋(`LOC-S0101A01~S0110A01`) 탑재
+- [x] 39.4 `mobile-app` 바코드 스캔 및 적치/이동 정합성 검증: `Put-away`, `Lookup`, `Relocate`에서 `LOC-S` 접두어 자동 파싱 및 현장 작업 지원 확인
