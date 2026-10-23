@@ -180,6 +180,15 @@ export default function TransferPage() {
       {/* Camera Barcode Scanner Modal */}
       {isCameraOpen && (
         <CameraBarcodeScanner
+          onValidate={async (code: string) => {
+            try {
+              const res = await fetch(`/api/inventory/lookup?code=${encodeURIComponent(code)}`);
+              const data = await res.json();
+              return Boolean(res.ok && data.success && data.type === "LOCATION");
+            } catch {
+              return false;
+            }
+          }}
           onScan={(code) => {
             setIsCameraOpen(false);
             if (cameraTarget === "SOURCE") {

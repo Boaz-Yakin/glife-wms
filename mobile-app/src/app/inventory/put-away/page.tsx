@@ -645,6 +645,20 @@ function PutAwayContent() {
       {/* Camera Barcode Scanner Modal */}
       {isCameraOpen && (
         <CameraBarcodeScanner
+          onValidate={async (scannedCode: string) => {
+            try {
+              const res = await fetch(`/api/inventory/lookup?code=${encodeURIComponent(scannedCode)}`);
+              const data = await res.json();
+              if (!res.ok || !data.success) return false;
+              if (cameraTarget === "LOC") {
+                return data.type === "LOCATION";
+              } else {
+                return data.type === "ITEM";
+              }
+            } catch {
+              return false;
+            }
+          }}
           onScan={(scannedCode: string) => {
             setIsCameraOpen(false);
             if (cameraTarget === "LOC") {

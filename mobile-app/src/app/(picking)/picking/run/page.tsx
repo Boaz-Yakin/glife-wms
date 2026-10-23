@@ -271,6 +271,24 @@ function PickingRunInner() {
       {/* ── CAMERA SCANNER MODAL ── */}
       {isCameraOpen && (
         <CameraBarcodeScanner
+          onValidate={(code) => {
+            const trimmed = code.trim();
+            if (trimmed === CMD_SKIP || trimmed === CMD_UNDO || trimmed === CMD_DONE) return true;
+            const target = items[currentIndex];
+            if (!target) return false;
+            if (scanState === "WAITING_LOCATION") {
+              const expectedLoc = target.locations?.code?.toUpperCase() || "";
+              const scannedLoc = trimmed.toUpperCase();
+              return scannedLoc === expectedLoc || scannedLoc === expectedLoc.replace(/^LOC-/, "");
+            }
+            if (scanState === "WAITING_ITEM") {
+              const scanned = trimmed.toUpperCase();
+              const upc = target.items?.upc?.toUpperCase();
+              const sku = target.items?.sku?.toUpperCase();
+              return Boolean((upc && scanned === upc) || (sku && scanned === sku));
+            }
+            return false;
+          }}
           onScan={(code) => {
             processBarcode(code);
             setIsCameraOpen(false);

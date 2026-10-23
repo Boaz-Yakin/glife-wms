@@ -2,25 +2,31 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from "html5-qrcode";
-import { Camera, X, Zap, ZapOff, RefreshCw, AlertCircle, CheckCircle2, ScanLine, MapPin, Package } from "lucide-react";
+import { Camera, X, Zap, ZapOff, RefreshCw, AlertCircle, CheckCircle2, XCircle, Loader2, ScanLine, MapPin, Package } from "lucide-react";
 import { feedback } from "@/lib/feedback";
 
-interface CameraBarcodeScannerProps {
+export interface CameraBarcodeScannerProps {
   onScan: (decodedText: string) => void;
   onClose?: () => void;
   autoCloseOnScan?: boolean;
   cooldownMs?: number;
   confirmationDelayMs?: number;
   title?: string;
+  onValidate?: (scannedCode: string) => Promise<boolean> | boolean;
+  onMismatch?: (scannedCode: string) => void;
 }
+
+export type ScanStatus = "IDLE" | "VALIDATING" | "MATCH" | "MISMATCH";
 
 export function CameraBarcodeScanner({
   onScan,
   onClose,
   autoCloseOnScan = true,
   cooldownMs = 1200,
-  confirmationDelayMs = 650,
+  confirmationDelayMs = 1000, // 1초 (1000ms) 지연
   title = "Barcode / QR Scanner",
+  onValidate,
+  onMismatch,
 }: CameraBarcodeScannerProps) {
   const [scannerId] = useState(() => `reader-${Math.random().toString(36).substring(2, 9)}`);
   const [isScanning, setIsScanning] = useState(false);
@@ -29,8 +35,9 @@ export function CameraBarcodeScanner({
   const [torchOn, setTorchOn] = useState(false);
   const [facingMode, setFacingMode] = useState<"environment" | "user">("environment");
 
-  // Detection / Lock-on State
+  // Detection & Validation State
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
+  const [scanStatus, setScanStatus] = useState<ScanStatus>("IDLE");
   const [confirmProgress, setConfirmProgress] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
@@ -55,7 +62,7 @@ export function CameraBarcodeScanner({
   }, []);
 
   const handleDetected = useCallback(
-    (code: string) => {
+    async (code: string) => {
       const now = Date.now();
       if (now - lastScanTimeRef.current < cooldownMs) return;
       if (isDetectingRef.current) return;
@@ -63,51 +70,92 @@ export function CameraBarcodeScanner({
       isDetectingRef.current = true;
       lastScanTimeRef.current = now;
       setDetectedCode(code);
+      setScanStatus("VALIDATING");
 
-      // Sound & Haptic Feedback immediately upon lock-on
-      if (code.startsWith("LOC-") || code.includes("-")) {
-        feedback.match();
-      } else {
-        feedback.normal();
-      }
-
-      // Try pausing camera frame so worker sees the frozen captured barcode
+      // Freeze captured camera frame so the worker sees the captured code
       try {
         if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
           html5QrCodeRef.current.pause(true);
         }
       } catch {
-        // Safe fallback if pause is unsupported
+        // Safe fallback
       }
 
-      // Start visual progress bar animation
+      // ── 검증 로직 실행 (등록된 정보와 일치 여부) ──
+      let isValid = false;
+      if (onValidate) {
+        try {
+          isValid = Boolean(await onValidate(code));
+        } catch (err) {
+          console.error("Custom barcode validation error:", err);
+          isValid = false;
+        }
+      } else {
+        // 기본 WMS DB 등록 여부 검증 (로케이션 or 품목)
+        try {
+          const res = await fetch(`/api/inventory/lookup?code=${encodeURIComponent(code)}`);
+          const json = await res.json();
+          isValid = Boolean(json.success);
+        } catch {
+          isValid = false;
+        }
+      }
+
+      // 상태 및 사운드/햅틱 분기
+      if (isValid) {
+        setScanStatus("MATCH");
+        feedback.match();
+      } else {
+        setScanStatus("MISMATCH");
+        feedback.error();
+      }
+
+      // 1초 프로그레스 애니메이션 가동
       requestAnimationFrame(() => {
         setConfirmProgress(true);
       });
 
-      // Confirmation Hold Delay (650ms default): gives the worker clear, unmistakable confirmation
+      // 1초(1000ms) 유지 후 화면 복귀 또는 콜백 실행
       confirmTimerRef.current = setTimeout(async () => {
-        onScan(code);
-
-        if (autoCloseOnScan) {
-          await stopScanner();
-          if (onClose) onClose();
+        if (isValid) {
+          onScan(code);
+          if (autoCloseOnScan) {
+            await stopScanner();
+            if (onClose) onClose();
+          } else {
+            // Reset for next scan
+            setDetectedCode(null);
+            setScanStatus("IDLE");
+            setConfirmProgress(false);
+            isDetectingRef.current = false;
+            try {
+              if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+                html5QrCodeRef.current.resume();
+              }
+            } catch {}
+          }
         } else {
-          // If not auto-closing, reset after delay
-          setDetectedCode(null);
-          setConfirmProgress(false);
-          isDetectingRef.current = false;
-          try {
-            if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
-              html5QrCodeRef.current.resume();
-            }
-          } catch {
-            // Safe fallback
+          // 일치하지 않는 경우
+          if (onMismatch) onMismatch(code);
+          if (autoCloseOnScan) {
+            await stopScanner();
+            if (onClose) onClose();
+          } else {
+            // Reset for retry
+            setDetectedCode(null);
+            setScanStatus("IDLE");
+            setConfirmProgress(false);
+            isDetectingRef.current = false;
+            try {
+              if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
+                html5QrCodeRef.current.resume();
+              }
+            } catch {}
           }
         }
       }, confirmationDelayMs);
     },
-    [autoCloseOnScan, confirmationDelayMs, cooldownMs, onClose, onScan, stopScanner]
+    [autoCloseOnScan, confirmationDelayMs, cooldownMs, onClose, onMismatch, onScan, onValidate, stopScanner]
   );
 
   const startScanner = useCallback(
@@ -294,36 +342,56 @@ export function CameraBarcodeScanner({
           <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center">
             {/* Viewfinder Box */}
             <div
-              className={`relative w-[270px] h-[270px] rounded-2xl flex flex-col items-center justify-center overflow-hidden transition-all duration-300 ${
-                detectedCode
-                  ? "border-4 border-emerald-400 bg-emerald-950/75 shadow-[0_0_60px_rgba(16,185,129,0.7)] scale-[1.03]"
+              className={`relative w-[270px] h-[270px] rounded-2xl flex flex-col items-center justify-center overflow-hidden transition-all duration-300 select-none ${
+                scanStatus === "MATCH"
+                  ? "border-4 border-emerald-400 bg-emerald-500/25 shadow-[0_0_60px_rgba(16,185,129,0.7)] backdrop-blur-[2px] scale-[1.02]"
+                  : scanStatus === "MISMATCH"
+                  ? "border-4 border-rose-500 bg-rose-500/30 shadow-[0_0_60px_rgba(244,63,94,0.8)] backdrop-blur-[2px] scale-[1.02]"
+                  : scanStatus === "VALIDATING"
+                  ? "border-2 border-amber-400/90 bg-amber-500/15 shadow-[0_0_30px_rgba(245,158,11,0.35)]"
                   : "border-2 border-emerald-400/80 bg-black/10 shadow-[0_0_30px_rgba(16,185,129,0.25)]"
               }`}
             >
               {/* Corner Brackets */}
               <div
                 className={`absolute top-0 left-0 w-7 h-7 border-t-4 border-l-4 rounded-tl-xl transition-colors ${
-                  detectedCode ? "border-emerald-300" : "border-emerald-400"
+                  scanStatus === "MATCH"
+                    ? "border-emerald-300"
+                    : scanStatus === "MISMATCH"
+                    ? "border-rose-400"
+                    : "border-emerald-400"
                 }`}
               />
               <div
                 className={`absolute top-0 right-0 w-7 h-7 border-t-4 border-r-4 rounded-tr-xl transition-colors ${
-                  detectedCode ? "border-emerald-300" : "border-emerald-400"
+                  scanStatus === "MATCH"
+                    ? "border-emerald-300"
+                    : scanStatus === "MISMATCH"
+                    ? "border-rose-400"
+                    : "border-emerald-400"
                 }`}
               />
               <div
                 className={`absolute bottom-0 left-0 w-7 h-7 border-b-4 border-l-4 rounded-bl-xl transition-colors ${
-                  detectedCode ? "border-emerald-300" : "border-emerald-400"
+                  scanStatus === "MATCH"
+                    ? "border-emerald-300"
+                    : scanStatus === "MISMATCH"
+                    ? "border-rose-400"
+                    : "border-emerald-400"
                 }`}
               />
               <div
                 className={`absolute bottom-0 right-0 w-7 h-7 border-b-4 border-r-4 rounded-br-xl transition-colors ${
-                  detectedCode ? "border-emerald-300" : "border-emerald-400"
+                  scanStatus === "MATCH"
+                    ? "border-emerald-300"
+                    : scanStatus === "MISMATCH"
+                    ? "border-rose-400"
+                    : "border-emerald-400"
                 }`}
               />
 
               {/* Aiming Reticle Crosshair when seeking */}
-              {!detectedCode && (
+              {scanStatus === "IDLE" && (
                 <>
                   <div className="absolute w-4 h-0.5 bg-emerald-400/40" />
                   <div className="absolute w-0.5 h-4 bg-emerald-400/40" />
@@ -332,41 +400,76 @@ export function CameraBarcodeScanner({
                 </>
               )}
 
-              {/* LOCK-ON / CONFIRMATION DISPLAY WHEN DETECTED */}
-              {detectedCode && (
+              {/* VALIDATING STATE OVERLAY */}
+              {scanStatus === "VALIDATING" && (
+                <div className="flex flex-col items-center justify-center p-3 text-center space-y-2 animate-in fade-in duration-150">
+                  <div className="w-12 h-12 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/60 flex items-center justify-center shadow-lg">
+                    <Loader2 className="w-7 h-7 animate-spin text-amber-400" />
+                  </div>
+                  <span className="text-xs font-bold text-amber-300">
+                    정보 대조 중...
+                  </span>
+                </div>
+              )}
+
+              {/* MATCH OVERLAY: 옅은 녹색 사각형 오버랩 (1초 유지) */}
+              {scanStatus === "MATCH" && (
                 <div className="flex flex-col items-center justify-center p-3 text-center space-y-2 animate-in zoom-in-95 duration-200">
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/30 text-emerald-300 border border-emerald-400 flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 rounded-full bg-emerald-500/40 text-emerald-200 border-2 border-emerald-300 flex items-center justify-center shadow-lg">
                     <CheckCircle2 className="w-7 h-7 animate-bounce" />
                   </div>
 
                   {/* Badge */}
-                  <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/30 text-emerald-200 border border-emerald-400/50">
-                    {isLocationCode ? (
-                      <>
-                        <MapPin className="w-3 h-3" />
-                        <span>Location Detected</span>
-                      </>
-                    ) : (
-                      <>
-                        <Package className="w-3 h-3" />
-                        <span>Item Detected</span>
-                      </>
-                    )}
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/40 text-emerald-100 border border-emerald-300/80 shadow-xs">
+                    ✓ 등록 정보 일치
                   </span>
 
                   {/* Decoded Value */}
-                  <div className="font-mono text-base font-black text-white px-2.5 py-1 bg-black/80 rounded-lg border border-emerald-500/60 max-w-[240px] truncate shadow-inner">
+                  <div className="font-mono text-base font-black text-white px-3 py-1 bg-black/85 rounded-lg border border-emerald-400 max-w-[240px] truncate shadow-inner">
                     {detectedCode}
                   </div>
 
-                  <span className="text-[11px] font-bold text-emerald-300">
-                    인식 완료! 확인 중...
+                  <span className="text-[11px] font-bold text-emerald-200">
+                    확인 완료! 1초 후 화면 복귀...
                   </span>
 
-                  {/* Confirmation Progress Bar */}
-                  <div className="w-40 h-1.5 bg-zinc-800 rounded-full overflow-hidden mt-1 border border-emerald-500/30">
+                  {/* 1초 녹색 프로그레스 바 */}
+                  <div className="w-40 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-emerald-400/50">
                     <div
                       className={`h-full bg-emerald-400 transition-all ease-linear ${
+                        confirmProgress ? "w-full" : "w-0"
+                      }`}
+                      style={{ transitionDuration: `${confirmationDelayMs}ms` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* MISMATCH OVERLAY: 적색 사각형 오버랩 (1초 유지) */}
+              {scanStatus === "MISMATCH" && (
+                <div className="flex flex-col items-center justify-center p-3 text-center space-y-2 animate-in zoom-in-95 duration-200">
+                  <div className="w-12 h-12 rounded-full bg-rose-500/40 text-rose-200 border-2 border-rose-400 flex items-center justify-center shadow-lg">
+                    <XCircle className="w-7 h-7 animate-pulse" />
+                  </div>
+
+                  {/* Badge */}
+                  <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-rose-500/40 text-rose-100 border border-rose-400/80 shadow-xs">
+                    ✗ 등록 정보 불일치
+                  </span>
+
+                  {/* Decoded Value */}
+                  <div className="font-mono text-base font-black text-rose-100 px-3 py-1 bg-black/85 rounded-lg border border-rose-500 max-w-[240px] truncate shadow-inner">
+                    {detectedCode}
+                  </div>
+
+                  <span className="text-[11px] font-bold text-rose-200">
+                    일치하지 않는 바코드입니다
+                  </span>
+
+                  {/* 1초 적색 프로그레스 바 */}
+                  <div className="w-40 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-rose-500/50">
+                    <div
+                      className={`h-full bg-rose-500 transition-all ease-linear ${
                         confirmProgress ? "w-full" : "w-0"
                       }`}
                       style={{ transitionDuration: `${confirmationDelayMs}ms` }}
@@ -379,16 +482,34 @@ export function CameraBarcodeScanner({
             {/* Instruction Message Pill below Viewfinder */}
             <div
               className={`mt-5 px-4 py-2 rounded-full border transition-all duration-300 flex items-center gap-2 ${
-                detectedCode
-                  ? "bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-[0_0_20px_rgba(16,185,129,0.4)]"
+                scanStatus === "MATCH"
+                  ? "bg-emerald-950/90 border-emerald-400 text-emerald-200 shadow-[0_0_25px_rgba(16,185,129,0.5)]"
+                  : scanStatus === "MISMATCH"
+                  ? "bg-rose-950/90 border-rose-500 text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.5)]"
+                  : scanStatus === "VALIDATING"
+                  ? "bg-amber-950/90 border-amber-400 text-amber-200"
                   : "bg-zinc-900/85 backdrop-blur border-zinc-700 text-zinc-200"
               }`}
             >
-              {detectedCode ? (
+              {scanStatus === "MATCH" ? (
                 <>
                   <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span className="text-xs font-bold font-mono">
-                    TARGET LOCKED: {detectedCode}
+                    ✓ 일치: {detectedCode}
+                  </span>
+                </>
+              ) : scanStatus === "MISMATCH" ? (
+                <>
+                  <XCircle className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span className="text-xs font-bold font-mono">
+                    ✗ 불일치: {detectedCode}
+                  </span>
+                </>
+              ) : scanStatus === "VALIDATING" ? (
+                <>
+                  <Loader2 className="w-4 h-4 text-amber-400 shrink-0 animate-spin" />
+                  <span className="text-xs font-bold">
+                    데이터베이스 정보 대조 중...
                   </span>
                 </>
               ) : (

@@ -386,3 +386,17 @@
 - [x] 39.2 A안(실시간 가용 / Cross-docking) 자동 연동 확인: `inventory`에 등록 시 `available_qty` 즉시 반영 및 주문 자동 소프트 할당(`allocate_single_order_item`) 정합성 검증
 - [x] 39.3 `web-app` 라벨 인쇄 시스템 연동 ([`PrintClient.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/%28dashboard%29/master/labels/PrintClient.tsx)): `Zone S (Staging Floor)` 전용 앰버 뱃지 스타일링 및 원클릭 바코드 인쇄 프리셋(`LOC-S0101A01~S0110A01`) 탑재
 - [x] 39.4 `mobile-app` 바코드 스캔 및 적치/이동 정합성 검증: `Put-away`, `Lookup`, `Relocate`에서 `LOC-S` 접두어 자동 파싱 및 현장 작업 지원 확인
+
+---
+
+## 📷 Phase 40: 카메라 바코드 스캐너 시각 피드백 고도화 (1초 오버랩 & 일치/불일치 검증 UX)
+- [x] 40.1 카메라 스캐너 컴포넌트 고도화 ([`camera-scanner.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/components/features/camera-scanner.tsx)):
+  - 검증 인터페이스(`onValidate`, `onMismatch`) 및 기본 DB 연동 비동기 검증(`defaultValidator`) 탑재
+  - **인식영역(사각BOX) 1초(1000ms) 유지 시간 보장**: 급작스러운 화면 전환 방지 및 작업자 시각 인지 확보
+  - **일치(성공) 시**: 사각BOX 내 **옅은 녹색 사각형 오버랩**(`bg-emerald-500/25`), 체크 뱃지, 1초 게이지 애니메이션 후 화면 복귀
+  - **불일치(실패/미등록) 시**: 사각BOX 내 **적색 사각형 오버랩**(`bg-rose-500/30`), 경고 뱃지, 에러 버저 사운드 후 1초 뒤 화면 복귀
+- [x] 40.2 피킹 실행 화면 연동 ([`picking/run/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/%28picking%29/picking/run/page.tsx)):
+  - 로케이션 대기 상태(`WAITING_LOCATION`) / 아이템 대기 상태(`WAITING_ITEM`)별 목표 정보 일치 여부 정밀 검증
+- [x] 40.3 적치 및 로케이션 이동 화면 연동 ([`put-away/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/put-away/page.tsx), [`transfer/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/transfer/page.tsx)):
+  - 스캔 대상(`LOCATION` vs `ITEM`) 타입 판별 및 등록 정보 검증 후 녹색/적색 오버랩 적용
+- [x] 40.4 모바일 앱 프로덕션 빌드 타입 검증 및 번들 정합성 확인 완료
