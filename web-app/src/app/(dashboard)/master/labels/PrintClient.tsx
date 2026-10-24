@@ -895,7 +895,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               <CardContent className="p-4 flex flex-col justify-between h-full space-y-2.5">
                 <div className="flex items-center justify-between pb-2 border-b border-border/60 shrink-0">
                   <h4 className="font-semibold text-sm flex items-center gap-2">
-                    <SlidersHorizontal className="size-4 text-primary" />
+                    <SlidersHorizontal className="size-4 text-blue-600" />
                     Geometry & Hardware Alignment
                   </h4>
                   <span className="text-[11px] text-muted-foreground font-mono">Beam & Scanner Specs</span>
@@ -905,7 +905,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">Beam Width Footprint</Label>
-                    <span className="text-[11px] text-primary font-mono font-medium">
+                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-mono font-semibold">
                       {cardWidth === "65mm" ? "65mm (Recommended • 15/Sheet)" : cardWidth}
                     </span>
                   </div>
@@ -921,14 +921,16 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         type="button"
                         onClick={() => setCardWidth(w.id as CardWidth)}
                         className={cn(
-                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs transition-all cursor-pointer border",
                           cardWidth === w.id
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                            : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
                         <span>{w.label}</span>
-                        <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{w.sub}</span>
+                        <span className={cn("text-[9.5px] mt-0.5", cardWidth === w.id ? "text-blue-100 font-medium" : "text-muted-foreground/80")}>
+                          {w.sub}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -938,7 +940,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">Beam Face Height</Label>
-                    <span className="text-[11px] text-primary font-mono font-medium">{cardHeight}</span>
+                    <span className="text-[11px] text-blue-600 dark:text-blue-400 font-mono font-semibold">{cardHeight}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-1.5">
                     {[
@@ -951,14 +953,16 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         type="button"
                         onClick={() => setCardHeight(h.id as CardHeight)}
                         className={cn(
-                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs transition-all cursor-pointer border",
                           cardHeight === h.id
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                            : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
                         <span>{h.label}</span>
-                        <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{h.sub}</span>
+                        <span className={cn("text-[9.5px] mt-0.5", cardHeight === h.id ? "text-blue-100 font-medium" : "text-muted-foreground/80")}>
+                          {h.sub}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -972,10 +976,10 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                       type="button"
                       onClick={() => setSymbology("qr")}
                       className={cn(
-                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs transition-all cursor-pointer border",
                         symbology === "qr"
-                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                          : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                          : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                       )}
                     >
                       <QrCode className="size-3.5" />
@@ -985,10 +989,10 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                       type="button"
                       onClick={() => setSymbology("barcode")}
                       className={cn(
-                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs transition-all cursor-pointer border",
                         symbology === "barcode"
-                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                          : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                          ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                          : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                       )}
                     >
                       <BarcodeIcon className="size-3.5" />
@@ -1017,14 +1021,16 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         onClick={() => setQrPlacement(pos.id as QrPlacement)}
                         disabled={symbology !== "qr"}
                         className={cn(
-                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs transition-all cursor-pointer border",
                           qrPlacement === pos.id && symbology === "qr"
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                            : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
                         <span>{pos.label}</span>
-                        <span className="text-[9px] font-normal opacity-80 mt-0.5">{pos.desc}</span>
+                        <span className={cn("text-[9px] mt-0.5", qrPlacement === pos.id && symbology === "qr" ? "text-blue-100 font-medium" : "text-muted-foreground/80")}>
+                          {pos.desc}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -1056,8 +1062,8 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         className={cn(
                           "h-8 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
                           showCutLines
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                            : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
                         Cut Lines: ON
@@ -1068,8 +1074,8 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         className={cn(
                           "h-8 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
                           !showCutLines
-                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                            : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                            ? "bg-blue-600 text-white border-blue-600 shadow-sm shadow-blue-500/20 font-bold ring-2 ring-blue-500/30"
+                            : "bg-muted/25 border-border/50 text-muted-foreground opacity-65 hover:opacity-100 hover:bg-muted/60 hover:text-foreground"
                         )}
                       >
                         OFF (Rolls)

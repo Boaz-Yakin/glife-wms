@@ -622,6 +622,10 @@
   - 스마트 토큰 다중 검색(SKU 하이픈 유무 무관 일치, Name, Description, Category, UPC) 및 실시간 검색어 초기화(Clear) 버튼 지원
   - `MasterLabelsPage` 및 `getItems`에 3PL 활성 클라이언트 무관 창고 전체 품목 로드 안전 장치(Fallback) 적용
 - [x] 55.3 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+- [x] 55.4 `Geometry & Hardware Alignment` 버튼 스타일링 고도화:
+  - 투박한 흑백(Solid Black / Plain White) 대비를 탈피하고 로열 블루(`bg-blue-600 text-white font-bold ring-2 ring-blue-500/30`)의 산뜻한 선택 강조 적용
+  - 비선택(Unselected) 항목들은 반투명 배경 및 은은한 투명도(`bg-muted/25 opacity-65 hover:opacity-100`)로 처리하여 활성 상태와 확실한 시각적 위계 구축
+
 
 
 
