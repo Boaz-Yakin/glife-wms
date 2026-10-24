@@ -17,7 +17,7 @@ export async function getInventoryAudit({ page = 1, limit = 20, reason = '' }: G
     created_at,
     adjusted_by,
     inventory:inventory_id (
-      item:item_id (sku, name_en),
+      item:item_id (sku, name_en, desc_en),
       location:location_id (code)
     )
   `, { count: 'exact' })

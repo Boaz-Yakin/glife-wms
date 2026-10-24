@@ -30,7 +30,7 @@ export type InventoryData = {
   on_hand_qty: number
   allocated_qty: number
   updated_at: string
-  item: { sku: string; name_en: string } | any
+  item: { sku: string; name_en: string; desc_en?: string | null } | any
   location: { code: string; zone_type: string } | any
 }
 
@@ -48,7 +48,19 @@ const columns: ColumnDef<InventoryData>[] = [
   {
     accessorKey: "item.name_en",
     header: "Item Name",
-    cell: ({ row }) => <div className="font-semibold truncate max-w-[200px]" title={row.original.item?.name_en}>{row.original.item?.name_en || 'N/A'}</div>,
+    cell: ({ row }) => {
+      const name = row.original.item?.name_en || 'N/A'
+      const desc = row.original.item?.desc_en?.trim()
+      const fullText = desc ? `${name} (${desc})` : name
+      return (
+        <div className="font-semibold" title={fullText}>
+          <span>{name}</span>
+          {desc ? (
+            <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
+          ) : null}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "on_hand_qty",
@@ -122,7 +134,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       Location: d.location?.code || 'N/A',
       Zone: d.location?.zone_type || 'N/A',
       SKU: d.item?.sku || 'N/A',
-      "Item Name": d.item?.name_en || 'N/A',
+      "Item Name": d.item?.desc_en ? `${d.item?.name_en} (${d.item?.desc_en})` : (d.item?.name_en || 'N/A'),
       "On Hand": d.on_hand_qty,
       Allocated: d.allocated_qty,
       Available: d.on_hand_qty - d.allocated_qty,
@@ -143,7 +155,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
           <Input 
-            placeholder="Search Item Name or SKU..." 
+            placeholder="Search Item Name, SKU, or Description..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-background" 

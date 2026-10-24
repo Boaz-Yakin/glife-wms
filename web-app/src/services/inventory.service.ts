@@ -19,7 +19,7 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
     on_hand_qty,
     allocated_qty,
     updated_at,
-    item:item_id${itemJoin} ( sku, name_en ),
+    item:item_id${itemJoin} ( sku, name_en, desc_en ),
     location:location_id${locationJoin} ( code, zone_type )
   `, { count: 'exact' })
   
@@ -36,7 +36,7 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
   }
 
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%`, { foreignTable: 'item' })
+    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%,desc_en.ilike.%${search}%`, { foreignTable: 'item' })
   }
   
   const from = (page - 1) * limit

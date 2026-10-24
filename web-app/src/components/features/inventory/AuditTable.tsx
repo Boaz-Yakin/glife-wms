@@ -31,7 +31,7 @@ export type AuditData = {
   created_at: string
   adjusted_by: string
   inventory: {
-    item: { sku: string; name_en: string } | any
+    item: { sku: string; name_en: string; desc_en?: string | null } | any
     location: { code: string } | any
   } | any
 }
@@ -61,7 +61,19 @@ const columns: ColumnDef<AuditData>[] = [
   {
     accessorKey: "inventory.item.name_en",
     header: "Item Name",
-    cell: ({ row }) => <div className="truncate max-w-[150px]">{row.original.inventory?.item?.name_en || 'N/A'}</div>,
+    cell: ({ row }) => {
+      const name = row.original.inventory?.item?.name_en || 'N/A'
+      const desc = row.original.inventory?.item?.desc_en?.trim()
+      const fullText = desc ? `${name} (${desc})` : name
+      return (
+        <div title={fullText}>
+          <span className="font-medium">{name}</span>
+          {desc ? (
+            <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
+          ) : null}
+        </div>
+      )
+    },
   },
   {
     accessorKey: "reason",
@@ -124,7 +136,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
       "Date/Time": d.created_at ? new Date(d.created_at).toLocaleString('ko-KR') : '',
       Location: d.inventory?.location?.code || 'N/A',
       SKU: d.inventory?.item?.sku || 'N/A',
-      "Item Name": d.inventory?.item?.name_en || 'N/A',
+      "Item Name": d.inventory?.item?.desc_en ? `${d.inventory?.item?.name_en} (${d.inventory?.item?.desc_en})` : (d.inventory?.item?.name_en || 'N/A'),
       Reason: d.reason ? reasonLabels[d.reason] || d.reason : "Manual Adjustment",
       "Before Qty": d.previous_qty,
       "After Qty": d.new_qty,

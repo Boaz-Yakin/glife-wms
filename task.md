@@ -410,3 +410,16 @@
 - [x] 41.2 마스터 서비스 검색 쿼리 확장 ([`master.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/master.service.ts)):
   - `getItems` 검색 시 `desc_en` 필드도 OR 검색 조건에 포함하여 설명(규격, 용량 등)으로도 품목 검색 지원
 - [x] 41.3 `web-app` Next.js 16 프로덕션 빌드 검증 완료
+
+---
+
+## 📊 Phase 42: Inventory Status 및 Audit 이력 품목명 (Description) 병기 표시
+- [x] 42.1 재고 현황 테이블 UI 개선 ([`InventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryTable.tsx)):
+  - `Item Name` 컬럼에 `desc_en`이 존재할 경우 `Item Name (Description)` 형식으로 병기 렌더링
+  - 엑셀 다운로드 내보내기 시에도 `Item Name (Description)` 적용
+  - 검색창 플레이스홀더를 `Search Item Name, SKU, or Description...`으로 확장
+- [x] 42.2 재고 서비스 검색 쿼리 확장 ([`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/inventory.service.ts)):
+  - `getInventoryList` 조회 시 `desc_en` 필드 추가 및 Description 키워드 OR 검색 조건 연동
+- [x] 42.3 재고 감사 이력 화면 연동 ([`AuditTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/AuditTable.tsx), [`audit.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/audit.service.ts)):
+  - 감사 로그 테이블 및 엑셀 리포트에서도 `Item Name (Description)`으로 통일 표기
+- [x] 42.4 `web-app` Next.js 16 프로덕션 빌드 검증 완료
