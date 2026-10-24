@@ -118,6 +118,7 @@ export async function updateUserAction(formData: FormData) {
   const first_name = formData.get("first_name")?.toString()
   const last_name = formData.get("last_name")?.toString()
   const rawPhone = formData.get("phone")?.toString() || ""
+  const role = formData.get("role")?.toString()
 
   if (!userId || !first_name || !last_name || !rawPhone) {
     return { error: "Please enter required fields (name, number)." }
@@ -127,9 +128,14 @@ export async function updateUserAction(formData: FormData) {
   if (phone.length < 10) return { error: "Please enter a valid 10-digit US phone number." }
 
   // 1. Update public.users
+  const updatePayload: Record<string, any> = { first_name, last_name, phone }
+  if (role) {
+    updatePayload.role = role
+  }
+
   const { error: publicError } = await adminClient
     .from("users")
-    .update({ first_name, last_name, phone })
+    .update(updatePayload)
     .eq("id", userId)
 
   if (publicError) {
@@ -137,12 +143,17 @@ export async function updateUserAction(formData: FormData) {
     return { error: "Failed to update user profile: " + publicError.message }
   }
 
-  // 2. Update email in auth.users (Phone changes mean email changes)
+  // 2. Update email & metadata in auth.users
   const newEmail = `${phone}@glife.com`
-  const { error: authError } = await adminClient.auth.admin.updateUserById(userId, {
+  const authUpdatePayload: Record<string, any> = {
     email: newEmail,
     email_confirm: true
-  })
+  }
+  if (role) {
+    authUpdatePayload.user_metadata = { role }
+  }
+
+  const { error: authError } = await adminClient.auth.admin.updateUserById(userId, authUpdatePayload)
 
   if (authError) {
     if (authError.message.includes('already registered')) {

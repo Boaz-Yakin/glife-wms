@@ -539,6 +539,26 @@
   - 모달 내 Delete 버튼 및 행 삭제 버튼 클릭 시 실시간 로딩 토스트(`toast.loading`) 및 성공/실패 피드백 제공
 - [x] 49.5 Next.js 16 프로덕션 빌드(`npm run build`) 검증 100% 통과 완료
 
+---
+
+## 🎭 Phase 50: 사용자 역할(Role) 변경 즉시 반영 및 DB enum 동기화
+- [x] 50.1 원인 규명:
+  - PostgreSQL의 `user_role` enum 타입에 `'SUPERVISOR'`가 누락되어 있어 드롭다운에서 SUPERVISOR 선택 시 `22P02 invalid input value for enum user_role: "SUPERVISOR"` DB 오류 발생
+  - 테이블의 Role 셀렉트 변경 시 클라이언트 상태 업데이트 및 `router.refresh()` 누락으로 변경 사항이 즉각 뷰에 반영되지 않음
+  - 'Edit User' 모달 폼에 Role 선택 필드가 누락되어 정보 수정 창에서 역할 변경 불가
+- [x] 50.2 DB 마이그레이션 적용 ([`20261024135000_add_supervisor_to_user_role.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261024135000_add_supervisor_to_user_role.sql)):
+  - `ALTER TYPE public.user_role ADD VALUE IF NOT EXISTS 'SUPERVISOR'` 원격 프로덕션 DB 배포 완료
+- [x] 50.3 Server Actions 동기화 강화 ([`actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/settings/users/actions.ts)):
+  - `updateUserRoleAction`: `public.users`와 `auth.users` user_metadata 동시 원자적 갱신
+  - `updateUserAction`: 모달 폼 저장 시 `role` 필드 반영 및 Supabase Auth 메타데이터 연계 동기화
+- [x] 50.4 프론트엔드 반응형 상태 및 UI 개선 ([`UsersTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/settings/UsersTable.tsx)):
+  - 테이블 내 드롭다운 변경 시 낙관적 업데이트(Optimistic Update) 적용 및 에러 시 자동 롤백
+  - 작업 진행 상황 실시간 토스트(`Updating role to...`) 안내
+  - 'Edit User' 모달에 Role 셀렉트 박스 추가
+  - 역할 수정/삭제 완료 후 `router.refresh()` 및 로컬 상태 동기화로 무새로고침 즉각 반영
+- [x] 50.5 Next.js 16 프로덕션 빌드(`npm run build`) 검증 100% 통과 완료
+
+
 
 
 

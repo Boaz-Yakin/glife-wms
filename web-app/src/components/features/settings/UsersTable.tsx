@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRouter } from "next/navigation"
 import {
   ColumnDef,
   flexRender,
@@ -53,18 +54,32 @@ const formatUSPhone = (phone: string) => {
 }
 
 export function UsersTable({ data }: { data: UserData[] }) {
+  const router = useRouter()
+  const [users, setUsers] = React.useState<UserData[]>(data)
   const [isCreateOpen, setIsCreateOpen] = React.useState(false)
   const [isEditOpen, setIsEditOpen] = React.useState(false)
   const [editingUser, setEditingUser] = React.useState<UserData | null>(null)
   const [loading, setLoading] = React.useState(false)
 
+  // Sync props data with local state when server revalidates
+  React.useEffect(() => {
+    setUsers(data)
+  }, [data])
+
   const handleRoleChange = async (userId: string, newRole: string) => {
-    const toastId = toast.loading("Updating role...")
+    const previousUsers = [...users]
+    // 1. Optimistic update: immediately update UI
+    setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u))
+
+    const toastId = toast.loading(`Updating role to ${newRole}...`)
     const result = await updateUserRoleAction(userId, newRole)
     if (result?.error) {
+      // Rollback on failure
+      setUsers(previousUsers)
       toast.error(result.error, { id: toastId })
     } else {
       toast.success("Role updated successfully.", { id: toastId })
+      router.refresh()
     }
   }
 
@@ -100,8 +115,8 @@ export function UsersTable({ data }: { data: UserData[] }) {
         const role = row.original.role || "PICKER"
         const userId = row.original.id
         return (
-          <Select defaultValue={role} onValueChange={(val) => handleRoleChange(userId as string, val as string)}>
-            <SelectTrigger className="w-[140px] h-8">
+          <Select value={role} onValueChange={(val) => handleRoleChange(userId as string, val as string)}>
+            <SelectTrigger className="w-[140px] h-8 bg-background cursor-pointer">
               <SelectValue placeholder="Select Role" />
             </SelectTrigger>
             <SelectContent>
@@ -160,7 +175,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
   ]
 
   const table = useReactTable({
-    data,
+    data: users,
     columns,
     getCoreRowModel: getCoreRowModel(),
   })
@@ -175,6 +190,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     } else {
       toast.success("User successfully registered.")
       setIsCreateOpen(false)
+      router.refresh()
     }
   }
 
@@ -188,6 +204,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     } else {
       toast.success("User information successfully updated.")
       setIsEditOpen(false)
+      router.refresh()
     }
   }
 
@@ -205,7 +222,9 @@ export function UsersTable({ data }: { data: UserData[] }) {
       toast.error(result.error, { id: toastId })
     } else {
       toast.success("User has been deleted.", { id: toastId })
+      setUsers(prev => prev.filter(u => u.id !== target.id))
       setIsEditOpen(false)
+      router.refresh()
     }
   }
 
@@ -328,7 +347,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Modify user's name and phone number. (Changing phone number changes login ID)
+              Modify user's name, phone number, and role.
             </DialogDescription>
           </DialogHeader>
           {editingUser && (
@@ -346,6 +365,20 @@ export function UsersTable({ data }: { data: UserData[] }) {
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="edit_phone" className="text-right text-sm">Phone</Label>
                   <Input id="edit_phone" name="phone" defaultValue={editingUser.phone === 'N/A' ? '' : editingUser.phone} placeholder="4041234567" className="col-span-3" required />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="edit_role" className="text-right text-sm">Role</Label>
+                  <Select name="role" defaultValue={editingUser.role || "PICKER"}>
+                    <SelectTrigger id="edit_role" className="col-span-3">
+                      <SelectValue placeholder="Select Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ADMIN">ADMIN</SelectItem>
+                      <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
+                      <SelectItem value="PICKER">PICKER</SelectItem>
+                      <SelectItem value="INSPECTOR">INSPECTOR</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <DialogFooter className="flex items-center sm:justify-between w-full">
