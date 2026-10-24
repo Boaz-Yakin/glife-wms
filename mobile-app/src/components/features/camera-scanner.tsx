@@ -22,8 +22,8 @@ export function CameraBarcodeScanner({
   onScan,
   onClose,
   autoCloseOnScan = true,
-  cooldownMs = 1200,
-  confirmationDelayMs = 3000, // 3초 (3000ms) 유지
+  cooldownMs = 800,
+  confirmationDelayMs = 500, // 0.5초 (500ms) 빠른 시각 확인 후 즉시 완료
   title = "Barcode / QR Scanner",
   onValidate,
   onMismatch,
