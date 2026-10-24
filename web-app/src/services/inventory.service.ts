@@ -8,6 +8,52 @@ export interface GetInventoryParams {
   zone?: string
 }
 
+export interface DynamicItemThreshold {
+  itemId: string
+  sku: string
+  nameEn: string
+  leadTimeDays: number
+  dailyVelocity: number
+  demandStdDev: number
+  safetyStock: number
+  reorderPoint: number
+  surplusPoint: number
+  hasHistory: boolean
+}
+
+export async function getItemDynamicThresholdsMap(clientId?: string | null): Promise<Record<string, DynamicItemThreshold>> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await (supabase as any).rpc('calculate_item_dynamic_thresholds', {
+      p_client_id: clientId || null,
+      p_lookback_days: 30,
+    })
+    if (error || !data) {
+      console.error('getItemDynamicThresholdsMap error:', error)
+      return {}
+    }
+    const map: Record<string, DynamicItemThreshold> = {}
+    for (const row of data) {
+      map[row.item_id] = {
+        itemId: row.item_id,
+        sku: row.sku,
+        nameEn: row.name_en,
+        leadTimeDays: row.lead_time_days || 7,
+        dailyVelocity: Number(row.daily_velocity || 0),
+        demandStdDev: Number(row.demand_std_dev || 0),
+        safetyStock: Number(row.safety_stock || 10),
+        reorderPoint: Number(row.reorder_point || 50),
+        surplusPoint: Number(row.surplus_point || 200),
+        hasHistory: Boolean(row.has_history),
+      }
+    }
+    return map
+  } catch (err) {
+    console.error('getItemDynamicThresholdsMap unexpected error:', err)
+    return {}
+  }
+}
+
 export async function getInventoryList({ page = 1, limit = 20, search = '', zone = 'ALL' }: GetInventoryParams) {
   const supabase = await createClient()
 
@@ -20,7 +66,7 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
     allocated_qty,
     updated_at,
     created_at,
-    item:item_id${itemJoin} ( id, sku, name_en, desc_en, shelf_life_days ),
+    item:item_id${itemJoin} ( id, sku, name_en, desc_en, shelf_life_days, min_stock_qty, lead_time_days ),
     location:location_id${locationJoin} ( code, zone_type )
   `, { count: 'exact' })
   
@@ -43,16 +89,20 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
   const from = (page - 1) * limit
   const to = from + limit - 1
   
-  const { data, error, count } = await query.range(from, to).order('updated_at', { ascending: false })
+  // Parallel fetch: inventory page data + dynamic thresholds map
+  const [listRes, thresholdMap] = await Promise.all([
+    query.range(from, to).order('updated_at', { ascending: false }),
+    getItemDynamicThresholdsMap(activeClientId)
+  ])
+
+  const { data, error, count } = listRes
   
   if (error) {
     console.error('getInventoryList error:', error)
     return { data: [], count: 0, error: error.message }
   }
 
-  // Process expiration_date and lot_no:
-  // If the DB column is already present and populated, use it.
-  // Otherwise, calculate a realistic deterministic expiration date based on item shelf_life_days or creation/update date.
+  // Process expiration_date, lot_no, and attach dynamic threshold metadata
   const enrichedData = (data || []).map((row: any) => {
     let expDate = row.expiration_date
     let lotNo = row.lot_no
@@ -75,10 +125,17 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
       lotNo = `LOT-${datePrefix}-${shortId}`
     }
 
+    const itemId = row.item?.id
+    const dynThreshold = itemId ? thresholdMap[itemId] : undefined
+
     return {
       ...row,
       expiration_date: expDate,
       lot_no: lotNo,
+      item: row.item ? {
+        ...row.item,
+        dynamicThreshold: dynThreshold,
+      } : row.item
     }
   })
   

@@ -20,9 +20,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Label } from "@/components/ui/label"
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
+import { Download, SlidersHorizontal, RotateCcw, Zap, Sliders, Info } from "lucide-react"
 import { exportToExcel } from "@/lib/export"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
+import type { DynamicItemThreshold } from "@/services/inventory.service"
 
 // Types matching the service response
 export type InventoryData = {
@@ -33,8 +42,81 @@ export type InventoryData = {
   lot_no?: string | null
   updated_at: string
   created_at?: string
-  item: { sku: string; name_en: string; desc_en?: string | null; shelf_life_days?: number | null } | any
+  item: {
+    id: string
+    sku: string
+    name_en: string
+    desc_en?: string | null
+    shelf_life_days?: number | null
+    min_stock_qty?: number | null
+    lead_time_days?: number | null
+    dynamicThreshold?: DynamicItemThreshold
+  } | any
   location: { code: string; zone_type: string } | any
+}
+
+export type ThresholdMode = "auto" | "manual"
+
+export interface StockThresholdConfig {
+  low: number      // Low stock warning (0 < available <= low)
+  optimal: number  // Optimal stock level (low < available <= optimal, surplus > optimal)
+}
+
+export const DEFAULT_STOCK_THRESHOLDS: StockThresholdConfig = {
+  low: 10,
+  optimal: 100,
+}
+
+const STORAGE_KEY_CONFIG = "wms_inventory_stock_thresholds"
+const STORAGE_KEY_MODE = "wms_inventory_threshold_mode"
+
+function getAvailableBadge(
+  available: number,
+  thresholds: StockThresholdConfig,
+  dynamicThreshold?: DynamicItemThreshold,
+  mode: ThresholdMode = "auto"
+) {
+  let lowThreshold = thresholds.low
+  let optimalThreshold = thresholds.optimal
+  let tooltipText = ""
+
+  if (mode === "auto" && dynamicThreshold) {
+    lowThreshold = dynamicThreshold.safetyStock
+    optimalThreshold = dynamicThreshold.reorderPoint
+    tooltipText = `[Auto-Tuned by Velocity]\n• Daily Burn (ADU): ${dynamicThreshold.dailyVelocity.toFixed(2)}/day\n• Supplier Lead Time: ${dynamicThreshold.leadTimeDays}d\n• Safety Stock (Low): ${lowThreshold}\n• Reorder Point (Optimal): ${optimalThreshold}`
+  } else if (mode === "auto") {
+    tooltipText = `[Auto Fallback] Base safety stock threshold: ${lowThreshold}`
+  } else {
+    tooltipText = `[Manual Thresholds] Low: ${lowThreshold}, Optimal: ${optimalThreshold}`
+  }
+
+  let colorClass = ""
+
+  if (available <= 0) {
+    // Out of Stock / Negative: Rose / Red
+    colorClass = "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30 font-semibold"
+  } else if (available <= lowThreshold) {
+    // Low stock warning: Amber / Orange
+    colorClass = "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 font-semibold"
+  } else if (available <= optimalThreshold) {
+    // Optimal / Adequate: Emerald / Green
+    colorClass = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 font-semibold"
+  } else {
+    // Surplus / High: Sky / Blue
+    colorClass = "bg-sky-500/15 text-sky-700 dark:text-sky-400 border-sky-500/30 font-semibold"
+  }
+
+  return (
+    <span
+      title={tooltipText}
+      className={cn(
+        "inline-flex items-center justify-center min-w-9 px-2 py-0.5 rounded-md text-xs font-mono border tabular-nums cursor-help transition-all",
+        colorClass
+      )}
+    >
+      {available}
+    </span>
+  )
 }
 
 function getExpirationBadge(expDateStr?: string | null) {
@@ -76,74 +158,6 @@ function getExpirationBadge(expDateStr?: string | null) {
   )
 }
 
-const columns: ColumnDef<InventoryData>[] = [
-  {
-    accessorKey: "location.code",
-    header: "Location",
-    cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.code || 'N/A'}</div>,
-  },
-  {
-    accessorKey: "item.sku",
-    header: "SKU",
-    cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.item?.sku || 'N/A'}</div>,
-  },
-  {
-    accessorKey: "item.name_en",
-    header: "Item Name",
-    cell: ({ row }) => {
-      const name = row.original.item?.name_en || 'N/A'
-      const desc = row.original.item?.desc_en?.trim()
-      const fullText = desc ? `${name} (${desc})` : name
-      return (
-        <div className="font-semibold" title={fullText}>
-          <span>{name}</span>
-          {desc ? (
-            <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
-          ) : null}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "expiration_date",
-    header: "Exp. Date / D-Day",
-    cell: ({ row }) => getExpirationBadge(row.original.expiration_date),
-  },
-  {
-    accessorKey: "lot_no",
-    header: "Lot No.",
-    cell: ({ row }) => (
-      <div className="text-xs font-mono text-muted-foreground tabular-nums">
-        {row.original.lot_no || 'N/A'}
-      </div>
-    ),
-  },
-  {
-    accessorKey: "on_hand_qty",
-    header: () => <div className="text-right">On Hand</div>,
-    cell: ({ row }) => <div className="text-right font-medium tabular-nums">{row.original.on_hand_qty}</div>,
-  },
-  {
-    accessorKey: "allocated_qty",
-    header: () => <div className="text-right">Allocated</div>,
-    cell: ({ row }) => <div className="text-right text-muted-foreground tabular-nums">{row.original.allocated_qty}</div>,
-  },
-  {
-    id: "available_qty",
-    header: () => <div className="text-right">Available</div>,
-    cell: ({ row }) => {
-      const available = row.original.on_hand_qty - row.original.allocated_qty
-      return (
-        <div className="text-right tabular-nums">
-          <Badge variant={available <= 0 ? "destructive" : "secondary"}>
-            {available}
-          </Badge>
-        </div>
-      )
-    },
-  },
-]
-
 interface InventoryTableProps {
   data: InventoryData[]
   totalCount: number
@@ -158,6 +172,73 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
   const defaultZone = searchParams.get("zone") || "ALL"
 
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+
+  // Threshold mode: "auto" (Statistical velocity & lead time) or "manual" (Global fixed thresholds)
+  const [mode, setMode] = React.useState<ThresholdMode>("auto")
+  const [thresholds, setThresholds] = React.useState<StockThresholdConfig>(DEFAULT_STOCK_THRESHOLDS)
+  const [tempThresholds, setTempThresholds] = React.useState<StockThresholdConfig>(DEFAULT_STOCK_THRESHOLDS)
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+
+  // Load saved preferences from localStorage on mount
+  React.useEffect(() => {
+    try {
+      const savedMode = localStorage.getItem(STORAGE_KEY_MODE) as ThresholdMode | null
+      if (savedMode === "auto" || savedMode === "manual") {
+        setMode(savedMode)
+      }
+      const savedConfig = localStorage.getItem(STORAGE_KEY_CONFIG)
+      if (savedConfig) {
+        const parsed = JSON.parse(savedConfig)
+        if (typeof parsed.low === "number" && typeof parsed.optimal === "number") {
+          setThresholds(parsed)
+          setTempThresholds(parsed)
+        }
+      }
+    } catch (e) {
+      console.warn("Failed to load inventory threshold preferences:", e)
+    }
+  }, [])
+
+  const handleModeChange = (newMode: ThresholdMode) => {
+    setMode(newMode)
+    try {
+      localStorage.setItem(STORAGE_KEY_MODE, newMode)
+      toast.success(
+        newMode === "auto"
+          ? "Switched to Auto-Tuned Mode (Dynamic Velocity & Lead Time)"
+          : "Switched to Manual Thresholds Mode"
+      )
+    } catch (e) {
+      console.warn("Failed to save threshold mode to localStorage:", e)
+    }
+  }
+
+  const handleSaveThresholds = () => {
+    if (tempThresholds.low >= tempThresholds.optimal) {
+      toast.error("Low stock threshold must be less than optimal threshold.")
+      return
+    }
+    setThresholds(tempThresholds)
+    try {
+      localStorage.setItem(STORAGE_KEY_CONFIG, JSON.stringify(tempThresholds))
+      toast.success("Manual stock level thresholds saved.")
+    } catch (e) {
+      console.warn("Failed to save inventory thresholds to localStorage:", e)
+    }
+    setIsSettingsOpen(false)
+  }
+
+  const handleResetDefaults = () => {
+    setTempThresholds(DEFAULT_STOCK_THRESHOLDS)
+    setThresholds(DEFAULT_STOCK_THRESHOLDS)
+    try {
+      localStorage.removeItem(STORAGE_KEY_CONFIG)
+      toast.info("Stock thresholds reset to defaults.")
+    } catch (e) {
+      console.warn("Failed to reset inventory thresholds:", e)
+    }
+    setIsSettingsOpen(false)
+  }
 
   React.useEffect(() => {
     const timeout = setTimeout(() => {
@@ -196,10 +277,81 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       "On Hand": d.on_hand_qty,
       Allocated: d.allocated_qty,
       Available: d.on_hand_qty - d.allocated_qty,
+      "Daily Velocity (ADU)": d.item?.dynamicThreshold?.dailyVelocity ?? 0,
+      "Safety Stock": d.item?.dynamicThreshold?.safetyStock ?? d.item?.min_stock_qty ?? 10,
+      "Reorder Point": d.item?.dynamicThreshold?.reorderPoint ?? 50,
+      "Lead Time (Days)": d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7,
       "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString() : '',
     }))
     exportToExcel(flattened, "Inventory_Report")
   }
+
+  const columns = React.useMemo<ColumnDef<InventoryData>[]>(() => [
+    {
+      accessorKey: "location.code",
+      header: "Location",
+      cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.code || 'N/A'}</div>,
+    },
+    {
+      accessorKey: "item.sku",
+      header: "SKU",
+      cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.item?.sku || 'N/A'}</div>,
+    },
+    {
+      accessorKey: "item.name_en",
+      header: "Item Name",
+      cell: ({ row }) => {
+        const name = row.original.item?.name_en || 'N/A'
+        const desc = row.original.item?.desc_en?.trim()
+        const fullText = desc ? `${name} (${desc})` : name
+        return (
+          <div className="font-semibold" title={fullText}>
+            <span>{name}</span>
+            {desc ? (
+              <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
+            ) : null}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "expiration_date",
+      header: "Exp. Date / D-Day",
+      cell: ({ row }) => getExpirationBadge(row.original.expiration_date),
+    },
+    {
+      accessorKey: "lot_no",
+      header: "Lot No.",
+      cell: ({ row }) => (
+        <div className="text-xs font-mono text-muted-foreground tabular-nums">
+          {row.original.lot_no || 'N/A'}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "on_hand_qty",
+      header: () => <div className="text-right">On Hand</div>,
+      cell: ({ row }) => <div className="text-right font-medium tabular-nums">{row.original.on_hand_qty}</div>,
+    },
+    {
+      accessorKey: "allocated_qty",
+      header: () => <div className="text-right">Allocated</div>,
+      cell: ({ row }) => <div className="text-right text-muted-foreground tabular-nums">{row.original.allocated_qty}</div>,
+    },
+    {
+      id: "available_qty",
+      header: () => <div className="text-right">Available</div>,
+      cell: ({ row }) => {
+        const available = row.original.on_hand_qty - row.original.allocated_qty
+        const dyn = row.original.item?.dynamicThreshold
+        return (
+          <div className="text-right">
+            {getAvailableBadge(available, thresholds, dyn, mode)}
+          </div>
+        )
+      },
+    },
+  ], [thresholds, mode])
 
   const table = useReactTable({
     data,
@@ -209,7 +361,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
 
   return (
     <div className="space-y-4">
-      {/* Filters */}
+      {/* Filters & Actions */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
           <Input 
@@ -229,10 +381,202 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
             </SelectContent>
           </Select>
         </div>
-        <Button variant="outline" className="shrink-0 bg-background" onClick={handleExport}>
-          <Download className="mr-2 size-4" />
-          Download Excel
-        </Button>
+
+        <div className="flex items-center gap-2">
+          {/* Thresholds Settings Popover */}
+          <Popover 
+            open={isSettingsOpen} 
+            onOpenChange={(open) => {
+              setIsSettingsOpen(open)
+              if (open) setTempThresholds(thresholds)
+            }}
+          >
+            <PopoverTrigger
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "shrink-0 bg-background gap-1.5 cursor-pointer font-medium",
+                mode === "auto" && "border-primary/50 text-primary bg-primary/5 hover:bg-primary/10"
+              )}
+            >
+              {mode === "auto" ? (
+                <Zap className="size-4 text-primary fill-primary/20" />
+              ) : (
+                <SlidersHorizontal className="size-4 text-muted-foreground" />
+              )}
+              <span>Thresholds</span>
+              <span className="text-[10px] px-1 py-0.2 rounded bg-muted font-mono uppercase text-muted-foreground">
+                {mode}
+              </span>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-88 p-4 space-y-4 shadow-xl">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-sm leading-none flex items-center gap-1.5">
+                    <SlidersHorizontal className="size-4 text-primary" />
+                    Stock Criteria & Thresholds
+                  </h4>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Determine how inventory status colors are evaluated.
+                </p>
+              </div>
+
+              {/* Mode Toggle Switch */}
+              <div className="grid grid-cols-2 gap-1 p-1 bg-muted/60 rounded-lg text-xs font-medium">
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("auto")}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md transition-all cursor-pointer",
+                    mode === "auto"
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Zap className="size-3.5 text-primary" />
+                  Auto-Tuned
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModeChange("manual")}
+                  className={cn(
+                    "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-md transition-all cursor-pointer",
+                    mode === "manual"
+                      ? "bg-background text-foreground shadow-xs font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <Sliders className="size-3.5 text-muted-foreground" />
+                  Manual
+                </button>
+              </div>
+
+              {/* Auto Mode Info Card */}
+              {mode === "auto" ? (
+                <div className="space-y-2.5">
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2 text-xs text-foreground/90">
+                    <div className="flex items-center gap-1.5 font-semibold text-primary">
+                      <Zap className="size-3.5" />
+                      Dynamic Statistical Formula
+                    </div>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      Each SKU automatically calculates its own thresholds using <strong>Daily Outbound Velocity (ADU)</strong> and <strong>Supplier Lead Time ($L$)</strong> with a 95% service level buffer.
+                    </p>
+                    <div className="pt-1 border-t border-border/40 text-[11px] font-mono space-y-1 text-muted-foreground">
+                      <div>• Safety Stock: <span className="text-foreground">Ceil(1.65 × σ × √L)</span></div>
+                      <div>• Reorder Point: <span className="text-foreground">ADU × L + Safety Stock</span></div>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground italic flex items-center gap-1">
+                    <Info className="size-3 shrink-0" />
+                    Hover over any Available badge in the table to view the breakdown for that item.
+                  </p>
+                </div>
+              ) : (
+                /* Manual Mode Configuration */
+                <div className="space-y-3">
+                  <div className="rounded-lg border bg-muted/40 p-2.5 space-y-2 text-xs">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-rose-500 shrink-0" />
+                        <span className="font-medium text-foreground">Out of Stock</span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">&le; 0</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-amber-500 shrink-0" />
+                        <span className="font-medium text-foreground">Low Stock</span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">1 ~ {tempThresholds.low}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-emerald-500 shrink-0" />
+                        <span className="font-medium text-foreground">Optimal Stock</span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">{tempThresholds.low + 1} ~ {tempThresholds.optimal}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="size-2.5 rounded-full bg-sky-500 shrink-0" />
+                        <span className="font-medium text-foreground">Surplus Stock</span>
+                      </div>
+                      <span className="font-mono text-muted-foreground">&gt; {tempThresholds.optimal}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="low-threshold" className="text-xs font-medium">
+                          Low Stock Threshold (Amber)
+                        </Label>
+                        <span className="text-[11px] text-muted-foreground">&le; value</span>
+                      </div>
+                      <Input
+                        id="low-threshold"
+                        type="number"
+                        min={1}
+                        max={tempThresholds.optimal - 1}
+                        value={tempThresholds.low}
+                        onChange={(e) => setTempThresholds(prev => ({ 
+                          ...prev, 
+                          low: Math.max(1, parseInt(e.target.value) || 1) 
+                        }))}
+                        className="h-8 text-xs font-mono"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="optimal-threshold" className="text-xs font-medium">
+                          Optimal Stock Threshold (Green)
+                        </Label>
+                        <span className="text-[11px] text-muted-foreground">&le; value</span>
+                      </div>
+                      <Input
+                        id="optimal-threshold"
+                        type="number"
+                        min={tempThresholds.low + 1}
+                        value={tempThresholds.optimal}
+                        onChange={(e) => setTempThresholds(prev => ({ 
+                          ...prev, 
+                          optimal: Math.max(prev.low + 1, parseInt(e.target.value) || prev.low + 1) 
+                        }))}
+                        className="h-8 text-xs font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-border/50">
+                    <Button
+                      variant="ghost"
+                      size="xs"
+                      onClick={handleResetDefaults}
+                      className="text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                    >
+                      <RotateCcw className="size-3 mr-1" />
+                      Reset
+                    </Button>
+                    <Button
+                      size="xs"
+                      onClick={handleSaveThresholds}
+                      className="text-xs px-3 cursor-pointer"
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+
+          <Button variant="outline" className="shrink-0 bg-background" onClick={handleExport}>
+            <Download className="mr-2 size-4" />
+            Download Excel
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-md border bg-background">
@@ -286,10 +630,39 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         </Table>
       </div>
       
-      <div className="text-sm text-muted-foreground">
-        Total {totalCount} records
+      {/* Footer Info & Dynamic Status Indicator */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+        <div>Total {totalCount} records</div>
+        <div className="flex items-center gap-3">
+          <span className="text-muted-foreground font-medium flex items-center gap-1">
+            {mode === "auto" ? (
+              <span className="inline-flex items-center gap-1 text-primary font-semibold">
+                <Zap className="size-3" /> Auto Velocity:
+              </span>
+            ) : (
+              "Available:"
+            )}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2 rounded-full bg-rose-500" />
+            <span className="font-mono">&le;0 (Stockout)</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2 rounded-full bg-amber-500" />
+            <span className="font-mono">{mode === "auto" ? "≤Safety Stock" : `≤${thresholds.low}`}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2 rounded-full bg-emerald-500" />
+            <span className="font-mono">{mode === "auto" ? "≤Reorder Point" : `≤${thresholds.optimal}`}</span>
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <span className="size-2 rounded-full bg-sky-500" />
+            <span className="font-mono">{mode === "auto" ? ">Surplus" : `>${thresholds.optimal}`}</span>
+          </span>
+        </div>
       </div>
     </div>
   )
 }
+
 

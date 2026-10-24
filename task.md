@@ -504,6 +504,26 @@
   - 적치 완료 성공 화면에 등록된 `Exp. Date (FEFO)` 및 `Lot No` 명확히 표기
 - [x] 47.4 모바일 앱 Next.js 16 프로덕션 빌드(`npm run build`) 검증 통과 완료
 
+---
+
+## ⚡ Phase 48: 품목별 소진율(Velocity) & 리드타임 기반 가용재고(Available) 동적 임계치 자동 산출 체계 구축
+- [x] 48.1 DB 스키마 마이그레이션 적용 ([`20261024130000_add_lead_time_and_dynamic_stock_thresholds.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261024130000_add_lead_time_and_dynamic_stock_thresholds.sql), [`20261024130500_update_dynamic_thresholds_rpc.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261024130500_update_dynamic_thresholds_rpc.sql)):
+  - `public.items` 테이블에 `lead_time_days INT DEFAULT 7` (공급 리드타임), `target_service_level NUMERIC(3, 2) DEFAULT 0.95` (결품 방지 신뢰수준 95%) 컬럼 신설
+  - 통계적 동적 임계치 산출 RPC 함수 `calculate_item_dynamic_thresholds(p_client_id, p_lookback_days)` 구축 (275개 SKU 대상 실시간 소진율 $ADU$, 출고 변동성 $\sigma_D$, 안전재고 $SS$, 재주문점 $ROP$, 잉여 상한 $Surplus$ 자동 집계)
+  - `supabase db push`를 통해 원격 프로덕션 DB 마이그레이션 및 권한 부여 완료
+- [x] 48.2 재고 서비스 백엔드 연동 ([`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/inventory.service.ts)):
+  - `getItemDynamicThresholdsMap()` 함수 신설 및 `getInventoryList` 병렬 조회 연동
+  - `items` 쿼리에 `min_stock_qty`, `lead_time_days` 컬럼 추가 및 각 인벤토리 행에 `dynamicThreshold` 메타데이터 자동 매핑
+- [x] 48.3 가용재고(Available) 컬러 뱃지 및 임계치 설정 UI 구현 ([`InventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryTable.tsx)):
+  - 텍스트 없이 깔끔한 4단계 컬러 수치 뱃지 (🔴 Stockout / 🟠 Low / 🟢 Optimal / 🔵 Surplus)
+  - **Thresholds 설정 팝오버**:
+    - ⚡ **Auto-Tuned Mode (동적 통계 산출)**: 실시간 일평균 소진율($ADU$)과 공급 리드타임($L$) 기반 품목별 맞춤 $SS$ 및 $ROP$ 실시간 적용
+    - ⚙️ **Manual Mode (수동 고정값)**: Low / Optimal 임계치 직접 입력 및 `localStorage` 영구 보존
+  - Available 배지 호버 시 품목별 소진 속도 및 임계치 세부 내역(`Daily Burn`, `Lead Time`, `Safety Stock`, `Reorder Point`) 툴팁 제공
+  - 엑셀 내보내기 리포트에 `Daily Velocity (ADU)`, `Safety Stock`, `Reorder Point`, `Lead Time` 자동 포함
+- [x] 48.4 Next.js 16 프로덕션 빌드(`npm run build`) 타입 및 번들링 100% 통과 완료
+
+
 
 
 
