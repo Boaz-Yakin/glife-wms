@@ -452,4 +452,18 @@
   - 다이얼로그 헤더의 Status 변경 드롭다운 트리거 및 선택 아이템에 `OrderStatusBadge` 적용
 - [x] 44.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 배포 완료
 
+---
+
+## 📊 Phase 45: 대시보드 원형(도넛) 차트 툴팁 외측 표시 및 중앙 메트릭 오버랩 방지
+- [x] 45.1 `StorageCapacityChart` ([`StorageCapacityChart.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/StorageCapacityChart.tsx)):
+  - 호버 툴팁이 도넛 중앙의 `24.2% OCCUPIED` 메트릭과 오버랩되는 현상 해결
+  - `containerRef` 및 `ResizeObserver`를 통한 컨테이너 크기 동적 감지
+  - 커서의 방위각/사분면에 따라 툴팁 카드를 도넛 링 외측(Top은 상단, Bottom은 하단, Left/Right는 좌우 외측)으로 자동 투영하는 `getOutsideTooltipStyle` 적용
+  - 컬러 도트, 호버 품목/구역명, 빈 개수 및 백분율을 선명하게 표시
+- [x] 45.2 `InventoryStatusChart` ([`InventoryStatusChart.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/InventoryStatusChart.tsx)):
+  - `Inventory Health Index` 도넛 차트 역시 원형 외측으로 툴팁 팝업이 위치하도록 `getOutsideTooltipStyle` 일원화
+  - 범례 컬러 도트와 수량(units), 백분율(%)을 함께 표기
+- [x] 45.3 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
+
+
 
