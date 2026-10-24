@@ -6,6 +6,7 @@ import {
   getStorageCapacity,
   getLogistixFlowMetrics,
   getInventoryIntelligenceData,
+  getExpirationRiskMetrics,
   getWarehouseMapData,
   DashboardPeriod,
 } from "@/services/dashboard.service"
@@ -20,6 +21,7 @@ import { DashboardTabNav, DashboardTab } from "@/components/features/dashboard/D
 import { DeadStockCard } from "@/components/features/dashboard/DeadStockCard"
 import { SmartReorderQueue } from "@/components/features/dashboard/SmartReorderQueue"
 import { DynamicSlottingCard } from "@/components/features/dashboard/DynamicSlottingCard"
+import { ExpirationAlertCard } from "@/components/features/dashboard/ExpirationAlertCard"
 import { WarehouseMapViewer } from "@/components/features/dashboard/WarehouseMapViewer"
 import { Card } from "@/components/ui/card"
 import {
@@ -32,6 +34,7 @@ import {
   TrendingDown,
   ShoppingCart,
   Layers,
+  CalendarClock,
 } from "lucide-react"
 
 interface DashboardPageProps {
@@ -60,6 +63,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     storageCapacity,
     logistixFlow,
     intelligenceData,
+    expirationData,
     warehouseMapData,
   ] = await Promise.all([
     isOperationsTab ? getDashboardKpis(period) : null,
@@ -68,6 +72,7 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
     isOperationsTab ? getStorageCapacity() : null,
     isOperationsTab ? getLogistixFlowMetrics(warehouse) : null,
     isIntelligenceTab ? getInventoryIntelligenceData() : null,
+    isIntelligenceTab ? getExpirationRiskMetrics() : null,
     isMapTab ? getWarehouseMapData() : null,
   ])
 
@@ -158,11 +163,29 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
         </>
       )}
 
-      {/* TAB 2: INVENTORY INTELLIGENCE (Phase 3: Dead Stock & Smart Reorder) */}
-      {isIntelligenceTab && intelligenceData && (
+      {/* TAB 2: INVENTORY INTELLIGENCE (Dead Stock, Expiration Risk, Reorder & Slotting) */}
+      {isIntelligenceTab && intelligenceData && expirationData && (
         <div className="flex flex-col gap-5">
-          {/* Top 3 Intelligence Metric Summary Cards */}
-          <div className="grid gap-4 sm:grid-cols-3">
+          {/* Top 4 Intelligence Metric Summary Cards */}
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Card className="p-4 border-border/80 bg-card flex items-center justify-between">
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  FEFO Near-Expiry Risk
+                </span>
+                <span className="text-2xl font-black tracking-tight text-rose-600 dark:text-rose-400 font-mono block mt-1">
+                  {expirationData.criticalCount}{" "}
+                  <span className="text-xs font-normal text-muted-foreground">Critical (&le;14d)</span>
+                </span>
+                <span className="text-[11px] text-muted-foreground mt-0.5 block">
+                  {expirationData.warningCount} Lots Warning (15-45d)
+                </span>
+              </div>
+              <div className="p-2.5 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                <CalendarClock className="h-5 w-5" />
+              </div>
+            </Card>
+
             <Card className="p-4 border-border/80 bg-card flex items-center justify-between">
               <div>
                 <span className="text-xs font-medium text-muted-foreground">
@@ -215,8 +238,9 @@ export default async function DashboardPage({ searchParams }: DashboardPageProps
             </Card>
           </div>
 
-          {/* 3 Dedicated Intelligence Action Modules */}
-          <div className="grid gap-5 lg:grid-cols-3">
+          {/* 4 Dedicated Intelligence Action Modules in Responsive Grid */}
+          <div className="grid gap-5 lg:grid-cols-2">
+            <ExpirationAlertCard data={expirationData} />
             <DeadStockCard data={intelligenceData.deadStock} />
             <SmartReorderQueue data={intelligenceData.reorderQueue} />
             <DynamicSlottingCard data={intelligenceData.slotting} />

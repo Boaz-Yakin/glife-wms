@@ -67,8 +67,32 @@ export type Database = {
           location_id: string;
           on_hand_qty: number;
           allocated_qty: number;
+          expiration_date?: string | null;
+          lot_no?: string | null;
           created_at: string;
           updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          item_id: string;
+          location_id: string;
+          on_hand_qty?: number;
+          allocated_qty?: number;
+          expiration_date?: string | null;
+          lot_no?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          item_id?: string;
+          location_id?: string;
+          on_hand_qty?: number;
+          allocated_qty?: number;
+          expiration_date?: string | null;
+          lot_no?: string | null;
+          created_at?: string;
+          updated_at?: string;
         };
       };
       items: {
@@ -89,6 +113,7 @@ export type Database = {
           zone_type: 'A' | 'F';
           min_stock_qty: number | null;
           shelf_life_days: number | null;
+          min_outbound_days?: number | null;
           image_url: string | null;
           is_active: boolean;
           manufacturer_id: string | null;

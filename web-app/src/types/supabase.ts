@@ -88,9 +88,11 @@ export type Database = {
           allocated_qty: number
           client_id: string | null
           created_at: string | null
+          expiration_date: string | null
           id: string
           item_id: string
           location_id: string
+          lot_no: string | null
           on_hand_qty: number
           updated_at: string | null
         }
@@ -98,9 +100,11 @@ export type Database = {
           allocated_qty?: number
           client_id?: string | null
           created_at?: string | null
+          expiration_date?: string | null
           id?: string
           item_id: string
           location_id: string
+          lot_no?: string | null
           on_hand_qty?: number
           updated_at?: string | null
         }
@@ -108,9 +112,11 @@ export type Database = {
           allocated_qty?: number
           client_id?: string | null
           created_at?: string | null
+          expiration_date?: string | null
           id?: string
           item_id?: string
           location_id?: string
+          lot_no?: string | null
           on_hand_qty?: number
           updated_at?: string | null
         }
@@ -195,6 +201,7 @@ export type Database = {
           is_active: boolean | null
           item_volume: number | null
           manufacturer_id: string | null
+          min_outbound_days: number | null
           min_stock_qty: number | null
           name_en: string
           note: string | null
@@ -221,6 +228,7 @@ export type Database = {
           is_active?: boolean | null
           item_volume?: number | null
           manufacturer_id?: string | null
+          min_outbound_days?: number | null
           min_stock_qty?: number | null
           name_en: string
           note?: string | null
@@ -247,6 +255,7 @@ export type Database = {
           is_active?: boolean | null
           item_volume?: number | null
           manufacturer_id?: string | null
+          min_outbound_days?: number | null
           min_stock_qty?: number | null
           name_en?: string
           note?: string | null

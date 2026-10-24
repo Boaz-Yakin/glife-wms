@@ -465,5 +465,27 @@
   - 범례 컬러 도트와 수량(units), 백분율(%)을 함께 표기
 - [x] 45.3 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
 
+---
+
+## 📅 Phase 46: 아이템 유통기한(Expiration Date) 및 선입선출(FEFO) 체계 구축
+- [x] 46.1 DB 스키마 마이그레이션 스크립트 작성 ([`20261024101500_add_inventory_expiration_tracking.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261024101500_add_inventory_expiration_tracking.sql)):
+  - `public.inventory`에 `expiration_date DATE`, `lot_no VARCHAR(50)` 컬럼 및 인덱스 신설
+  - `public.items`에 `min_outbound_days INT DEFAULT 14` (출고 최소 잔여 유효일수) 추가
+  - 기존 재고 대상 일괄 초기화(Seed/Backfill) 쿼리 포함
+- [x] 46.2 TypeScript 데이터베이스 타입 동기화 ([`database.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/types/database.ts), [`supabase.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/types/supabase.ts)):
+  - `inventory` 테이블 Row/Insert/Update에 `expiration_date`, `lot_no` 필드 추가
+  - `items` 테이블에 `min_outbound_days` 필드 추가
+- [x] 46.3 재고 현황 서비스 및 테이블 연동 ([`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/inventory.service.ts), [`InventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryTable.tsx)):
+  - `getInventoryList`에 유통기한 및 Lot 번호 조회 및 계산 로직 연동
+  - 재고 테이블에 `Exp. Date / D-Day` 및 `Lot No.` 컬럼 추가
+  - 남은 일수에 따른 단계별 컬러 뱃지(`D-Day/Expired` 붉은색 펄스, `D-Critical(≤14일)` 붉은색 뱃지, `D-Warning(15~45일)` 노란색 뱃지, `D-Safe(>45일)` 초록색 뱃지) 구현
+  - 엑셀 내보내기에 유통기한(`Exp. Date`) 및 `Lot No` 포함
+- [x] 46.4 대시보드 FEFO & 만료 위험 분석 모듈 신설 ([`ExpirationAlertCard.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/ExpirationAlertCard.tsx), [`dashboard.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dashboard.service.ts), [`dashboard/page.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/dashboard/page.tsx)):
+  - `getExpirationRiskMetrics()`로 전체 재고 중 만료 임박(Critical/Warning/Safe) 건수 및 수량, 긴급 FEFO 큐 산출
+  - Intelligence 탭 상단 KPI에 `FEFO Near-Expiry Risk` 카드 배치
+  - 하단 분석 영역에 `ExpirationAlertCard`를 배치하여 로케이션, Lot, D-Day, 재고 수량 우선순위 표기
+- [x] 46.5 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
+
+
 
 

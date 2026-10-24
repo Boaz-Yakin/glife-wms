@@ -29,9 +29,51 @@ export type InventoryData = {
   id: string
   on_hand_qty: number
   allocated_qty: number
+  expiration_date?: string | null
+  lot_no?: string | null
   updated_at: string
-  item: { sku: string; name_en: string; desc_en?: string | null } | any
+  created_at?: string
+  item: { sku: string; name_en: string; desc_en?: string | null; shelf_life_days?: number | null } | any
   location: { code: string; zone_type: string } | any
+}
+
+function getExpirationBadge(expDateStr?: string | null) {
+  if (!expDateStr) {
+    return <span className="text-muted-foreground text-xs font-mono">-</span>
+  }
+
+  const expDate = new Date(expDateStr)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  expDate.setHours(0, 0, 0, 0)
+
+  const diffTime = expDate.getTime() - today.getTime()
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+  let badgeVariant = "bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-500/30"
+  let label = `D-${diffDays}`
+
+  if (diffDays <= 0) {
+    badgeVariant = "bg-rose-500/20 text-rose-700 dark:text-rose-400 border-rose-500/40 animate-pulse"
+    label = diffDays === 0 ? "D-Day (Today)" : `Expired (${Math.abs(diffDays)}d)`
+  } else if (diffDays <= 14) {
+    badgeVariant = "bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30 font-bold"
+    label = `D-${diffDays} (Critical)`
+  } else if (diffDays <= 45) {
+    badgeVariant = "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30"
+    label = `D-${diffDays}`
+  }
+
+  return (
+    <div className="flex flex-col items-start gap-0.5">
+      <span className="font-mono text-xs tabular-nums text-foreground/90 font-medium">
+        {expDateStr}
+      </span>
+      <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold border ${badgeVariant}`}>
+        {label}
+      </span>
+    </div>
+  )
 }
 
 const columns: ColumnDef<InventoryData>[] = [
@@ -61,6 +103,20 @@ const columns: ColumnDef<InventoryData>[] = [
         </div>
       )
     },
+  },
+  {
+    accessorKey: "expiration_date",
+    header: "Exp. Date / D-Day",
+    cell: ({ row }) => getExpirationBadge(row.original.expiration_date),
+  },
+  {
+    accessorKey: "lot_no",
+    header: "Lot No.",
+    cell: ({ row }) => (
+      <div className="text-xs font-mono text-muted-foreground tabular-nums">
+        {row.original.lot_no || 'N/A'}
+      </div>
+    ),
   },
   {
     accessorKey: "on_hand_qty",
@@ -135,6 +191,8 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       Zone: d.location?.zone_type || 'N/A',
       SKU: d.item?.sku || 'N/A',
       "Item Name": d.item?.desc_en ? `${d.item?.name_en} (${d.item?.desc_en})` : (d.item?.name_en || 'N/A'),
+      "Exp. Date": d.expiration_date || 'N/A',
+      "Lot No": d.lot_no || 'N/A',
       "On Hand": d.on_hand_qty,
       Allocated: d.allocated_qty,
       Available: d.on_hand_qty - d.allocated_qty,
