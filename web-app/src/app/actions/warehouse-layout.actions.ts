@@ -247,7 +247,7 @@ export async function applyWarehouseStructureAction(
           { code: 'LOC-A0104A01', qty: 80, itemIdx: 4 },
           { code: 'LOC-A0105B02', qty: 60, itemIdx: 5 },
           { code: 'LOC-A0106A01', qty: 35, itemIdx: 6 },
-          { code: 'LOC-A0107C01', qty: 40, itemIdx: 7 },
+          { code: 'LOC-A0107B01', qty: 40, itemIdx: 7 },
           { code: 'LOC-A0108A02', qty: 20, itemIdx: 8 },
           { code: 'LOC-A0110A01', qty: 15, itemIdx: 9 },
           { code: 'LOC-F0101A01', qty: 55, itemIdx: 10 },
@@ -280,6 +280,7 @@ export async function applyWarehouseStructureAction(
 
     revalidatePath('/dashboard')
     revalidatePath('/master/locations')
+    revalidatePath('/master/labels')
     revalidatePath('/inventory')
 
     let invMsg = 'Existing inventory preserved.'

@@ -2,6 +2,8 @@ import * as React from "react"
 import { PrintClient } from "./PrintClient"
 import { getLocations } from "@/services/master.service"
 
+export const dynamic = "force-dynamic"
+
 export default async function MasterLabelsPage() {
   const { data: locationsData } = await getLocations({})
   const dbCodes = (locationsData || []).map((l) => l.code).filter(Boolean)
