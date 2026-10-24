@@ -423,3 +423,15 @@
 - [x] 42.3 재고 감사 이력 화면 연동 ([`AuditTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/AuditTable.tsx), [`audit.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/audit.service.ts)):
   - 감사 로그 테이블 및 엑셀 리포트에서도 `Item Name (Description)`으로 통일 표기
 - [x] 42.4 `web-app` Next.js 16 프로덕션 빌드 검증 완료
+
+---
+
+## 🏷️ Phase 43: 선반 랙 로케이션 라벨 인쇄 2단(Level A, B) 정합성 일치화 (존재하지 않는 C단 제거)
+- [x] 43.1 2D 레이아웃 맵 및 실제 창고 구조(Level A, Level B 2단)와 불일치하던 가상 C단 코드(`LOC-*C01`) 제거
+- [x] 43.2 [`warehouse-layout.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/types/warehouse-layout.ts) 및 [`warehouse-layout.actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/actions/warehouse-layout.actions.ts)의 `DEFAULT_WAREHOUSE_CONFIG` 기본 레벨(단수)을 3에서 2로 조정
+- [x] 43.3 [`PrintClient.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/%28dashboard%29/master/labels/PrintClient.tsx):
+  - Zone A / Zone F 프리셋 버튼 클릭 시 실제 DB에 등록된 2단 로케이션(`A01`, `A02`, `B01`, `B02`)을 우선 로드하도록 개선
+  - fallback 상수에서 존재하지 않는 C단(`C01`)을 완전히 제거하고 2단 규격에 맞게 동기화
+  - 페이지 최초 마운트 시 DB 실제 2단 로케이션 코드로 기본 텍스트에어리어 초기화
+- [x] 43.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
+
