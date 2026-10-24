@@ -579,6 +579,20 @@
 - [x] 52.4 사이드바 네비게이션 서브메뉴 연동 ([`AppSidebar.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/AppSidebar.tsx))
 - [x] 52.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 🏷️ Phase 53: 바코드 라벨 인쇄 센터 다목적화 (랙 로케이션 vs 아이템 상품 바코드 모드)
+- [x] 53.1 데이터 레이어 확장: `master/labels/page.tsx`에서 `locations` 및 `items` 마스터 목록 동시 로드
+- [x] 53.2 `ItemBarcodePrintClient.tsx` 아이템 바코드 인쇄 컴포넌트 개발:
+  - 품목 검색 및 빠른 선택, 품목별 인쇄 매수(Copies) 증감 패드
+  - 바코드 형식(Code128 1D 바코드 vs QR Code) 및 라벨 규격(롤 라벨 50×30mm, 60×40mm, 80×50mm / A4 24칸)
+  - `Item Name (Description)` 공식 포맷 표기
+  - 브라우저 인쇄(`@media print`) 무결점 최적화 레이아웃
+- [x] 53.3 `MasterLabelsHub.tsx` 모드 선택 허브 래퍼 구축 (상단 탭 전환: 📍 Rack Location vs 🏷️ Item Barcode)
+- [x] 53.4 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
+
+
 
 
 

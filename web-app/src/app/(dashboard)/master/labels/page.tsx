@@ -1,23 +1,26 @@
 import * as React from "react"
-import { PrintClient } from "./PrintClient"
-import { getLocations } from "@/services/master.service"
+import { MasterLabelsHub } from "./MasterLabelsHub"
+import { getLocations, getItems } from "@/services/master.service"
 
 export const dynamic = "force-dynamic"
 
+export const metadata = {
+  title: "Barcode Label Center | Glife WMS",
+  description: "Generate and print shelf rack location labels and item barcode stickers.",
+}
+
 export default async function MasterLabelsPage() {
-  const { data: locationsData } = await getLocations({})
+  const [{ data: locationsData }, { data: itemsData }] = await Promise.all([
+    getLocations({}),
+    getItems({ page: 1, limit: 1000 }),
+  ])
+
   const dbCodes = (locationsData || []).map((l) => l.code).filter(Boolean)
 
   return (
-    <div className="flex flex-col gap-6 print:m-0 print:p-0 print:block">
-      <div className="print:hidden">
-        <h2 className="text-2xl font-bold tracking-tight">Shelf Rack Physical Labels (Location QR Codes)</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Generate and print official warehouse shelf rack labels (65mm Compact Width / 2.5" × 1.8") with Level color bands and anti-crossfire 2D QR codes (or 1D barcodes).
-        </p>
-      </div>
-
-      <PrintClient initialDbCodes={dbCodes} />
-    </div>
+    <MasterLabelsHub
+      initialDbCodes={dbCodes}
+      items={itemsData || []}
+    />
   )
 }
