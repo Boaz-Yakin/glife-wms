@@ -114,7 +114,7 @@ const ZONE_STYLES: Record<string, { label: string; sub: string; badgeBg: string;
 }
 
 // ─────────────────────────────────────────────────────────────
-// Preset Location Barcode Batches
+// Preset Location Barcode Batches (2-Level Warehouse Standard)
 // ─────────────────────────────────────────────────────────────
 const FOUR_LEVEL_PREVIEW_CODES = [
   "LOC-A0105A01",
@@ -125,23 +125,28 @@ const FOUR_LEVEL_PREVIEW_CODES = [
 
 const ZONE_A_LOCATION_CODES = [
   "LOC-A0101A01",
+  "LOC-A0101A02",
   "LOC-A0101B01",
-  "LOC-A0101C01",
+  "LOC-A0101B02",
   "LOC-A0102A01",
+  "LOC-A0102A02",
   "LOC-A0102B01",
-  "LOC-A0102C01",
-  "LOC-A0105A01",
-  "LOC-A0105B01",
-  "LOC-A0105C01",
+  "LOC-A0102B02",
+  "LOC-A0103A01",
+  "LOC-A0103A02",
+  "LOC-A0103B01",
+  "LOC-A0103B02",
 ].join("\n")
 
 const ZONE_F_LOCATION_CODES = [
   "LOC-F0101A01",
+  "LOC-F0101A02",
   "LOC-F0101B01",
-  "LOC-F0101C01",
+  "LOC-F0101B02",
   "LOC-F0102A01",
+  "LOC-F0102A02",
   "LOC-F0102B01",
-  "LOC-F0102C01",
+  "LOC-F0102B02",
 ].join("\n")
 
 const ZONE_S_LOCATION_CODES = [
@@ -717,7 +722,16 @@ function ShelfRackLabelCard({
 // Print Client Component (English Unified)
 // ─────────────────────────────────────────────────────────────
 export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[] }) {
-  const [codesInput, setCodesInput] = React.useState(FOUR_LEVEL_PREVIEW_CODES)
+  // 2D 레이아웃 맵 및 DB에 등록된 실제 2단(Level A, Level B) 로케이션 코드를 우선 로드
+  const defaultCodes = React.useMemo(() => {
+    if (initialDbCodes.length > 0) {
+      const zoneACodes = initialDbCodes.filter((c) => c.startsWith("LOC-A"))
+      return zoneACodes.length > 0 ? zoneACodes.join("\n") : initialDbCodes.join("\n")
+    }
+    return ZONE_A_LOCATION_CODES
+  }, [initialDbCodes])
+
+  const [codesInput, setCodesInput] = React.useState(defaultCodes)
   const [cardWidth, setCardWidth] = React.useState<CardWidth>("65mm")
   const [cardHeight, setCardHeight] = React.useState<CardHeight>("45mm")
   const [paperSize, setPaperSize] = React.useState<PaperSize>("letter")
@@ -877,34 +891,34 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
+              onClick={() => {
+                const dbZoneA = initialDbCodes.filter((c) => c.startsWith("LOC-A"))
+                setCodesInput(dbZoneA.length > 0 ? dbZoneA.join("\n") : ZONE_A_LOCATION_CODES)
+              }}
               className="text-xs h-7 px-2.5 font-medium"
             >
-              🌈 4 Level Color Bands (A~D)
+              Zone A (Ambient • 2 Levels)
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setCodesInput(ZONE_A_LOCATION_CODES)}
+              onClick={() => {
+                const dbZoneF = initialDbCodes.filter((c) => c.startsWith("LOC-F"))
+                setCodesInput(dbZoneF.length > 0 ? dbZoneF.join("\n") : ZONE_F_LOCATION_CODES)
+              }}
               className="text-xs h-7 px-2.5 font-medium"
             >
-              Ambient Rack 01 (Zone A)
+              Zone F (Cold Storage • 2 Levels)
             </Button>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setCodesInput(ZONE_F_LOCATION_CODES)}
-              className="text-xs h-7 px-2.5 font-medium"
-            >
-              Cold Storage Rack 01 (Zone F)
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setCodesInput(ZONE_S_LOCATION_CODES)}
+              onClick={() => {
+                const dbZoneS = initialDbCodes.filter((c) => c.startsWith("LOC-S"))
+                setCodesInput(dbZoneS.length > 0 ? dbZoneS.join("\n") : ZONE_S_LOCATION_CODES)
+              }}
               className="text-xs h-7 px-2.5 font-medium text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700"
             >
               📦 Staging Floor 01~10 (Zone S)
@@ -921,6 +935,15 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 Load All Warehouse Locations ({initialDbCodes.length})
               </Button>
             )}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
+              className="text-xs h-7 px-2.5 font-medium text-muted-foreground"
+            >
+              🌈 Color Band Demo (A~D)
+            </Button>
             <Button
               type="button"
               variant="ghost"

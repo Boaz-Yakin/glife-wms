@@ -16,14 +16,14 @@ export const DEFAULT_WAREHOUSE_CONFIG: WarehouseStructureConfig = {
     zoneType: 'A',
     aisles: 1,
     bays: 10,
-    levels: 3,
+    levels: 2,
     bins: 2,
   },
   zoneF: {
     zoneType: 'F',
     aisles: 1,
     bays: 10,
-    levels: 3,
+    levels: 2,
     bins: 2,
   },
 }

@@ -76,14 +76,14 @@ export async function getWarehouseStructureConfigAction(): Promise<{
         zoneType: 'A',
         aisles: maxAisleA || 1,
         bays: maxBayA || 10,
-        levels: levelsA.size > 0 ? levelsA.size : 3,
+        levels: levelsA.size > 0 ? levelsA.size : 2,
         bins: maxBinA || 2,
       },
       zoneF: {
         zoneType: 'F',
         aisles: maxAisleF || 1,
         bays: maxBayF || 10,
-        levels: levelsF.size > 0 ? levelsF.size : 3,
+        levels: levelsF.size > 0 ? levelsF.size : 2,
         bins: maxBinF || 2,
       },
     }
