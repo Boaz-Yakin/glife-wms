@@ -17,6 +17,8 @@ export type Database = {
           location_id: string;
           on_hand_qty: number;
           allocated_qty: number;
+          expiration_date?: string | null;
+          lot_no?: string | null;
           created_at: string;
           updated_at: string;
         };

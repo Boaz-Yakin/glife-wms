@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const { userId } = await requireWorker(INSPECTOR_ROLES);
     const body = await request.json();
-    const { locationCode, itemCode, qty, reason } = body;
+    const { locationCode, itemCode, qty, reason, expirationDate, lotNo } = body;
 
     if (!locationCode || !itemCode || !qty || Number(qty) <= 0) {
       return NextResponse.json(
@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
       qty: Number(qty),
       operatorId: userId,
       reason,
+      expirationDate,
+      lotNo,
     });
 
     return NextResponse.json({ success: true, inventory: result }, { status: 200 });

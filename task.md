@@ -486,6 +486,25 @@
   - 하단 분석 영역에 `ExpirationAlertCard`를 배치하여 로케이션, Lot, D-Day, 재고 수량 우선순위 표기
 - [x] 46.5 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
 
+---
+
+## 📱 Phase 47: 모바일 앱 입고 적치(Put-away) 유통기한(Expiration Date) & Lot 번호 실시간 입력 연동
+- [x] 47.1 모바일 앱 타입 및 API 확장 ([`supabase.ts`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/types/supabase.ts), [`route.ts`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/api/inventory/put-away/route.ts)):
+  - `inventory` 테이블 Row 타입에 `expiration_date`, `lot_no` 필드 추가
+  - `/api/inventory/put-away` 요청 본문에서 `expirationDate` 및 `lotNo` 수신 및 서비스 전달
+- [x] 47.2 모바일 재고 서비스 고도화 ([`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/services/inventory.service.ts)):
+  - `findItemRecord` 및 `lookupByItem`에서 `shelf_life_days` 및 `min_outbound_days` 조회 지원
+  - `putAwayStock`에서 적치 시 `expiration_date` 및 `lot_no`를 `inventory`에 upsert 반영
+  - `inventory_adjustments` 변경 로그에 Expiration Date 및 Lot No 기록
+- [x] 47.3 모바일 입고 적치 UI 고도화 ([`put-away/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/put-away/page.tsx)):
+  - 상품 스캔 시 품목 마스터의 `shelf_life_days`를 읽어 **입고일 + Shelf Life 일수로 기본 유통기한 자동 계산 및 입력**
+  - 당일 날짜 기반 기본 Lot 번호(`LOT-YYMMDD-SKU`) 자동 생성
+  - Step 3 화면에 **유통기한(FEFO) & 로트 번호 입력 카드** 배치
+  - D-Day 실시간 계산 뱃지 및 빠른 날짜 프리셋(`+30일`, `+90일`, `+180일`, `+1년`) 원클릭 지원
+  - 적치 완료 성공 화면에 등록된 `Exp. Date (FEFO)` 및 `Lot No` 명확히 표기
+- [x] 47.4 모바일 앱 Next.js 16 프로덕션 빌드(`npm run build`) 검증 통과 완료
+
+
 
 
 

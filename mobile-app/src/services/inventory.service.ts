@@ -53,6 +53,8 @@ export interface ItemLookupResult {
     upc: string;
     uom: string;
     category?: string;
+    shelf_life_days?: number | null;
+    min_outbound_days?: number | null;
   };
   locations: Array<{
     inventoryId: string;
@@ -127,14 +129,14 @@ export async function findLocationRecord(
 export async function findItemRecord(
   supabase: SupabaseClient,
   skuOrUpcOrId: string
-): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string; client_id?: string | null } | null> {
+): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string; client_id?: string | null; shelf_life_days?: number | null; min_outbound_days?: number | null } | null> {
   const clean = skuOrUpcOrId.trim();
   if (!clean) return null;
 
   if (isUUID(clean)) {
     const { data } = await supabase
       .from('items')
-      .select('id, sku, name_en, upc, uom, category, client_id')
+      .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
       .eq('id', clean)
       .maybeSingle();
     return data;
@@ -143,7 +145,7 @@ export async function findItemRecord(
   // 1. Try exact UPC match
   const { data: byUpc } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category, client_id')
+    .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
     .eq('upc', clean)
     .maybeSingle();
   if (byUpc) return byUpc;
@@ -151,7 +153,7 @@ export async function findItemRecord(
   // 2. Try exact or case-insensitive SKU match
   const { data: bySku } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category, client_id')
+    .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
     .ilike('sku', clean)
     .maybeSingle();
   if (bySku) return bySku;
@@ -250,6 +252,8 @@ export async function lookupByItem(
         upc: it.upc || '',
         uom: it.uom || 'BOX',
         category: it.category,
+        shelf_life_days: it.shelf_life_days,
+        min_outbound_days: it.min_outbound_days,
       },
       locations: [],
     };
@@ -278,6 +282,8 @@ export async function lookupByItem(
       upc: it.upc || '',
       uom: it.uom || 'BOX',
       category: it.category,
+      shelf_life_days: it.shelf_life_days,
+      min_outbound_days: it.min_outbound_days,
     },
     locations,
   };
@@ -530,6 +536,8 @@ export interface PutAwayParams {
   qty: number;
   operatorId: string;
   reason?: string;
+  expirationDate?: string;
+  lotNo?: string;
 }
 
 export interface PutAwayResult {
@@ -543,6 +551,8 @@ export interface PutAwayResult {
   previousQty: number;
   newQty: number;
   allocatedQty: number;
+  expirationDate?: string | null;
+  lotNo?: string | null;
 }
 
 /**
@@ -552,7 +562,7 @@ export async function putAwayStock(
   supabase: SupabaseClient,
   params: PutAwayParams
 ): Promise<PutAwayResult> {
-  const { locationCodeOrId, itemCodeOrId, qty, operatorId, reason } = params;
+  const { locationCodeOrId, itemCodeOrId, qty, operatorId, reason, expirationDate, lotNo } = params;
 
   if (qty <= 0) {
     throw new Error('Quantity to put away must be greater than zero.');
@@ -573,7 +583,7 @@ export async function putAwayStock(
   // 3. Find or create inventory row
   const { data: existingInv } = await supabase
     .from('inventory')
-    .select('id, on_hand_qty, allocated_qty, client_id')
+    .select('id, on_hand_qty, allocated_qty, client_id, expiration_date, lot_no')
     .eq('location_id', loc.id)
     .eq('item_id', itm.id)
     .maybeSingle();
@@ -582,6 +592,8 @@ export async function putAwayStock(
   let previousQty = 0;
   let allocatedQty = 0;
   let newQty = qty;
+  let finalExpDate: string | null = expirationDate || null;
+  let finalLotNo: string | null = lotNo || null;
 
   if (existingInv) {
     inventoryId = existingInv.id;
@@ -596,6 +608,18 @@ export async function putAwayStock(
     if (!existingInv.client_id && itm.client_id) {
       updatePayload.client_id = itm.client_id;
     }
+    if (expirationDate) {
+      updatePayload.expiration_date = expirationDate;
+      finalExpDate = expirationDate;
+    } else if (existingInv.expiration_date) {
+      finalExpDate = existingInv.expiration_date;
+    }
+    if (lotNo) {
+      updatePayload.lot_no = lotNo;
+      finalLotNo = lotNo;
+    } else if (existingInv.lot_no) {
+      finalLotNo = existingInv.lot_no;
+    }
 
     const { error: updErr } = await supabase
       .from('inventory')
@@ -608,15 +632,23 @@ export async function putAwayStock(
     allocatedQty = 0;
     newQty = qty;
 
+    const insertPayload: Record<string, any> = {
+      location_id: loc.id,
+      item_id: itm.id,
+      on_hand_qty: newQty,
+      allocated_qty: 0,
+      client_id: itm.client_id || null,
+    };
+    if (expirationDate) {
+      insertPayload.expiration_date = expirationDate;
+    }
+    if (lotNo) {
+      insertPayload.lot_no = lotNo;
+    }
+
     const { data: newInv, error: insErr } = await supabase
       .from('inventory')
-      .insert({
-        location_id: loc.id,
-        item_id: itm.id,
-        on_hand_qty: newQty,
-        allocated_qty: 0,
-        client_id: itm.client_id || null,
-      })
+      .insert(insertPayload)
       .select('id')
       .single();
 
@@ -626,13 +658,14 @@ export async function putAwayStock(
   }
 
   // 4. Log adjustment
+  const expLog = finalExpDate ? ` (Exp: ${finalExpDate}${finalLotNo ? `, Lot: ${finalLotNo}` : ''})` : '';
   const { error: adjErr } = await supabase.from('inventory_adjustments').insert([
     {
       inventory_id: inventoryId,
       adjusted_by: operatorId,
       previous_qty: previousQty,
       new_qty: newQty,
-      reason: reason || `PUT_AWAY: Stored ${qty} ${itm.uom || 'units'} into ${loc.code}`,
+      reason: (reason || `PUT_AWAY: Stored ${qty} ${itm.uom || 'units'} into ${loc.code}`) + expLog,
     },
   ]);
   if (adjErr) {
@@ -650,6 +683,8 @@ export async function putAwayStock(
     previousQty,
     newQty,
     allocatedQty,
+    expirationDate: finalExpDate,
+    lotNo: finalLotNo,
   };
 }
 

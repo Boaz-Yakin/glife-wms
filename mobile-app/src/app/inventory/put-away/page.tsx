@@ -20,6 +20,8 @@ import {
   Layers,
   ChevronRight,
   Loader2,
+  CalendarClock,
+  Hash,
 } from "lucide-react";
 
 interface LocationData {
@@ -34,6 +36,8 @@ interface ItemData {
   name: string;
   upc: string;
   uom: string;
+  shelf_life_days?: number | null;
+  min_outbound_days?: number | null;
 }
 
 function PutAwayContent() {
@@ -52,6 +56,10 @@ function PutAwayContent() {
   const [existingItemQtyInLoc, setExistingItemQtyInLoc] = useState<number>(0);
   const [putAwayQty, setPutAwayQty] = useState<number>(1);
   const [reasonType, setReasonType] = useState<string>("INITIAL_STOCK_IN");
+
+  // Expiration & Lot tracking state
+  const [expirationDate, setExpirationDate] = useState<string>("");
+  const [lotNo, setLotNo] = useState<string>("");
 
   const [inputVal, setInputVal] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -134,7 +142,20 @@ function PutAwayContent() {
         name: itm.name,
         upc: itm.upc,
         uom: itm.uom || "BOX",
+        shelf_life_days: itm.shelf_life_days,
+        min_outbound_days: itm.min_outbound_days,
       });
+
+      // Default Expiration Date calculation based on Shelf Life Days
+      const shelfDays = Number(itm.shelf_life_days) || 180;
+      const defaultExp = new Date();
+      defaultExp.setDate(defaultExp.getDate() + shelfDays);
+      setExpirationDate(defaultExp.toISOString().split("T")[0]);
+
+      // Default Lot Number based on today's date
+      const todayStr = new Date().toISOString().substring(2, 10).replace(/-/g, "");
+      const shortSku = (itm.sku || "ITM").replace(/[^a-zA-Z0-9]/g, "").substring(0, 4).toUpperCase();
+      setLotNo(`LOT-${todayStr}-${shortSku}`);
 
       // Check if this item is already stored in the target location
       const matchInBin = existingItemsInLoc.find(
@@ -167,6 +188,8 @@ function PutAwayContent() {
           locationCode: targetLoc.code,
           itemCode: selectedItem.sku || selectedItem.id,
           qty: putAwayQty,
+          expirationDate: expirationDate || undefined,
+          lotNo: lotNo.trim() || undefined,
           reason:
             reasonType === "INITIAL_STOCK_IN"
               ? `INITIAL_STOCK: Initial rack stocking (${putAwayQty} ${selectedItem.uom})`
@@ -210,6 +233,8 @@ function PutAwayContent() {
   const handlePutAwayAnotherInSameLoc = () => {
     setSelectedItem(null);
     setPutAwayQty(1);
+    setExpirationDate("");
+    setLotNo("");
     setSuccessData(null);
     setError(null);
     setStep(2);
@@ -231,6 +256,8 @@ function PutAwayContent() {
     setExistingItemsInLoc([]);
     setSelectedItem(null);
     setPutAwayQty(1);
+    setExpirationDate("");
+    setLotNo("");
     setSuccessData(null);
     setError(null);
     setInputVal("");
@@ -310,6 +337,22 @@ function PutAwayContent() {
                 {successData.name} ({successData.sku})
               </span>
             </div>
+            {successData.expirationDate && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400">Exp. Date (FEFO):</span>
+                <span className="font-mono font-bold text-amber-400">
+                  {successData.expirationDate}
+                </span>
+              </div>
+            )}
+            {successData.lotNo && (
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-slate-400">Lot No:</span>
+                <span className="font-mono text-slate-300">
+                  {successData.lotNo}
+                </span>
+              </div>
+            )}
             <div className="flex justify-between items-center text-sm pt-2 border-t border-slate-700/60">
               <span className="text-slate-400">Inventory Change:</span>
               <span className="font-mono font-bold text-base text-white">
@@ -580,6 +623,80 @@ function PutAwayContent() {
                   >
                     입고 적치 (Inbound)
                   </button>
+                </div>
+              </div>
+
+              {/* Expiration Date (FEFO) & Lot Number Input Card */}
+              <div className="bg-[#13161F] border border-slate-800 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800/80">
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                    <CalendarClock className="w-4 h-4" />
+                    <span>유통기한 (FEFO) & 로트 번호</span>
+                  </div>
+                  {selectedItem.shelf_life_days ? (
+                    <span className="text-[10px] text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800 font-mono">
+                      Shelf Life: {selectedItem.shelf_life_days}d
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Expiration Date Picker */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-400 flex items-center justify-between">
+                      <span>EXPIRATION DATE</span>
+                      <span className="text-[10px] text-amber-400/90 font-mono">
+                        {expirationDate ? `D-${Math.ceil((new Date(expirationDate).getTime() - new Date().setHours(0,0,0,0))/(1000*60*60*24))}d` : ''}
+                      </span>
+                    </label>
+                    <input
+                      type="date"
+                      value={expirationDate}
+                      onChange={(e) => setExpirationDate(e.target.value)}
+                      className="w-full bg-[#1E2333] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 focus:outline-none"
+                    />
+                  </div>
+
+                  {/* Lot Number */}
+                  <div className="space-y-1">
+                    <label className="text-[11px] font-semibold text-slate-400 flex items-center gap-1">
+                      <Hash className="w-3 h-3 text-slate-500" />
+                      <span>LOT NO.</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. LOT-261024-001"
+                      value={lotNo}
+                      onChange={(e) => setLotNo(e.target.value)}
+                      className="w-full bg-[#1E2333] border border-slate-700 rounded-xl px-3 py-2 text-white font-mono text-sm focus:border-amber-400 focus:outline-none placeholder:text-slate-600"
+                    />
+                  </div>
+                </div>
+
+                {/* Quick Expiration Presets */}
+                <div className="flex items-center gap-1.5 pt-1">
+                  <span className="text-[10px] text-slate-500 font-semibold shrink-0">빠른 설정:</span>
+                  <div className="flex gap-1.5 flex-wrap">
+                    {[
+                      { label: "+30일", days: 30 },
+                      { label: "+90일", days: 90 },
+                      { label: "+180일", days: 180 },
+                      { label: "+1년", days: 365 },
+                    ].map((p) => (
+                      <button
+                        key={p.days}
+                        type="button"
+                        onClick={() => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + p.days);
+                          setExpirationDate(d.toISOString().split("T")[0]);
+                        }}
+                        className="text-[10px] px-2 py-1 rounded-md bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 font-mono active:scale-95 transition-all"
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
