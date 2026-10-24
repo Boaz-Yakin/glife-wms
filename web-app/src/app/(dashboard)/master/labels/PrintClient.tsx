@@ -4,8 +4,11 @@ import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Printer, Eye, Sparkles, Database, Check, QrCode, Barcode as BarcodeIcon } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
+import { Printer, Eye, Sparkles, Database, Check, QrCode, Barcode as BarcodeIcon, SlidersHorizontal, Layers, RotateCcw, MapPin, ZoomIn, ZoomOut, CheckCircle2 } from "lucide-react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { cn } from "@/lib/utils"
 import Barcode from "react-barcode"
 import { QRCodeSVG } from "qrcode.react"
 
@@ -739,7 +742,11 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
   const [qrPlacement, setQrPlacement] = React.useState<QrPlacement>("vertical")
   const [showCutLines, setShowCutLines] = React.useState(true)
 
-  const codes = codesInput.split("\n").map((c) => c.trim()).filter(Boolean)
+  const [previewScale, setPreviewScale] = React.useState<"actual" | "compact">("actual")
+
+  const codes = React.useMemo(() => {
+    return codesInput.split("\n").map((c) => c.trim()).filter(Boolean)
+  }, [codesInput])
 
   const handlePrint = () => {
     window.print()
@@ -754,7 +761,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
   const isThreeCols = cardWidth !== "100mm"
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Dynamic Print Stylesheet (US Letter 8.5" x 11" Optimized) */}
       <style dangerouslySetInnerHTML={{ __html: `
         @media print {
@@ -827,424 +834,414 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
       `}} />
 
       {/* Control Panel (Hidden during Print) */}
-      <div className="print:hidden space-y-6 max-w-4xl border p-6 rounded-xl bg-card shadow-xs">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b pb-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg text-foreground">Shelf Rack Label Print Settings</h3>
-              <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
-                {cardWidth} × {cardHeight} ({cardWidth === "65mm" ? "2.5\" Compact Width" : cardWidth === "60mm" ? "2.4\" Slim Width" : cardWidth === "75mm" ? "3.0\" Medium" : "4.0\" Full Width"}) • {symbology === "qr" ? "QR Code (2D)" : "Barcode (1D)"}
-              </span>
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Glife WMS Standard: Compact horizontal spacing for shelf beams, Level color bands, and {symbology === "qr" ? "Anti-Crossfire 2D QR Codes" : "Code 128 Barcodes"}.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={handlePrint} size="sm" className="font-semibold shadow-xs">
-              <Printer className="mr-1.5 h-4 w-4" />
-              Print Labels (Save PDF)
-            </Button>
-          </div>
-        </div>
-
-        {/* 4 Level Color Bands Legend Banner */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-900">
-            <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0" />
-            <div>
-              <span className="font-bold block">Level A (Floor / 1st)</span>
-              <span className="text-[10px] text-emerald-700">Green Band (#10B981)</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-amber-50 border border-amber-300 text-amber-950">
-            <span className="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0" />
-            <div>
-              <span className="font-bold block">Level B (Middle / 2nd)</span>
-              <span className="text-[10px] text-amber-700">Gold Band (#F59E0B)</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-blue-50 border border-blue-300 text-blue-950">
-            <span className="w-3.5 h-3.5 rounded-full bg-blue-500 shrink-0" />
-            <div>
-              <span className="font-bold block">Level C (Upper / 3rd)</span>
-              <span className="text-[10px] text-blue-700">Blue Band (#3B82F6)</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2.5 p-2 rounded-lg bg-purple-50 border border-purple-300 text-purple-950">
-            <span className="w-3.5 h-3.5 rounded-full bg-purple-500 shrink-0" />
-            <div>
-              <span className="font-bold block">Level D (Top / 4th)</span>
-              <span className="text-[10px] text-purple-700">Purple Band (#8B5CF6)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Presets Buttons */}
-        <div className="space-y-1.5">
-          <Label className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
-            <Sparkles className="size-3.5 text-primary" />
-            <span>One-Click Presets</span>
-          </Label>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const dbZoneA = initialDbCodes.filter((c) => c.startsWith("LOC-A"))
-                setCodesInput(dbZoneA.length > 0 ? dbZoneA.join("\n") : ZONE_A_LOCATION_CODES)
-              }}
-              className="text-xs h-7 px-2.5 font-medium"
-            >
-              Zone A (Ambient • 2 Levels)
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const dbZoneF = initialDbCodes.filter((c) => c.startsWith("LOC-F"))
-                setCodesInput(dbZoneF.length > 0 ? dbZoneF.join("\n") : ZONE_F_LOCATION_CODES)
-              }}
-              className="text-xs h-7 px-2.5 font-medium"
-            >
-              Zone F (Cold Storage • 2 Levels)
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                const dbZoneS = initialDbCodes.filter((c) => c.startsWith("LOC-S"))
-                setCodesInput(dbZoneS.length > 0 ? dbZoneS.join("\n") : ZONE_S_LOCATION_CODES)
-              }}
-              className="text-xs h-7 px-2.5 font-medium text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700"
-            >
-              📦 Staging Floor 01~10 (Zone S)
-            </Button>
-            {initialDbCodes.length > 0 && (
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                onClick={handleLoadDbLocations}
-                className="text-xs h-7 px-2.5 font-semibold text-primary"
-              >
-                <Database className="mr-1 size-3.5" />
-                Load All Warehouse Locations ({initialDbCodes.length})
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
-              className="text-xs h-7 px-2.5 font-medium text-muted-foreground"
-            >
-              🌈 Color Band Demo (A~D)
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setCodesInput(SAMPLE_SKU_CODES)}
-              className="text-xs h-7 px-2.5 font-medium text-muted-foreground"
-            >
-              Sample SKUs
-            </Button>
-          </div>
-        </div>
-
-        {/* Settings Form */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            {/* Label Width Selector (Compact Horizontal) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Label Width (Horizontal Beam Spacing)</Label>
-                <span className="text-[10px] text-primary font-semibold">
-                  {cardWidth === "65mm"
-                    ? "65mm Compact (3 Cols / Letter • Default)"
-                    : cardWidth === "60mm"
-                    ? "60mm Ultra-Slim"
-                    : cardWidth === "75mm"
-                    ? "75mm Medium"
-                    : "100mm Full Width (4\")"}
-                </span>
+      <div className="print:hidden space-y-6">
+        {/* Top Header Card with Quick Print & Level Color Legend Ribbon */}
+        <div className="p-4 sm:p-5 rounded-2xl border border-border/80 bg-card shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                <MapPin className="size-5" />
               </div>
-              <div className="grid grid-cols-4 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCardWidth("60mm")}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
-                    cardWidth === "60mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>60mm Slim</span>
-                  <span className="text-[9px] font-normal opacity-80 mt-0.5">2.4" • 15/sheet</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCardWidth("65mm")}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
-                    cardWidth === "65mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span className="flex items-center gap-1">
-                    <span>65mm</span>
-                    <span className="text-[8px] px-1 rounded bg-emerald-500/20 text-emerald-300">Default</span>
-                  </span>
-                  <span className="text-[9px] font-normal opacity-80 mt-0.5">2.5" • 15/sheet</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCardWidth("75mm")}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
-                    cardWidth === "75mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>75mm Med</span>
-                  <span className="text-[9px] font-normal opacity-80 mt-0.5">3.0" • 15/sheet</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCardWidth("100mm")}
-                  className={`flex flex-col items-center justify-center p-2 rounded-lg text-xs font-bold border transition-colors ${
-                    cardWidth === "100mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>100mm Full</span>
-                  <span className="text-[9px] font-normal opacity-80 mt-0.5">4.0" • 10/sheet</span>
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-normal">
-                • <strong>65mm Compact Width (Default)</strong>: Compact horizontal beam footprint, prevents label crowding along rack beams, yields <strong>15 labels per US Letter sheet (3 cols × 5 rows)</strong>.<br />
-                • <strong>100mm Full Width</strong>: Traditional wide 4" beam label.
-              </p>
-            </div>
-
-            {/* Label Height Selector (Vertical) */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label className="text-xs font-semibold">Label Height (Vertical Beam Face)</Label>
-                <span className="text-[10px] text-primary font-semibold">{cardHeight}</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCardHeight("45mm")}
-                  className={`flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                    cardHeight === "45mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>45mm Standard (Default)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCardHeight("35mm")}
-                  className={`flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                    cardHeight === "35mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>35mm Medium</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCardHeight("30mm")}
-                  className={`flex items-center justify-center p-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                    cardHeight === "30mm"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <span>30mm Slim Beam</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Symbology Toggle (QR Code 2D vs Barcode 1D) */}
-            <div className="space-y-2">
-              <Label className="text-xs font-semibold">Symbology (Code Type)</Label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSymbology("qr")}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${
-                    symbology === "qr"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <QrCode className="size-4" />
-                  <span>QR Code (2D)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSymbology("barcode")}
-                  className={`flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs font-bold border transition-colors ${
-                    symbology === "barcode"
-                      ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                      : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                  }`}
-                >
-                  <BarcodeIcon className="size-4" />
-                  <span>Barcode (1D)</span>
-                </button>
-              </div>
-            </div>
-
-            {/* QR Placement Mode (Vertical Top/Bottom vs Horizontal vs Diagonal) */}
-            {symbology === "qr" && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold">QR Code Alignment (Anti-Crossfire)</Label>
-                  <span className="text-[10px] text-primary font-semibold">
-                    {qrPlacement === "vertical"
-                      ? "↕ Top ↔ Bottom (Active)"
-                      : qrPlacement === "horizontal"
-                      ? "↔ Left ↔ Right (Active)"
-                      : qrPlacement === "diagonal"
-                      ? "⤡ Diagonal (Active)"
-                      : "Fixed"}
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setQrPlacement("vertical")}
-                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "vertical"
-                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                    }`}
-                  >
-                    <span>↕ Top ↔ Bottom</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQrPlacement("horizontal")}
-                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "horizontal"
-                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                    }`}
-                  >
-                    <span>↔ Left ↔ Right</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQrPlacement("diagonal")}
-                    className={`flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-lg text-xs font-bold border transition-colors ${
-                      qrPlacement === "diagonal"
-                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                        : "bg-muted/40 hover:bg-muted text-foreground border-border"
-                    }`}
-                  >
-                    <span>⤡ Diagonal</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-normal">
-                  • <strong>↕ Top ↔ Bottom (Vertical Zig-Zag)</strong>: Staggers QR codes between Upper (Level A/C) and Lower (Level B/D) positions. Eliminates scanner cross-reading when labels are mounted side-by-side along shelf beams.<br />
-                  • <strong>↔ Left ↔ Right</strong>: Alternates between Right and Left for vertical rack posts.
+              <div>
+                <h3 className="font-bold text-lg text-foreground flex items-center gap-2">
+                  Shelf Rack Label Print Configuration
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Compact beam spacing, official Level color bands, and Anti-Crossfire 2D QR codes.
                 </p>
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="paper-size" className="text-xs font-semibold">Paper Size</Label>
-              <Select value={paperSize} onValueChange={(value) => setPaperSize(value as PaperSize)}>
-                <SelectTrigger id="paper-size" className="w-full">
-                  <SelectValue placeholder="Select paper size" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="letter">
-                    📄 US Letter (8.5" × 11" - {isThreeCols ? "3 cols × 5 rows, 15" : "2 cols × 5 rows, 10"} labels/sheet)
-                  </SelectItem>
-                  <SelectItem value="rack-label">
-                    🏷️ {cardWidth} × {cardHeight} Dedicated Roll Label (Continuous)
-                  </SelectItem>
-                  <SelectItem value="compact-label">
-                    🏷️ Small Roll Label (50×30mm)
-                  </SelectItem>
-                  <SelectItem value="a4">
-                    📄 A4 Paper (210 × 297mm - {isThreeCols ? "3 cols" : "2 cols"})
-                  </SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="cut-lines" className="text-xs font-semibold">Cut-Line Border Guides</Label>
-                <button
-                  type="button"
-                  onClick={() => setShowCutLines(!showCutLines)}
-                  className={`text-xs px-2.5 py-1 rounded-md font-medium border ${
-                    showCutLines ? "bg-primary text-primary-foreground border-primary" : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {showCutLines ? "Cut Lines: ON" : "Cut Lines: OFF (Roll Labels)"}
-                </button>
-              </div>
-              <p className="text-[11px] text-muted-foreground leading-normal">
-                • Turn <strong>ON</strong> for <strong>US Letter</strong> or <strong>A4</strong> paper to guide scissor / paper trimmer cutting.<br />
-                • Turn <strong>OFF</strong> for continuous or die-cut roll labels.
-              </p>
+            <div className="flex items-center gap-2.5 w-full sm:w-auto">
+              <Button
+                onClick={handlePrint}
+                className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-2 cursor-pointer shadow-sm px-5"
+              >
+                <Printer className="size-4" />
+                <span>Print {codes.length} Labels (Save PDF)</span>
+              </Button>
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="codes" className="text-xs font-semibold">Codes to Print (One per line)</Label>
-              <span className="text-xs font-mono text-muted-foreground">
-                Total: <strong className="text-foreground font-bold">{codes.length}</strong>
+          {/* Level Color Band Compact Ribbon */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap text-xs">
+              <span className="text-[11px] font-semibold text-muted-foreground mr-1">Level Color Bands:</span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 font-semibold text-[11px]">
+                <span className="size-2 rounded-full bg-[#10B981]" /> Level A (Floor)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 font-semibold text-[11px]">
+                <span className="size-2 rounded-full bg-[#F59E0B]" /> Level B (2nd)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-800 dark:text-blue-300 font-semibold text-[11px]">
+                <span className="size-2 rounded-full bg-[#3B82F6]" /> Level C (3rd)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-800 dark:text-purple-300 font-semibold text-[11px]">
+                <span className="size-2 rounded-full bg-[#8B5CF6]" /> Level D (Top)
               </span>
             </div>
-            <Textarea
-              id="codes"
-              value={codesInput}
-              onChange={(e) => setCodesInput(e.target.value)}
-              rows={6}
-              placeholder={"LOC-A0105A01\nLOC-A0105B01\nLOC-A0105C01\nLOC-F0101A01..."}
-              className="font-mono text-xs"
-            />
+
+            <Badge variant="outline" className="font-mono text-xs px-2.5 py-1 bg-muted/40">
+              {cardWidth} × {cardHeight} • {symbology === "qr" ? "2D QR" : "1D Code128"} • {paperSize.toUpperCase()}
+            </Badge>
+          </div>
+        </div>
+
+        {/* Two-Column Master Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Left Column: Dimensions & Symbology Configuration (7 Cols) */}
+          <div className="lg:col-span-7 space-y-4">
+            <Card className="border border-border/80 shadow-xs">
+              <CardContent className="p-4 sm:p-5 space-y-4">
+                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                  <h4 className="font-semibold text-sm flex items-center gap-2">
+                    <SlidersHorizontal className="size-4 text-primary" />
+                    Geometry & Hardware Alignment
+                  </h4>
+                  <span className="text-[11px] text-muted-foreground font-mono">Beam & Scanner Specs</span>
+                </div>
+
+                {/* 1. Label Width */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Beam Width Footprint</Label>
+                    <span className="text-[11px] text-primary font-mono font-medium">
+                      {cardWidth === "65mm" ? "65mm (Recommended • 15/Sheet)" : cardWidth}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    {[
+                      { id: "60mm", label: "60mm Slim", sub: "2.4\" (15/sh)" },
+                      { id: "65mm", label: "65mm Compact", sub: "★ Default (15/sh)" },
+                      { id: "75mm", label: "75mm Medium", sub: "3.0\" (15/sh)" },
+                      { id: "100mm", label: "100mm Full", sub: "4.0\" (10/sh)" },
+                    ].map((w) => (
+                      <button
+                        key={w.id}
+                        type="button"
+                        onClick={() => setCardWidth(w.id as CardWidth)}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                          cardWidth === w.id
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                        )}
+                      >
+                        <span>{w.label}</span>
+                        <span className="text-[10px] font-normal opacity-80 mt-0.5">{w.sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 2. Label Height */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Beam Face Height</Label>
+                    <span className="text-[11px] text-primary font-mono font-medium">{cardHeight}</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "45mm", label: "45mm Standard", sub: "Beam Standard" },
+                      { id: "35mm", label: "35mm Medium", sub: "Mid-Height" },
+                      { id: "30mm", label: "30mm Slim", sub: "Slim Beam" },
+                    ].map((h) => (
+                      <button
+                        key={h.id}
+                        type="button"
+                        onClick={() => setCardHeight(h.id as CardHeight)}
+                        className={cn(
+                          "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                          cardHeight === h.id
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                        )}
+                      >
+                        <span>{h.label}</span>
+                        <span className="text-[10px] font-normal opacity-80 mt-0.5">{h.sub}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 3. Symbology (QR vs Barcode) */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Scanner Symbology</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSymbology("qr")}
+                      className={cn(
+                        "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                        symbology === "qr"
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                          : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                      )}
+                    >
+                      <QrCode className="size-4" />
+                      <span>2D QR Code (Recommended)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSymbology("barcode")}
+                      className={cn(
+                        "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                        symbology === "barcode"
+                          ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                          : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                      )}
+                    >
+                      <BarcodeIcon className="size-4" />
+                      <span>1D Barcode (Code128)</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* 4. Anti-Crossfire Alignment (Only when QR) */}
+                {symbology === "qr" && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold">Anti-Crossfire Alignment</Label>
+                      <span className="text-[10px] text-muted-foreground font-mono">Prevents adjacent misreads</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      {[
+                        { id: "vertical", label: "↕ Top ↔ Bottom", desc: "Vertical Zig-Zag" },
+                        { id: "horizontal", label: "↔ Left ↔ Right", desc: "Horizontal Shift" },
+                        { id: "diagonal", label: "⤡ Diagonal", desc: "Corner Stagger" },
+                      ].map((pos) => (
+                        <button
+                          key={pos.id}
+                          type="button"
+                          onClick={() => setQrPlacement(pos.id as QrPlacement)}
+                          className={cn(
+                            "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                            qrPlacement === pos.id
+                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                              : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                          )}
+                        >
+                          <span>{pos.label}</span>
+                          <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{pos.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* 5. Paper & Cut-Lines */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/60">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="paper-size" className="text-xs font-semibold">Paper Medium</Label>
+                    <Select value={paperSize} onValueChange={(val) => setPaperSize(val as PaperSize)}>
+                      <SelectTrigger id="paper-size" className="h-9 bg-background">
+                        <SelectValue placeholder="Select paper size" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="letter">📄 US Letter ({isThreeCols ? "3×5 grid • 15 labels" : "2×5 grid • 10 labels"})</SelectItem>
+                        <SelectItem value="rack-label">🏷️ {cardWidth} × {cardHeight} Continuous Roll</SelectItem>
+                        <SelectItem value="compact-label">🏷️ Small Roll Label (50×30mm)</SelectItem>
+                        <SelectItem value="a4">📄 A4 Sheet ({isThreeCols ? "3 cols" : "2 cols"})</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold">Cut-Line Border Guides</Label>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => setShowCutLines(true)}
+                        className={cn(
+                          "py-2 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
+                          showCutLines
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        Cut Lines: ON
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setShowCutLines(false)}
+                        className={cn(
+                          "py-2 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
+                          !showCutLines
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/30 text-muted-foreground hover:text-foreground"
+                        )}
+                      >
+                        OFF (Rolls)
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column: Location Codes Queue & Presets (5 Cols) */}
+          <div className="lg:col-span-5 space-y-4">
+            <Card className="border border-border/80 shadow-xs flex flex-col h-full">
+              <CardContent className="p-4 sm:p-5 flex flex-col h-full space-y-3.5">
+                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-semibold text-sm">Target Locations Queue</h4>
+                  </div>
+                  <Badge className="bg-primary/10 text-primary border-primary/20 font-mono text-xs">
+                    {codes.length} Labels
+                  </Badge>
+                </div>
+
+                {/* Quick Selection Presets */}
+                <div className="space-y-1.5">
+                  <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
+                    <Sparkles className="size-3 text-primary" />
+                    Quick Selection Presets
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {initialDbCodes.length > 0 && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="xs"
+                        onClick={handleLoadDbLocations}
+                        className="h-7 text-xs font-semibold text-primary cursor-pointer"
+                      >
+                        <Database className="mr-1 size-3" />
+                        All ({initialDbCodes.length})
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        const dbZoneA = initialDbCodes.filter((c) => c.startsWith("LOC-A"))
+                        setCodesInput(dbZoneA.length > 0 ? dbZoneA.join("\n") : ZONE_A_LOCATION_CODES)
+                      }}
+                      className="h-7 text-xs cursor-pointer"
+                    >
+                      Zone A
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        const dbZoneF = initialDbCodes.filter((c) => c.startsWith("LOC-F"))
+                        setCodesInput(dbZoneF.length > 0 ? dbZoneF.join("\n") : ZONE_F_LOCATION_CODES)
+                      }}
+                      className="h-7 text-xs cursor-pointer"
+                    >
+                      Zone F
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        const dbZoneS = initialDbCodes.filter((c) => c.startsWith("LOC-S"))
+                        setCodesInput(dbZoneS.length > 0 ? dbZoneS.join("\n") : ZONE_S_LOCATION_CODES)
+                      }}
+                      className="h-7 text-xs text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700 cursor-pointer"
+                    >
+                      Zone S
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
+                      className="h-7 text-xs text-muted-foreground cursor-pointer"
+                    >
+                      A~D Demo
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="xs"
+                      onClick={() => setCodesInput("")}
+                      className="h-7 text-xs text-destructive hover:bg-destructive/10 cursor-pointer ml-auto"
+                    >
+                      <RotateCcw className="size-3 mr-1" />
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Codes Textarea */}
+                <div className="flex-1 flex flex-col space-y-1.5 min-h-[220px]">
+                  <Label htmlFor="codes" className="text-xs font-semibold text-muted-foreground">
+                    Codes to Print (One location per line)
+                  </Label>
+                  <Textarea
+                    id="codes"
+                    value={codesInput}
+                    onChange={(e) => setCodesInput(e.target.value)}
+                    rows={10}
+                    placeholder={"LOC-A0105A01\nLOC-A0105B01\nLOC-A0105C01\nLOC-F0101A01..."}
+                    className="font-mono text-xs flex-1 bg-muted/20 border-border/80 resize-none leading-relaxed p-3"
+                  />
+                  <p className="text-[11px] text-muted-foreground leading-tight pt-1">
+                    Standard: <code className="font-mono text-foreground font-bold">LOC-A0105B01</code> (Zone•Aisle•Bay•Level•Bin)
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>
 
       {/* Screen Preview Section (Visible on Screen, Hidden during Print) */}
-      <div className="print:hidden space-y-4">
-        <div className="flex items-center justify-between">
+      <div className="print:hidden space-y-4 pt-2">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Eye className="size-4 text-primary" />
             <h4 className="font-bold text-base text-foreground">
-              Physical Shelf Rack Label Preview ({symbology === "qr" ? "2D QR Code" : "1D Barcode"} • {codes.length} labels)
+              Physical Shelf Rack Label Preview ({codes.length} labels)
             </h4>
           </div>
-          <span className="text-xs text-muted-foreground">
-            Current Size: {cardWidth} × {cardHeight} ({cardWidth === "65mm" ? "2.5\" Compact Width" : cardWidth === "60mm" ? "2.4\" Slim" : cardWidth === "75mm" ? "3.0\" Medium" : "4.0\" Full Width"})
-          </span>
+
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1 p-0.5 rounded-lg bg-muted border border-border">
+              <button
+                type="button"
+                onClick={() => setPreviewScale("actual")}
+                className={cn(
+                  "px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer",
+                  previewScale === "actual"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Actual Size
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewScale("compact")}
+                className={cn(
+                  "px-2.5 py-1 text-xs font-medium rounded-md transition-all cursor-pointer",
+                  previewScale === "compact"
+                    ? "bg-background text-foreground shadow-xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Compact Overview
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="border p-6 bg-muted/20 rounded-xl overflow-x-auto">
-          <div className="flex flex-wrap gap-6 justify-center">
+        <div className="border border-border/80 p-6 bg-muted/15 rounded-2xl overflow-x-auto">
+          <div className={cn(
+            "flex flex-wrap justify-center transition-all duration-200",
+            previewScale === "compact" ? "gap-3 scale-90 origin-top" : "gap-6"
+          )}>
             {codes.map((code, index) => (
               <div
                 key={`preview-${index}`}
-                className="shadow-sm rounded overflow-hidden bg-white hover:shadow-md transition-shadow shrink-0"
+                className="shadow-sm rounded-sm overflow-hidden bg-white hover:shadow-md transition-shadow shrink-0 border border-black/10"
               >
                 <ShelfRackLabelCard
                   code={code}

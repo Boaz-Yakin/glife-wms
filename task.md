@@ -591,6 +591,25 @@
 - [x] 53.3 `MasterLabelsHub.tsx` 모드 선택 허브 래퍼 구축 (상단 탭 전환: 📍 Rack Location vs 🏷️ Item Barcode)
 - [x] 53.4 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 🎨 Phase 54: 랙 로케이션 라벨(Rack Locations Labels) 설정 & 인쇄 화면 UX/UI 전면 개편
+- [x] 54.1 정보 계층 구조(Hierarchy) 최적화:
+  - 상단 비대했던 4단 레벨 카드들을 슬림한 인라인 컬러 뱃지 리본(`Level A~D Color Band Legend`)으로 압축
+  - 좌측 설정 패널(7 cols)과 우측 타겟 로케이션 큐 패널(5 cols)의 2열 그리드 구조로 정돈
+- [x] 54.2 라벨 설정(Dimensions & Symbology) 조작성 개선:
+  - Label Width (60mm / 65mm Default / 75mm / 100mm) & Height (45mm / 35mm / 30mm) 모던 필(Pill) 셀렉터 적용
+  - 바코드 심볼(2D QR Code vs 1D Barcode) 및 Anti-Crossfire 오독 방지 지그재그 정렬(Top-Bottom, Left-Right, Diagonal) 컨트롤 정리
+  - Paper Size 및 재단 보조선(Cut-Line) 토글 버튼 직관화
+- [x] 54.3 인쇄 대상 로케이션 관리 및 프리셋 고도화:
+  - 원클릭 퀵 프리셋 칩(`All Locations`, `Zone A`, `Zone F`, `Staging Floor 01~10`, `A~D Demo`, `Clear`)
+  - 실시간 대상 로케이션 수 카운트 뱃지 및 모노스페이스 코드 텍스트에어리어
+- [x] 54.4 인쇄 미리보기(Print Preview) 사용자 경험 강화:
+  - 실제 크기(Actual Size 100%) vs 축소 개요(Compact Overview 85%) 줌 토글 탑재
+  - 화면상에서 수십 장의 라벨 검토 시 가독성 및 조작 편의성 극대화
+- [x] 54.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
+
 
 
 
