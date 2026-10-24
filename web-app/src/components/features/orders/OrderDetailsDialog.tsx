@@ -46,6 +46,7 @@ import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { updateOrderAction, searchMasterItemsAction, deleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { toAtlantaDateString, validateInvoiceDate } from "@/lib/date"
 import { toast } from "sonner"
+import { OrderStatusBadge } from "./OrderStatusBadge"
 
 interface OrderDetailsDialogProps {
   order: OrderData
@@ -71,20 +72,6 @@ interface EditableItem {
   box_price: number
   pack_price: number
   requested_uom?: string | null
-}
-
-const statusBadgeVariants: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "secondary",
-  PICKING: "default",
-  PACKED: "outline",
-  INVOICED: "default",
-  SHIPPED: "secondary",
-  CANCELED: "destructive",
-  // Legacy compatibility
-  RECEIVED: "secondary",
-  ALLOCATED: "outline",
-  PICKED: "outline",
-  DISPATCHED: "secondary",
 }
 
 const COMMON_UOMS = ["EA", "BOX", "PACK", "CASE", "BAG", "CAN", "BTL"]
@@ -495,18 +482,14 @@ export function OrderDetailsDialog({
                   if (val) setSelectedStatus(val)
                 }}
               >
-                <SelectTrigger className="h-7 min-w-[125px] text-xs font-semibold gap-1.5 bg-background">
-                  <Badge variant={statusBadgeVariants[selectedStatus] || "secondary"} className="text-[10px] px-1.5 py-0 h-4 font-semibold">
-                    {selectedStatus}
-                  </Badge>
+                <SelectTrigger className="h-7 min-w-[130px] text-xs font-semibold gap-1.5 bg-background p-1">
+                  <OrderStatusBadge status={selectedStatus} className="text-[10px] px-2 py-0 h-4.5" />
                 </SelectTrigger>
                 <SelectContent align="end">
                   {AVAILABLE_STATUSES.map((st) => (
                     <SelectItem key={st} value={st} className="text-xs font-medium">
                       <div className="flex items-center gap-2">
-                        <Badge variant={statusBadgeVariants[st] || "secondary"} className="text-[10px] px-1.5 py-0 h-4 font-semibold">
-                          {st}
-                        </Badge>
+                        <OrderStatusBadge status={st} className="text-[10px] px-2 py-0 h-4.5 font-semibold" />
                       </div>
                     </SelectItem>
                   ))}

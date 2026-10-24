@@ -435,3 +435,21 @@
   - 페이지 최초 마운트 시 DB 실제 2단 로케이션 코드로 기본 텍스트에어리어 초기화
 - [x] 43.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 Vercel 프로덕션 배포 완료
 
+---
+
+## 🎨 Phase 44: web-app 주문 상태(Order Status)별 고유 컬러 뱃지 및 필터 UI 개선
+- [x] 44.1 전용 주문 상태 뱃지 컴포넌트 신설 ([`OrderStatusBadge.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/orders/OrderStatusBadge.tsx)):
+  - **PENDING (대기)**: 앰버/노랑 (`bg-amber-500/15 text-amber-700 border-amber-500/30`) + 앰버 도트
+  - **PICKING (피킹 중)**: 블루 (`bg-blue-500/15 text-blue-700 border-blue-500/30`) + 펄스 애니메이션 도트
+  - **PACKED (패킹 완료)**: 퍼플 (`bg-purple-500/15 text-purple-700 border-purple-500/30`) + 퍼플 도트
+  - **INVOICED (인보이스 발행)**: 인디고 (`bg-indigo-500/15 text-indigo-700 border-indigo-500/30`) + 인디고 도트
+  - **SHIPPED (출고 완료)**: 에메랄드/그린 (`bg-emerald-500/15 text-emerald-700 border-emerald-500/30`) + 에메랄드 도트
+  - **CANCELED (주문 취소)**: 로즈/레드 (`bg-rose-500/15 text-rose-700 border-rose-500/30`) + 로즈 도트
+- [x] 44.2 주문 목록 테이블 연동 ([`OrdersTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/orders/OrdersTable.tsx)):
+  - 테이블 Status 컬럼을 `OrderStatusBadge`로 교체하여 한눈에 식별 가능하도록 시각화
+  - 상단 Status 필터 드롭다운 각 옵션에 컬러 인디케이터 도트 적용
+- [x] 44.3 주문 상세 다이얼로그 연동 ([`OrderDetailsDialog.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/orders/OrderDetailsDialog.tsx)):
+  - 다이얼로그 헤더의 Status 변경 드롭다운 트리거 및 선택 아이템에 `OrderStatusBadge` 적용
+- [x] 44.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 및 배포 완료
+
+

@@ -41,34 +41,7 @@ import { exportToExcel } from "@/lib/export"
 import { OrderData } from "@/services/orders.service"
 import { deleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
-
-const statusColors: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
-  PENDING: "secondary",
-  PICKING: "default",
-  PACKED: "outline",
-  INVOICED: "default",
-  SHIPPED: "secondary",
-  CANCELED: "destructive",
-  // Legacy compatibility
-  RECEIVED: "secondary",
-  ALLOCATED: "outline",
-  PICKED: "outline",
-  DISPATCHED: "secondary",
-}
-
-const statusLabels: Record<string, string> = {
-  PENDING: "Pending",
-  PICKING: "Picking",
-  PACKED: "Packed",
-  INVOICED: "Invoiced",
-  SHIPPED: "Shipped",
-  CANCELED: "Canceled",
-  // Legacy compatibility
-  RECEIVED: "Received",
-  ALLOCATED: "Allocated",
-  PICKED: "Picked",
-  DISPATCHED: "Dispatched",
-}
+import { OrderStatusBadge, ORDER_STATUS_CONFIG } from "./OrderStatusBadge"
 
 
 export interface ClientOption {
@@ -300,12 +273,7 @@ export function OrdersTable({
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.original.status
-        return (
-          <Badge variant={statusColors[status] || "secondary"} className="text-xs">
-            {statusLabels[status] || status}
-          </Badge>
-        )
+        return <OrderStatusBadge status={row.original.status} />
       },
     },
     {
@@ -356,17 +324,58 @@ export function OrdersTable({
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Select value={defaultStatus} onValueChange={handleStatusChange}>
-            <SelectTrigger className="w-[140px] bg-background">
-              <SelectValue placeholder="Order Status" />
+            <SelectTrigger className="w-[155px] bg-background">
+              <SelectValue placeholder="Order Status">
+                {defaultStatus && defaultStatus !== "ALL" ? (
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`size-2 rounded-full shrink-0 ${ORDER_STATUS_CONFIG[defaultStatus]?.dotColor || "bg-muted-foreground"}`}
+                    />
+                    <span className="truncate">{ORDER_STATUS_CONFIG[defaultStatus]?.label || defaultStatus}</span>
+                  </div>
+                ) : (
+                  "All Status"
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Status</SelectItem>
-              <SelectItem value="PENDING">Pending</SelectItem>
-              <SelectItem value="PICKING">Picking</SelectItem>
-              <SelectItem value="PACKED">Packed</SelectItem>
-              <SelectItem value="INVOICED">Invoiced</SelectItem>
-              <SelectItem value="SHIPPED">Shipped</SelectItem>
-              <SelectItem value="CANCELED">Canceled</SelectItem>
+              <SelectItem value="PENDING">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-amber-500 shrink-0" />
+                  <span>Pending</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="PICKING">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-blue-500 shrink-0" />
+                  <span>Picking</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="PACKED">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-purple-500 shrink-0" />
+                  <span>Packed</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="INVOICED">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-indigo-500 shrink-0" />
+                  <span>Invoiced</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="SHIPPED">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span>Shipped</span>
+                </div>
+              </SelectItem>
+              <SelectItem value="CANCELED">
+                <div className="flex items-center gap-2">
+                  <span className="size-2 rounded-full bg-rose-500 shrink-0" />
+                  <span>Canceled</span>
+                </div>
+              </SelectItem>
             </SelectContent>
           </Select>
         </div>
