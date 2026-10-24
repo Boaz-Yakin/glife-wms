@@ -30,14 +30,24 @@ export interface ItemData {
 
 export { getItemEffectivePrice } from "@/lib/pricing"
 
-export async function getItems({ page = 1, limit = 20, search = '' }) {
+export async function getItems({
+  page = 1,
+  limit = 20,
+  search = '',
+  clientId,
+}: {
+  page?: number
+  limit?: number
+  search?: string
+  clientId?: string | null
+} = {}) {
   const supabase = await createClient()
   let query = supabase.from('items').select(`
     *,
     manufacturer:manufacturer_id(name)
   `, { count: 'exact' })
   
-  const activeClientId = await getActiveClientAction()
+  const activeClientId = clientId !== undefined ? clientId : await getActiveClientAction()
   if (activeClientId) {
     query = query.eq('client_id', activeClientId)
   }

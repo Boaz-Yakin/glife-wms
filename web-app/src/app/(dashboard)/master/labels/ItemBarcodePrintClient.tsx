@@ -36,23 +36,54 @@ interface QueueItem {
 
 export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
   const [search, setSearch] = React.useState("")
+  const [selectedCategory, setSelectedCategory] = React.useState<string>("ALL")
   const [selectedQueue, setSelectedQueue] = React.useState<QueueItem[]>([])
   const [paperSize, setPaperSize] = React.useState<ItemPaperSize>("roll-50x30")
   const [symbology, setSymbology] = React.useState<ItemSymbology>("barcode")
   const [includePrice, setIncludePrice] = React.useState(false)
 
-  // Filter available items by search
+  // Extract unique categories with counts
+  const categoryStats = React.useMemo(() => {
+    const counts: Record<string, number> = {}
+    items.forEach((item) => {
+      const cat = item.category?.trim() || "Uncategorized"
+      counts[cat] = (counts[cat] || 0) + 1
+    })
+    return Object.entries(counts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [items])
+
+  // Filter available items by search & category without artificial slice limits
   const filteredItems = React.useMemo(() => {
-    if (!search.trim()) return items.slice(0, 15) // Show top 15 when empty
-    const q = search.toLowerCase()
-    return items.filter(
-      (item) =>
-        item.sku.toLowerCase().includes(q) ||
-        item.name_en.toLowerCase().includes(q) ||
-        (item.desc_en && item.desc_en.toLowerCase().includes(q)) ||
-        (item.upc && item.upc.toLowerCase().includes(q))
-    )
-  }, [items, search])
+    const rawQ = search.trim().toLowerCase()
+    const tokens = rawQ ? rawQ.split(/\s+/) : []
+
+    return items.filter((item) => {
+      // 1. Category check
+      if (selectedCategory !== "ALL") {
+        const itemCat = item.category?.trim() || "Uncategorized"
+        if (itemCat !== selectedCategory) return false
+      }
+
+      // If no search query, match all in this category
+      if (tokens.length === 0) return true
+
+      const sku = (item.sku || "").toLowerCase()
+      const skuClean = sku.replace(/[^a-z0-9]/g, "")
+      const name = (item.name_en || "").toLowerCase()
+      const desc = (item.desc_en || "").toLowerCase()
+      const upc = (item.upc || "").toLowerCase()
+      const cat = (item.category || "").toLowerCase()
+      const searchable = `${sku} ${skuClean} ${name} ${desc} ${upc} ${cat}`
+
+      // All search tokens must be present
+      return tokens.every((tok) => {
+        const tokClean = tok.replace(/[^a-z0-9]/g, "")
+        return searchable.includes(tok) || (tokClean.length > 0 && skuClean.includes(tokClean))
+      })
+    })
+  }, [items, search, selectedCategory])
 
   // Total labels in queue
   const totalLabelsCount = React.useMemo(() => {
@@ -258,42 +289,73 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
         </Card>
 
         {/* Step 2: Item Selection Grid & Print Queue */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left Panel: Search & Catalog (5 cols) */}
-          <Card className="lg:col-span-5 border border-border/80 shadow-xs flex flex-col h-[520px]">
-            <div className="p-3.5 border-b border-border/60 space-y-3">
+          <Card className="lg:col-span-5 border border-border/80 shadow-xs flex flex-col h-[560px]">
+            <div className="p-3.5 border-b border-border/60 space-y-2.5 shrink-0">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold text-sm">Product Master Catalog</h4>
                 <Badge variant="secondary" className="font-mono text-xs">
-                  {filteredItems.length} SKUs
+                  {filteredItems.length === items.length
+                    ? `${items.length} SKUs (All)`
+                    : `${filteredItems.length} of ${items.length} SKUs`}
                 </Badge>
               </div>
 
-              <div className="relative">
-                <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search SKU, Item Name, or UPC..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-8 h-9 text-xs bg-background"
-                />
+              {/* Search & Category Filter Row */}
+              <div className="grid grid-cols-1 sm:grid-cols-12 gap-2">
+                <div className="relative sm:col-span-7">
+                  <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search SKU, name, UPC..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-8 pr-7 h-9 text-xs bg-background"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="absolute right-2 top-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer p-0.5"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                <div className="sm:col-span-5">
+                  <Select value={selectedCategory} onValueChange={(val) => setSelectedCategory(val || "ALL")}>
+                    <SelectTrigger className="h-9 text-xs bg-background">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ALL">All Categories ({items.length})</SelectItem>
+                      {categoryStats.map((cat) => (
+                        <SelectItem key={cat.name} value={cat.name}>
+                          {cat.name} ({cat.count})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-0.5">
                 <span className="text-[11px] text-muted-foreground">Click item to add to print queue</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={addAllFiltered}
+                  disabled={filteredItems.length === 0}
                   className="h-7 text-xs text-primary font-medium hover:bg-primary/10 cursor-pointer"
                 >
                   <Plus className="size-3 mr-1" />
-                  Add All Filtered
+                  Add All Filtered ({filteredItems.length})
                 </Button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto divide-y divide-border/40 p-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-border/40 p-1 min-h-0">
               {filteredItems.length ? (
                 filteredItems.map((item) => (
                   <div
@@ -302,10 +364,15 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
                     className="p-2.5 hover:bg-muted/50 rounded-md transition-colors cursor-pointer flex items-center justify-between gap-3 group"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-semibold text-xs text-foreground">{item.sku}</span>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="font-mono font-bold text-xs text-foreground">{item.sku}</span>
+                        {item.category && (
+                          <span className="font-mono text-[10px] text-muted-foreground bg-muted/80 px-1.5 py-0.2 rounded">
+                            {item.category}
+                          </span>
+                        )}
                         {item.upc && (
-                          <span className="font-mono text-[10px] text-muted-foreground bg-muted px-1 rounded">
+                          <span className="font-mono text-[10px] text-muted-foreground bg-muted/60 px-1 rounded">
                             UPC: {item.upc}
                           </span>
                         )}
@@ -325,15 +392,28 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
                   </div>
                 ))
               ) : (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  No items found matching "{search}".
+                <div className="p-8 text-center text-xs text-muted-foreground space-y-2">
+                  <p>No items found matching your filters.</p>
+                  {(search || selectedCategory !== "ALL") && (
+                    <Button
+                      variant="outline"
+                      size="xs"
+                      onClick={() => {
+                        setSearch("")
+                        setSelectedCategory("ALL")
+                      }}
+                      className="text-xs cursor-pointer"
+                    >
+                      Reset Filters
+                    </Button>
+                  )}
                 </div>
               )}
             </div>
           </Card>
 
           {/* Right Panel: Selected Print Queue (7 cols) */}
-          <Card className="lg:col-span-7 border border-border/80 shadow-xs flex flex-col h-[520px]">
+          <Card className="lg:col-span-7 border border-border/80 shadow-xs flex flex-col h-[560px]">
             <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
               <div>
                 <h4 className="font-semibold text-sm">Print Queue & Copies</h4>

@@ -888,11 +888,11 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
         </div>
 
         {/* Two-Column Master Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
           {/* Left Column: Dimensions & Symbology Configuration (7 Cols) */}
-          <div className="lg:col-span-7 space-y-4">
-            <Card className="border border-border/80 shadow-xs">
-              <CardContent className="p-4 sm:p-5 space-y-4">
+          <div className="lg:col-span-7 flex flex-col">
+            <Card className="border border-border/80 shadow-xs flex-1 flex flex-col">
+              <CardContent className="p-4 sm:p-5 space-y-4 flex-1">
                 <div className="flex items-center justify-between pb-3 border-b border-border/60">
                   <h4 className="font-semibold text-sm flex items-center gap-2">
                     <SlidersHorizontal className="size-4 text-primary" />
@@ -1080,11 +1080,11 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             </Card>
           </div>
 
-          {/* Right Column: Location Codes Queue & Presets (5 Cols) */}
-          <div className="lg:col-span-5 space-y-4">
-            <Card className="border border-border/80 shadow-xs flex flex-col h-full">
-              <CardContent className="p-4 sm:p-5 flex flex-col h-full space-y-3.5">
-                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+          {/* Right Column: Location Codes Queue & Presets (5 Cols) - Height synced to left card with inner scroll */}
+          <div className="lg:col-span-5 flex flex-col">
+            <Card className="border border-border/80 shadow-xs flex-1 flex flex-col min-h-0">
+              <CardContent className="p-4 sm:p-5 flex flex-col flex-1 space-y-3.5 min-h-0">
+                <div className="flex items-center justify-between pb-3 border-b border-border/60 shrink-0">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-sm">Target Locations Queue</h4>
                   </div>
@@ -1094,7 +1094,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </div>
 
                 {/* Quick Selection Presets */}
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 shrink-0">
                   <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                     <Sparkles className="size-3 text-primary" />
                     Quick Selection Presets
@@ -1170,20 +1170,19 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                   </div>
                 </div>
 
-                {/* Codes Textarea */}
-                <div className="flex-1 flex flex-col space-y-1.5 min-h-[220px]">
-                  <Label htmlFor="codes" className="text-xs font-semibold text-muted-foreground">
+                {/* Codes Textarea with synced vertical height and inner scroll */}
+                <div className="flex-1 flex flex-col space-y-1.5 min-h-0">
+                  <Label htmlFor="codes" className="text-xs font-semibold text-muted-foreground shrink-0">
                     Codes to Print (One location per line)
                   </Label>
                   <Textarea
                     id="codes"
                     value={codesInput}
                     onChange={(e) => setCodesInput(e.target.value)}
-                    rows={10}
                     placeholder={"LOC-A0105A01\nLOC-A0105B01\nLOC-A0105C01\nLOC-F0101A01..."}
-                    className="font-mono text-xs flex-1 bg-muted/20 border-border/80 resize-none leading-relaxed p-3"
+                    className="font-mono text-xs flex-1 w-full min-h-[160px] bg-muted/20 border-border/80 resize-none leading-relaxed p-3 overflow-y-auto"
                   />
-                  <p className="text-[11px] text-muted-foreground leading-tight pt-1">
+                  <p className="text-[11px] text-muted-foreground leading-tight pt-1 shrink-0">
                     Standard: <code className="font-mono text-foreground font-bold">LOC-A0105B01</code> (Zone•Aisle•Bay•Level•Bin)
                   </p>
                 </div>

@@ -609,6 +609,20 @@
   - 화면상에서 수십 장의 라벨 검토 시 가독성 및 조작 편의성 극대화
 - [x] 54.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 🛠️ Phase 55: 랙 로케이션 패널 높이 동기화 및 아이템 바코드 전체 검색/카테고리 필터 고도화
+- [x] 55.1 랙 로케이션 큐(Target Locations Queue) 패널 높이 동기화 및 스크롤 개선:
+  - CSS Grid `items-stretch` 및 `min-h-0` flexbox 체계를 적용하여 좌측 `Geometry & Hardware Alignment` 카드와 우측 큐 카드의 높이를 1:1 완벽 일치
+  - 로케이션 코드 Textarea를 flex-1 확장 및 `overflow-y-auto` 독립 세로 스크롤로 구성하여 수십~수백 개 코드 입력 시에도 좌측 카드 높이를 초과하지 않고 정돈된 뷰 유지
+- [x] 55.2 아이템 바코드(Item Barcodes) 전체 품목 검색 및 카테고리 필터 개선:
+  - 기존 초기 화면의 15개 제한(`slice(0, 15)`)을 제거하여 전체 288개 SKU가 스크롤 가능한 카탈로그에 표시되도록 개선
+  - 13개 카테고리(Beverage, General, Candy, Nuts, Ramyun 등) 원클릭 필터 드롭다운 탑재
+  - 스마트 토큰 다중 검색(SKU 하이픈 유무 무관 일치, Name, Description, Category, UPC) 및 실시간 검색어 초기화(Clear) 버튼 지원
+  - `MasterLabelsPage` 및 `getItems`에 3PL 활성 클라이언트 무관 창고 전체 품목 로드 안전 장치(Fallback) 적용
+- [x] 55.3 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
+
 
 
 

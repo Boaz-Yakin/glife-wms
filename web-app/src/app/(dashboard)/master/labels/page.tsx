@@ -10,10 +10,18 @@ export const metadata = {
 }
 
 export default async function MasterLabelsPage() {
-  const [{ data: locationsData }, { data: itemsData }] = await Promise.all([
+  let [{ data: locationsData }, { data: itemsData }] = await Promise.all([
     getLocations({}),
-    getItems({ page: 1, limit: 1000 }),
+    getItems({ page: 1, limit: 2000 }),
   ])
+
+  // Fallback: if active client filter returned 0 items, load all items so barcode center is always functional
+  if (!itemsData || itemsData.length === 0) {
+    const fallback = await getItems({ page: 1, limit: 2000, clientId: null })
+    if (fallback.data && fallback.data.length > 0) {
+      itemsData = fallback.data
+    }
+  }
 
   const dbCodes = (locationsData || []).map((l) => l.code).filter(Boolean)
 
