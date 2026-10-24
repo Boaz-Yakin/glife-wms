@@ -628,6 +628,18 @@
   - 비선택(Inactive) 항목: `text-muted-foreground hover:text-foreground font-medium` (동일한 심플 반투명 톤)
   - 두 설정 화면의 컨트롤 UI가 완전한 일체감과 직관성을 갖추도록 통일
 
+---
+
+## 🔍 Phase 56: 재고 감사 이력(Inventory Audit History) 작업자(Audited By / Operator) 정보 추가 및 엑셀 연동
+- [x] 56.1 `audit.service.ts` Supabase 조인 쿼리 확장:
+  - `inventory_adjustments.adjusted_by` 컬럼을 `operator:adjusted_by(id, first_name, last_name, role, phone)`로 Foreign Key 관계 조인
+- [x] 56.2 `AuditTable.tsx` 데이터 그리드 컬럼 추가:
+  - `Audited By` 컬럼 신설: 작업자 성명(`first_name` + `last_name`) 및 직책/역할(`role`) 서브 뱃지 표시
+  - 시스템 자동 조정 건(`adjusted_by`가 null인 배치/시더 데이터)은 점 표시와 함께 `System (Auto)`로 명확하게 대체 표기
+- [x] 56.3 엑셀(Excel) 내보내기 연동:
+  - `exportToExcel` 매핑에 `Audited By` 필드 추가 ("이름 (역할)" 포맷 및 System (Auto) 지원)
+- [x] 56.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 검증 완료
+
 
 
 

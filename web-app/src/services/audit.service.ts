@@ -16,6 +16,13 @@ export async function getInventoryAudit({ page = 1, limit = 20, reason = '' }: G
     reason,
     created_at,
     adjusted_by,
+    operator:adjusted_by (
+      id,
+      first_name,
+      last_name,
+      role,
+      phone
+    ),
     inventory:inventory_id (
       item:item_id (sku, name_en, desc_en),
       location:location_id (code)

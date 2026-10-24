@@ -29,7 +29,14 @@ export type AuditData = {
   new_qty: number
   reason: string | null
   created_at: string
-  adjusted_by: string
+  adjusted_by: string | null
+  operator?: {
+    id: string
+    first_name: string | null
+    last_name: string | null
+    role: string | null
+    phone?: string | null
+  } | null
   inventory: {
     item: { sku: string; name_en: string; desc_en?: string | null } | any
     location: { code: string } | any
@@ -71,6 +78,32 @@ const columns: ColumnDef<AuditData>[] = [
           {desc ? (
             <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
           ) : null}
+        </div>
+      )
+    },
+  },
+  {
+    accessorKey: "operator",
+    header: "Audited By",
+    cell: ({ row }) => {
+      const op = row.original.operator
+      if (!op) {
+        return (
+          <span className="text-muted-foreground text-xs inline-flex items-center gap-1.5 font-medium">
+            <span className="size-1.5 rounded-full bg-muted-foreground/60" />
+            System (Auto)
+          </span>
+        )
+      }
+      const fullName = [op.first_name, op.last_name].filter(Boolean).join(" ") || "Unknown"
+      return (
+        <div className="flex flex-col">
+          <span className="font-semibold text-xs text-foreground leading-tight">{fullName}</span>
+          {op.role && (
+            <span className="text-[10px] text-muted-foreground font-mono leading-tight mt-0.5">
+              {op.role}
+            </span>
+          )}
         </div>
       )
     },
@@ -137,6 +170,9 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
       Location: d.inventory?.location?.code || 'N/A',
       SKU: d.inventory?.item?.sku || 'N/A',
       "Item Name": d.inventory?.item?.desc_en ? `${d.inventory?.item?.name_en} (${d.inventory?.item?.desc_en})` : (d.inventory?.item?.name_en || 'N/A'),
+      "Audited By": d.operator
+        ? `${[d.operator.first_name, d.operator.last_name].filter(Boolean).join(" ")} (${d.operator.role || 'User'})`
+        : "System (Auto)",
       Reason: d.reason ? reasonLabels[d.reason] || d.reason : "Manual Adjustment",
       "Before Qty": d.previous_qty,
       "After Qty": d.new_qty,
