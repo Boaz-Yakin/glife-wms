@@ -166,12 +166,35 @@ export async function deleteUserAction(userId: string) {
     auth: { autoRefreshToken: false, persistSession: false }
   })
 
-  // Delete from auth.users (cascades to public.users)
-  const { error } = await adminClient.auth.admin.deleteUser(userId)
+  // 1. Fetch user phone to clean up any login lockout records
+  const { data: pubUser } = await adminClient.from("users").select("phone").eq("id", userId).maybeSingle()
 
-  if (error) {
-    console.error("deleteUser error:", error)
-    return { error: "Failed to delete user: " + error.message }
+  // 2. Explicitly nullify foreign key references in historical records to preserve audit trail safely
+  try {
+    await Promise.all([
+      adminClient.from("orders").update({ user_id: null }).eq("user_id", userId),
+      adminClient.from("inventory_adjustments").update({ adjusted_by: null }).eq("adjusted_by", userId),
+      adminClient.from("cycle_count_requests").update({ requested_by: null }).eq("requested_by", userId),
+      adminClient.from("cycle_count_requests").update({ reported_by: null }).eq("reported_by", userId),
+      adminClient.from("cycle_count_requests").update({ completed_by: null }).eq("completed_by", userId),
+      pubUser?.phone ? adminClient.from("auth_login_attempts").delete().eq("phone", pubUser.phone) : Promise.resolve(),
+    ])
+  } catch (cleanErr) {
+    console.warn("User reference cleanup warning:", cleanErr)
+  }
+
+  // 3. Delete from public.users table
+  const { error: pubDeleteError } = await adminClient.from("users").delete().eq("id", userId)
+  if (pubDeleteError) {
+    console.error("public.users delete error:", pubDeleteError)
+    return { error: "Failed to delete user profile: " + pubDeleteError.message }
+  }
+
+  // 4. Delete from auth.users (authentication account)
+  const { error: authDeleteError } = await adminClient.auth.admin.deleteUser(userId)
+  if (authDeleteError && !authDeleteError.message.includes("User not found")) {
+    console.error("auth.users delete error:", authDeleteError)
+    return { error: "Failed to delete auth login: " + authDeleteError.message }
   }
 
   revalidatePath("/settings/users")

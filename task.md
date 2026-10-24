@@ -523,6 +523,23 @@
   - 엑셀 내보내기 리포트에 `Daily Velocity (ADU)`, `Safety Stock`, `Reorder Point`, `Lead Time` 자동 포함
 - [x] 48.4 Next.js 16 프로덕션 빌드(`npm run build`) 타입 및 번들링 100% 통과 완료
 
+---
+
+## 👥 Phase 49: 사용자 관리(User Management) 안전 삭제(Safe Deletion) 및 외래키 연계 해결
+- [x] 49.1 원인 규명: 과거 주문(`orders.user_id`), 재고 조정(`inventory_adjustments.adjusted_by`), 실사 요청(`cycle_count_requests`)에 참조된 유저 삭제 시 외래키 제약조건(`violates foreign key constraint`)으로 인한 DB 레벨 삭제 차단 현상 확인
+- [x] 49.2 DB 마이그레이션 적용 ([`20261024134000_cascade_user_deletion.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261024134000_cascade_user_deletion.sql)):
+  - `orders.user_id` 외래키 `ON DELETE SET NULL` 제약조건 변경
+  - `inventory_adjustments.adjusted_by` 컬럼 NOT NULL 해제 및 `ON DELETE SET NULL` 적용
+  - `cycle_count_requests` (`requested_by`, `reported_by`, `completed_by`) NOT NULL 해제 및 `ON DELETE SET NULL` 적용
+  - `supabase db push`를 통해 원격 프로덕션 DB 배포 완료
+- [x] 49.3 백엔드 삭제 액션 강화 ([`actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/settings/users/actions.ts)):
+  - `deleteUserAction`: 삭제 전 연관된 외래키 참조 명시적 nullify 처리, `auth_login_attempts` 잔여 로그인 잠금 기록 정리, `public.users` 및 `auth.users` 2단계 완전 삭제 파이프라인 구축
+- [x] 49.4 프론트엔드 UX 고도화 ([`UsersTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/settings/UsersTable.tsx)):
+  - 테이블 Row 'Manage' 컬럼에 원클릭 삭제(`Trash2`) 버튼 직관적 추가
+  - 모달 내 Delete 버튼 및 행 삭제 버튼 클릭 시 실시간 로딩 토스트(`toast.loading`) 및 성공/실패 피드백 제공
+- [x] 49.5 Next.js 16 프로덕션 빌드(`npm run build`) 검증 100% 통과 완료
+
+
 
 
 

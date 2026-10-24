@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Loader2, Edit2 } from "lucide-react"
+import { Plus, Loader2, Edit2, Trash2 } from "lucide-react"
 
 import {
   Dialog,
@@ -139,10 +139,22 @@ export function UsersTable({ data }: { data: UserData[] }) {
       id: "actions",
       header: "Manage",
       cell: ({ row }) => (
-        <Button variant="outline" size="sm" onClick={() => openEdit(row.original)}>
-          <Edit2 className="mr-2 h-4 w-4 text-muted-foreground" />
-          Edit
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={() => openEdit(row.original)} disabled={loading}>
+            <Edit2 className="mr-1.5 h-3.5 w-3.5 text-muted-foreground" />
+            Edit
+          </Button>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => handleDelete(row.original)} 
+            disabled={loading}
+            className="text-destructive hover:bg-destructive/10 hover:text-destructive cursor-pointer h-8 px-2"
+            title="Delete user"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
       )
     }
   ]
@@ -179,18 +191,20 @@ export function UsersTable({ data }: { data: UserData[] }) {
     }
   }
 
-  const handleDelete = async () => {
-    if (!editingUser) return
-    if (!confirm(`Are you sure you want to delete user ${editingUser.first_name} ${editingUser.last_name}?`)) return
+  const handleDelete = async (userToDelete?: UserData) => {
+    const target = userToDelete || editingUser
+    if (!target) return
+    if (!confirm(`Are you sure you want to delete user ${target.first_name} ${target.last_name}?`)) return
 
+    const toastId = toast.loading(`Deleting user ${target.first_name}...`)
     setLoading(true)
-    const result = await deleteUserAction(editingUser.id)
+    const result = await deleteUserAction(target.id)
     setLoading(false)
 
     if (result?.error) {
-      toast.error(result.error)
+      toast.error(result.error, { id: toastId })
     } else {
-      toast.success("User has been deleted.")
+      toast.success("User has been deleted.", { id: toastId })
       setIsEditOpen(false)
     }
   }
@@ -339,7 +353,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
                   <Button 
                     type="button" 
                     variant="destructive" 
-                    onClick={handleDelete}
+                    onClick={() => handleDelete()}
                     disabled={loading}
                   >
                     Delete
