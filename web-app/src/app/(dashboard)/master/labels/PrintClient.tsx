@@ -888,12 +888,12 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
         </div>
 
         {/* Two-Column Master Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
           {/* Left Column: Dimensions & Symbology Configuration (7 Cols) */}
-          <div className="lg:col-span-7 flex flex-col">
-            <Card className="border border-border/80 shadow-xs flex-1 flex flex-col">
-              <CardContent className="p-4 sm:p-5 space-y-4 flex-1">
-                <div className="flex items-center justify-between pb-3 border-b border-border/60">
+          <div className="lg:col-span-7">
+            <Card className="border border-border/80 shadow-xs lg:h-[440px] flex flex-col">
+              <CardContent className="p-4 flex flex-col justify-between h-full space-y-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-border/60 shrink-0">
                   <h4 className="font-semibold text-sm flex items-center gap-2">
                     <SlidersHorizontal className="size-4 text-primary" />
                     Geometry & Hardware Alignment
@@ -902,14 +902,14 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </div>
 
                 {/* 1. Label Width */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">Beam Width Footprint</Label>
                     <span className="text-[11px] text-primary font-mono font-medium">
                       {cardWidth === "65mm" ? "65mm (Recommended • 15/Sheet)" : cardWidth}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                     {[
                       { id: "60mm", label: "60mm Slim", sub: "2.4\" (15/sh)" },
                       { id: "65mm", label: "65mm Compact", sub: "★ Default (15/sh)" },
@@ -921,26 +921,26 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         type="button"
                         onClick={() => setCardWidth(w.id as CardWidth)}
                         className={cn(
-                          "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
                           cardWidth === w.id
                             ? "bg-primary text-primary-foreground border-primary shadow-xs"
                             : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
                         )}
                       >
                         <span>{w.label}</span>
-                        <span className="text-[10px] font-normal opacity-80 mt-0.5">{w.sub}</span>
+                        <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{w.sub}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* 2. Label Height */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs font-semibold">Beam Face Height</Label>
                     <span className="text-[11px] text-primary font-mono font-medium">{cardHeight}</span>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-1.5">
                     {[
                       { id: "45mm", label: "45mm Standard", sub: "Beam Standard" },
                       { id: "35mm", label: "35mm Medium", sub: "Mid-Height" },
@@ -951,109 +951,110 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         type="button"
                         onClick={() => setCardHeight(h.id as CardHeight)}
                         className={cn(
-                          "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
                           cardHeight === h.id
                             ? "bg-primary text-primary-foreground border-primary shadow-xs"
                             : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
                         )}
                       >
                         <span>{h.label}</span>
-                        <span className="text-[10px] font-normal opacity-80 mt-0.5">{h.sub}</span>
+                        <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{h.sub}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* 3. Symbology (QR vs Barcode) */}
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <Label className="text-xs font-semibold">Scanner Symbology</Label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     <button
                       type="button"
                       onClick={() => setSymbology("qr")}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer",
                         symbology === "qr"
                           ? "bg-primary text-primary-foreground border-primary shadow-xs"
                           : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
                       )}
                     >
-                      <QrCode className="size-4" />
+                      <QrCode className="size-3.5" />
                       <span>2D QR Code (Recommended)</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setSymbology("barcode")}
                       className={cn(
-                        "flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer",
+                        "flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-bold border transition-all cursor-pointer",
                         symbology === "barcode"
                           ? "bg-primary text-primary-foreground border-primary shadow-xs"
                           : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
                       )}
                     >
-                      <BarcodeIcon className="size-4" />
+                      <BarcodeIcon className="size-3.5" />
                       <span>1D Barcode (Code128)</span>
                     </button>
                   </div>
                 </div>
 
-                {/* 4. Anti-Crossfire Alignment (Only when QR) */}
-                {symbology === "qr" && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-semibold">Anti-Crossfire Alignment</Label>
-                      <span className="text-[10px] text-muted-foreground font-mono">Prevents adjacent misreads</span>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      {[
-                        { id: "vertical", label: "↕ Top ↔ Bottom", desc: "Vertical Zig-Zag" },
-                        { id: "horizontal", label: "↔ Left ↔ Right", desc: "Horizontal Shift" },
-                        { id: "diagonal", label: "⤡ Diagonal", desc: "Corner Stagger" },
-                      ].map((pos) => (
-                        <button
-                          key={pos.id}
-                          type="button"
-                          onClick={() => setQrPlacement(pos.id as QrPlacement)}
-                          className={cn(
-                            "flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold border transition-all cursor-pointer",
-                            qrPlacement === pos.id
-                              ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                              : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
-                          )}
-                        >
-                          <span>{pos.label}</span>
-                          <span className="text-[9.5px] font-normal opacity-80 mt-0.5">{pos.desc}</span>
-                        </button>
-                      ))}
-                    </div>
+                {/* 4. Anti-Crossfire Alignment */}
+                <div className={cn("space-y-1 transition-opacity", symbology !== "qr" && "opacity-40 pointer-events-none")}>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Anti-Crossfire Alignment</Label>
+                    <span className="text-[10px] text-muted-foreground font-mono">
+                      {symbology === "qr" ? "Prevents adjacent misreads" : "N/A for 1D Barcode"}
+                    </span>
                   </div>
-                )}
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { id: "vertical", label: "↕ Top ↔ Bottom", desc: "Vertical Zig-Zag" },
+                      { id: "horizontal", label: "↔ Left ↔ Right", desc: "Horizontal Shift" },
+                      { id: "diagonal", label: "⤡ Diagonal", desc: "Corner Stagger" },
+                    ].map((pos) => (
+                      <button
+                        key={pos.id}
+                        type="button"
+                        onClick={() => setQrPlacement(pos.id as QrPlacement)}
+                        disabled={symbology !== "qr"}
+                        className={cn(
+                          "flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs font-bold border transition-all cursor-pointer",
+                          qrPlacement === pos.id && symbology === "qr"
+                            ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                            : "bg-muted/30 hover:bg-muted/70 text-foreground border-border/80"
+                        )}
+                      >
+                        <span>{pos.label}</span>
+                        <span className="text-[9px] font-normal opacity-80 mt-0.5">{pos.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 {/* 5. Paper & Cut-Lines */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-border/60">
-                  <div className="space-y-1.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-border/60 shrink-0">
+                  <div className="space-y-1">
                     <Label htmlFor="paper-size" className="text-xs font-semibold">Paper Medium</Label>
                     <Select value={paperSize} onValueChange={(val) => setPaperSize(val as PaperSize)}>
-                      <SelectTrigger id="paper-size" className="h-9 bg-background">
+                      <SelectTrigger id="paper-size" className="h-8 text-xs bg-background">
                         <SelectValue placeholder="Select paper size" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="letter">📄 US Letter ({isThreeCols ? "3×5 grid • 15 labels" : "2×5 grid • 10 labels"})</SelectItem>
-                        <SelectItem value="rack-label">🏷️ {cardWidth} × {cardHeight} Continuous Roll</SelectItem>
-                        <SelectItem value="compact-label">🏷️ Small Roll Label (50×30mm)</SelectItem>
+                        <SelectItem value="letter">📄 US Letter ({isThreeCols ? "3×5 • 15 labels" : "2×5 • 10 labels"})</SelectItem>
+                        <SelectItem value="rack-label">🏷️ {cardWidth} × {cardHeight} Roll</SelectItem>
+                        <SelectItem value="compact-label">🏷️ Small Roll (50×30mm)</SelectItem>
                         <SelectItem value="a4">📄 A4 Sheet ({isThreeCols ? "3 cols" : "2 cols"})</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label className="text-xs font-semibold">Cut-Line Border Guides</Label>
                     <div className="grid grid-cols-2 gap-1.5">
                       <button
                         type="button"
                         onClick={() => setShowCutLines(true)}
                         className={cn(
-                          "py-2 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
+                          "h-8 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
                           showCutLines
                             ? "bg-primary text-primary-foreground border-primary shadow-xs"
                             : "bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -1065,7 +1066,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         type="button"
                         onClick={() => setShowCutLines(false)}
                         className={cn(
-                          "py-2 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
+                          "h-8 px-2 rounded-lg text-xs font-semibold border transition-all cursor-pointer text-center",
                           !showCutLines
                             ? "bg-primary text-primary-foreground border-primary shadow-xs"
                             : "bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -1080,11 +1081,11 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
             </Card>
           </div>
 
-          {/* Right Column: Location Codes Queue & Presets (5 Cols) - Height synced to left card with inner scroll */}
-          <div className="lg:col-span-5 flex flex-col">
-            <Card className="border border-border/80 shadow-xs flex-1 flex flex-col min-h-0">
-              <CardContent className="p-4 sm:p-5 flex flex-col flex-1 space-y-3.5 min-h-0">
-                <div className="flex items-center justify-between pb-3 border-b border-border/60 shrink-0">
+          {/* Right Column: Location Codes Queue & Presets (5 Cols) - Exact same 440px height with inner scroll */}
+          <div className="lg:col-span-5">
+            <Card className="border border-border/80 shadow-xs lg:h-[440px] flex flex-col">
+              <CardContent className="p-4 flex flex-col h-full space-y-2.5 min-h-0">
+                <div className="flex items-center justify-between pb-2 border-b border-border/60 shrink-0">
                   <div className="flex items-center gap-2">
                     <h4 className="font-semibold text-sm">Target Locations Queue</h4>
                   </div>
@@ -1094,21 +1095,21 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                 </div>
 
                 {/* Quick Selection Presets */}
-                <div className="space-y-1.5 shrink-0">
+                <div className="space-y-1 shrink-0">
                   <span className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1">
                     <Sparkles className="size-3 text-primary" />
                     Quick Selection Presets
                   </span>
-                  <div className="flex items-center gap-1.5 flex-wrap">
+                  <div className="flex items-center gap-1 flex-wrap">
                     {initialDbCodes.length > 0 && (
                       <Button
                         type="button"
                         variant="secondary"
                         size="xs"
                         onClick={handleLoadDbLocations}
-                        className="h-7 text-xs font-semibold text-primary cursor-pointer"
+                        className="h-6.5 text-[11px] font-semibold text-primary cursor-pointer px-2"
                       >
-                        <Database className="mr-1 size-3" />
+                        <Database className="mr-1 size-2.5" />
                         All ({initialDbCodes.length})
                       </Button>
                     )}
@@ -1120,7 +1121,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         const dbZoneA = initialDbCodes.filter((c) => c.startsWith("LOC-A"))
                         setCodesInput(dbZoneA.length > 0 ? dbZoneA.join("\n") : ZONE_A_LOCATION_CODES)
                       }}
-                      className="h-7 text-xs cursor-pointer"
+                      className="h-6.5 text-[11px] cursor-pointer px-2"
                     >
                       Zone A
                     </Button>
@@ -1132,7 +1133,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         const dbZoneF = initialDbCodes.filter((c) => c.startsWith("LOC-F"))
                         setCodesInput(dbZoneF.length > 0 ? dbZoneF.join("\n") : ZONE_F_LOCATION_CODES)
                       }}
-                      className="h-7 text-xs cursor-pointer"
+                      className="h-6.5 text-[11px] cursor-pointer px-2"
                     >
                       Zone F
                     </Button>
@@ -1144,7 +1145,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                         const dbZoneS = initialDbCodes.filter((c) => c.startsWith("LOC-S"))
                         setCodesInput(dbZoneS.length > 0 ? dbZoneS.join("\n") : ZONE_S_LOCATION_CODES)
                       }}
-                      className="h-7 text-xs text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700 cursor-pointer"
+                      className="h-6.5 text-[11px] text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700 cursor-pointer px-2"
                     >
                       Zone S
                     </Button>
@@ -1153,7 +1154,7 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                       variant="ghost"
                       size="xs"
                       onClick={() => setCodesInput(FOUR_LEVEL_PREVIEW_CODES)}
-                      className="h-7 text-xs text-muted-foreground cursor-pointer"
+                      className="h-6.5 text-[11px] text-muted-foreground cursor-pointer px-2"
                     >
                       A~D Demo
                     </Button>
@@ -1162,16 +1163,16 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                       variant="ghost"
                       size="xs"
                       onClick={() => setCodesInput("")}
-                      className="h-7 text-xs text-destructive hover:bg-destructive/10 cursor-pointer ml-auto"
+                      className="h-6.5 text-[11px] text-destructive hover:bg-destructive/10 cursor-pointer ml-auto px-1.5"
                     >
-                      <RotateCcw className="size-3 mr-1" />
+                      <RotateCcw className="size-2.5 mr-1" />
                       Clear
                     </Button>
                   </div>
                 </div>
 
-                {/* Codes Textarea with synced vertical height and inner scroll */}
-                <div className="flex-1 flex flex-col space-y-1.5 min-h-0">
+                {/* Codes Textarea with inner vertical scroll and fixed parent container */}
+                <div className="flex-1 min-h-0 flex flex-col space-y-1">
                   <Label htmlFor="codes" className="text-xs font-semibold text-muted-foreground shrink-0">
                     Codes to Print (One location per line)
                   </Label>
@@ -1180,9 +1181,9 @@ export function PrintClient({ initialDbCodes = [] }: { initialDbCodes?: string[]
                     value={codesInput}
                     onChange={(e) => setCodesInput(e.target.value)}
                     placeholder={"LOC-A0105A01\nLOC-A0105B01\nLOC-A0105C01\nLOC-F0101A01..."}
-                    className="font-mono text-xs flex-1 w-full min-h-[160px] bg-muted/20 border-border/80 resize-none leading-relaxed p-3 overflow-y-auto"
+                    className="font-mono text-xs flex-1 h-full w-full bg-muted/20 border-border/80 resize-none leading-relaxed p-2.5 overflow-y-auto"
                   />
-                  <p className="text-[11px] text-muted-foreground leading-tight pt-1 shrink-0">
+                  <p className="text-[10.5px] text-muted-foreground leading-tight shrink-0">
                     Standard: <code className="font-mono text-foreground font-bold">LOC-A0105B01</code> (Zone•Aisle•Bay•Level•Bin)
                   </p>
                 </div>

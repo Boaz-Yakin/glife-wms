@@ -612,9 +612,10 @@
 ---
 
 ## 🛠️ Phase 55: 랙 로케이션 패널 높이 동기화 및 아이템 바코드 전체 검색/카테고리 필터 고도화
-- [x] 55.1 랙 로케이션 큐(Target Locations Queue) 패널 높이 동기화 및 스크롤 개선:
-  - CSS Grid `items-stretch` 및 `min-h-0` flexbox 체계를 적용하여 좌측 `Geometry & Hardware Alignment` 카드와 우측 큐 카드의 높이를 1:1 완벽 일치
-  - 로케이션 코드 Textarea를 flex-1 확장 및 `overflow-y-auto` 독립 세로 스크롤로 구성하여 수십~수백 개 코드 입력 시에도 좌측 카드 높이를 초과하지 않고 정돈된 뷰 유지
+- [x] 55.1 랙 로케이션 설정 패널 컴팩트 복원 및 큐(Target Locations Queue) 높이 440px 완전 고정 & 내부 스크롤:
+  - `Geometry & Hardware Alignment` 패널 내부 간격 및 버튼 패딩을 컴팩트하게 정돈하여 이전의 깔끔한 세로 사이즈로 복원
+  - 좌/우 패널을 데스크톱 `lg:h-[440px]` 동일 높이로 잠그고, `items-start`로 상호 팽창 방지
+  - 로케이션 코드 Textarea를 `flex-1 min-h-0 h-full overflow-y-auto`로 감싸 로케이션 코드가 수십~수백 개로 늘어나더라도 외부 카드 높이는 절대 늘어나지 않고 내부 스크롤로 깔끔하게 탐색 가능하도록 구현
 - [x] 55.2 아이템 바코드(Item Barcodes) 전체 품목 검색 및 카테고리 필터 개선:
   - 기존 초기 화면의 15개 제한(`slice(0, 15)`)을 제거하여 전체 288개 SKU가 스크롤 가능한 카탈로그에 표시되도록 개선
   - 13개 카테고리(Beverage, General, Candy, Nuts, Ramyun 등) 원클릭 필터 드롭다운 탑재
