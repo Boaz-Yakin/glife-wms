@@ -23,7 +23,7 @@ export function CameraBarcodeScanner({
   onClose,
   autoCloseOnScan = true,
   cooldownMs = 1200,
-  confirmationDelayMs = 1000, // 1초 (1000ms) 지연
+  confirmationDelayMs = 3000, // 3초 (3000ms) 유지
   title = "Barcode / QR Scanner",
   onValidate,
   onMismatch,
@@ -39,17 +39,21 @@ export function CameraBarcodeScanner({
   const [detectedCode, setDetectedCode] = useState<string | null>(null);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("IDLE");
   const [confirmProgress, setConfirmProgress] = useState(false);
+  const [isAiming, setIsAiming] = useState(false);
 
   const html5QrCodeRef = useRef<Html5Qrcode | null>(null);
   const lastScanTimeRef = useRef<number>(0);
   const isDetectingRef = useRef<boolean>(false);
   const confirmTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const candidateRef = useRef<{ code: string; firstSeen: number } | null>(null);
 
   const stopScanner = useCallback(async () => {
     if (confirmTimerRef.current) {
       clearTimeout(confirmTimerRef.current);
       confirmTimerRef.current = null;
     }
+    candidateRef.current = null;
+    setIsAiming(false);
     if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
       try {
         await html5QrCodeRef.current.stop();
@@ -110,12 +114,12 @@ export function CameraBarcodeScanner({
         feedback.error();
       }
 
-      // 1초 프로그레스 애니메이션 가동
+      // 3초 프로그레스 애니메이션 가동
       requestAnimationFrame(() => {
         setConfirmProgress(true);
       });
 
-      // 1초(1000ms) 유지 후 화면 복귀 또는 콜백 실행
+      // 3초(3000ms) 유지 후 화면 복귀 또는 콜백 실행
       confirmTimerRef.current = setTimeout(async () => {
         if (isValid) {
           onScan(code);
@@ -164,6 +168,8 @@ export function CameraBarcodeScanner({
       setDetectedCode(null);
       setConfirmProgress(false);
       isDetectingRef.current = false;
+      candidateRef.current = null;
+      setIsAiming(false);
 
       try {
         if (html5QrCodeRef.current && html5QrCodeRef.current.isScanning) {
@@ -188,20 +194,45 @@ export function CameraBarcodeScanner({
         });
         html5QrCodeRef.current = html5QrCode;
 
+        // 화면 중앙 영역만 정확하게 크롭하여 인식하도록 함수형 qrbox 구성
         const config = {
           fps: 15,
-          qrbox: { width: 270, height: 270 },
-          aspectRatio: 1.0,
+          qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+            const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+            const edge = Math.max(Math.min(Math.floor(minEdge * 0.7), 260), 180);
+            return { width: edge, height: edge };
+          },
         };
 
         await html5QrCode.start(
           { facingMode: facing },
           config,
           (decodedText) => {
-            handleDetected(decodedText);
+            const now = Date.now();
+            if (now - lastScanTimeRef.current < cooldownMs) return;
+            if (isDetectingRef.current) return;
+
+            const trimmed = decodedText?.trim();
+            if (!trimmed) return;
+
+            // 화면 중앙에 바코드가 위치한 후 안정적으로 조준(350ms)되었을 때 인식을 시작
+            if (candidateRef.current && candidateRef.current.code === trimmed) {
+              if (now - candidateRef.current.firstSeen >= 350) {
+                candidateRef.current = null;
+                setIsAiming(false);
+                handleDetected(trimmed);
+              }
+            } else {
+              candidateRef.current = { code: trimmed, firstSeen: now };
+              setIsAiming(true);
+            }
           },
           () => {
-            // ignore frame decode misses
+            // 바코드가 중앙 영역에서 벗어난 경우 조준 상태 리셋
+            if (candidateRef.current && Date.now() - candidateRef.current.firstSeen > 500) {
+              candidateRef.current = null;
+              setIsAiming(false);
+            }
           }
         );
 
@@ -231,7 +262,7 @@ export function CameraBarcodeScanner({
         setIsScanning(false);
       }
     },
-    [handleDetected, scannerId, stopScanner]
+    [cooldownMs, handleDetected, scannerId, stopScanner]
   );
 
   useEffect(() => {
@@ -349,6 +380,8 @@ export function CameraBarcodeScanner({
                   ? "border-4 border-rose-500 bg-rose-500/30 shadow-[0_0_60px_rgba(244,63,94,0.8)] backdrop-blur-[2px] scale-[1.02]"
                   : scanStatus === "VALIDATING"
                   ? "border-2 border-amber-400/90 bg-amber-500/15 shadow-[0_0_30px_rgba(245,158,11,0.35)]"
+                  : isAiming
+                  ? "border-2 border-emerald-400 bg-emerald-500/10 shadow-[0_0_40px_rgba(16,185,129,0.4)] scale-[1.02]"
                   : "border-2 border-emerald-400/80 bg-black/10 shadow-[0_0_30px_rgba(16,185,129,0.25)]"
               }`}
             >
@@ -359,6 +392,8 @@ export function CameraBarcodeScanner({
                     ? "border-emerald-300"
                     : scanStatus === "MISMATCH"
                     ? "border-rose-400"
+                    : isAiming
+                    ? "border-emerald-300 animate-pulse"
                     : "border-emerald-400"
                 }`}
               />
@@ -368,6 +403,8 @@ export function CameraBarcodeScanner({
                     ? "border-emerald-300"
                     : scanStatus === "MISMATCH"
                     ? "border-rose-400"
+                    : isAiming
+                    ? "border-emerald-300 animate-pulse"
                     : "border-emerald-400"
                 }`}
               />
@@ -377,6 +414,8 @@ export function CameraBarcodeScanner({
                     ? "border-emerald-300"
                     : scanStatus === "MISMATCH"
                     ? "border-rose-400"
+                    : isAiming
+                    ? "border-emerald-300 animate-pulse"
                     : "border-emerald-400"
                 }`}
               />
@@ -386,6 +425,8 @@ export function CameraBarcodeScanner({
                     ? "border-emerald-300"
                     : scanStatus === "MISMATCH"
                     ? "border-rose-400"
+                    : isAiming
+                    ? "border-emerald-300 animate-pulse"
                     : "border-emerald-400"
                 }`}
               />
@@ -393,10 +434,10 @@ export function CameraBarcodeScanner({
               {/* Aiming Reticle Crosshair when seeking */}
               {scanStatus === "IDLE" && (
                 <>
-                  <div className="absolute w-4 h-0.5 bg-emerald-400/40" />
-                  <div className="absolute w-0.5 h-4 bg-emerald-400/40" />
+                  <div className={`absolute w-4 h-0.5 transition-colors ${isAiming ? "bg-emerald-300" : "bg-emerald-400/40"}`} />
+                  <div className={`absolute w-0.5 h-4 transition-colors ${isAiming ? "bg-emerald-300" : "bg-emerald-400/40"}`} />
                   {/* Animated Laser Scanning Line */}
-                  <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#10B981] animate-[scanLaser_2s_ease-in-out_infinite]" />
+                  <div className={`w-full h-0.5 bg-gradient-to-r from-transparent via-emerald-400 to-transparent shadow-[0_0_10px_#10B981] ${isAiming ? "opacity-90 animate-pulse" : "animate-[scanLaser_2s_ease-in-out_infinite]"}`} />
                 </>
               )}
 
@@ -412,7 +453,7 @@ export function CameraBarcodeScanner({
                 </div>
               )}
 
-              {/* MATCH OVERLAY: 옅은 녹색 사각형 오버랩 (1초 유지) */}
+              {/* MATCH OVERLAY: 옅은 녹색 사각형 오버랩 (3초 유지) */}
               {scanStatus === "MATCH" && (
                 <div className="flex flex-col items-center justify-center p-3 text-center space-y-2 animate-in zoom-in-95 duration-200">
                   <div className="w-12 h-12 rounded-full bg-emerald-500/40 text-emerald-200 border-2 border-emerald-300 flex items-center justify-center shadow-lg">
@@ -430,11 +471,11 @@ export function CameraBarcodeScanner({
                   </div>
 
                   <span className="text-[11px] font-bold text-emerald-200">
-                    확인 완료! 1초 후 화면 복귀...
+                    확인 완료! 잠시 후 화면 복귀...
                   </span>
 
-                  {/* 1초 녹색 프로그레스 바 */}
-                  <div className="w-40 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-emerald-400/50">
+                  {/* 프로그레스 바 */}
+                  <div className="w-44 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-emerald-400/50">
                     <div
                       className={`h-full bg-emerald-400 transition-all ease-linear ${
                         confirmProgress ? "w-full" : "w-0"
@@ -445,7 +486,7 @@ export function CameraBarcodeScanner({
                 </div>
               )}
 
-              {/* MISMATCH OVERLAY: 적색 사각형 오버랩 (1초 유지) */}
+              {/* MISMATCH OVERLAY */}
               {scanStatus === "MISMATCH" && (
                 <div className="flex flex-col items-center justify-center p-3 text-center space-y-2 animate-in zoom-in-95 duration-200">
                   <div className="w-12 h-12 rounded-full bg-rose-500/40 text-rose-200 border-2 border-rose-400 flex items-center justify-center shadow-lg">
@@ -466,8 +507,8 @@ export function CameraBarcodeScanner({
                     일치하지 않는 바코드입니다
                   </span>
 
-                  {/* 1초 적색 프로그레스 바 */}
-                  <div className="w-40 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-rose-500/50">
+                  {/* 프로그레스 바 */}
+                  <div className="w-44 h-1.5 bg-black/60 rounded-full overflow-hidden mt-1 border border-rose-500/50">
                     <div
                       className={`h-full bg-rose-500 transition-all ease-linear ${
                         confirmProgress ? "w-full" : "w-0"
@@ -488,6 +529,8 @@ export function CameraBarcodeScanner({
                   ? "bg-rose-950/90 border-rose-500 text-rose-200 shadow-[0_0_25px_rgba(244,63,94,0.5)]"
                   : scanStatus === "VALIDATING"
                   ? "bg-amber-950/90 border-amber-400 text-amber-200"
+                  : isAiming
+                  ? "bg-emerald-950/90 border-emerald-400 text-emerald-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] animate-pulse"
                   : "bg-zinc-900/85 backdrop-blur border-zinc-700 text-zinc-200"
               }`}
             >
@@ -512,11 +555,18 @@ export function CameraBarcodeScanner({
                     데이터베이스 정보 대조 중...
                   </span>
                 </>
+              ) : isAiming ? (
+                <>
+                  <Loader2 className="w-4 h-4 text-emerald-400 shrink-0 animate-spin" />
+                  <span className="text-xs font-bold text-emerald-300">
+                    중앙 조준 유지 중... (잠시 멈춰주세요)
+                  </span>
+                </>
               ) : (
                 <>
                   <ScanLine className="w-4 h-4 text-emerald-400 shrink-0 animate-pulse" />
                   <span className="text-xs font-semibold">
-                    사각 영역 안에 2D QR 또는 바코드를 비춰주세요
+                    화면 중앙 사각 프레임에 바코드를 맞춰주세요
                   </span>
                 </>
               )}
