@@ -270,6 +270,13 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
+    const formatItemNameWithDesc = (item?: { name_en?: string | null; desc_en?: string | null } | null) => {
+      if (!item) return 'N/A'
+      const name = item.name_en?.trim() || 'N/A'
+      const desc = item.desc_en?.trim()
+      return desc ? `${name} (${desc})` : name
+    }
+
     // 1. All Inventory Sheet
     const allSheet = data.map((d) => {
       const available = d.on_hand_qty - d.allocated_qty
@@ -279,7 +286,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         Location: d.location?.code || 'N/A',
         Zone: d.location?.zone_type || 'N/A',
         SKU: d.item?.sku || 'N/A',
-        "Item Name": d.item?.desc_en ? `${d.item?.name_en} (${d.item?.desc_en})` : (d.item?.name_en || 'N/A'),
+        "Item Name": formatItemNameWithDesc(d.item),
         "Exp. Date": d.expiration_date || 'N/A',
         "Lot No": d.lot_no || 'N/A',
         "On Hand": d.on_hand_qty,
@@ -313,7 +320,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         reorderSheet.push({
           Urgency: urgency,
           SKU: d.item?.sku || 'N/A',
-          "Item Name": d.item?.name_en || 'N/A',
+          "Item Name": formatItemNameWithDesc(d.item),
           Location: d.location?.code || 'N/A',
           Available: available,
           "Safety Stock": ss,
@@ -342,7 +349,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
           stockoutSheet.push({
             "Risk Level": risk,
             SKU: d.item?.sku || 'N/A',
-            "Item Name": d.item?.name_en || 'N/A',
+            "Item Name": formatItemNameWithDesc(d.item),
             Location: d.location?.code || 'N/A',
             Available: available,
             "Daily Velocity (ADU)": vel,
@@ -373,7 +380,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
             "Exp. Date": d.expiration_date,
             "Lot No": d.lot_no || 'N/A',
             SKU: d.item?.sku || 'N/A',
-            "Item Name": d.item?.name_en || 'N/A',
+            "Item Name": formatItemNameWithDesc(d.item),
             Location: d.location?.code || 'N/A',
             "On Hand Qty": d.on_hand_qty,
             Allocated: d.allocated_qty,
@@ -394,7 +401,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         overstockSheet.push({
           Classification: "DEAD STOCK (No Outbound in 30d)",
           SKU: d.item?.sku || 'N/A',
-          "Item Name": d.item?.name_en || 'N/A',
+          "Item Name": formatItemNameWithDesc(d.item),
           Location: d.location?.code || 'N/A',
           Available: available,
           "Daily Velocity (ADU)": 0,
@@ -404,7 +411,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         overstockSheet.push({
           Classification: "SURPLUS (Excess Stock)",
           SKU: d.item?.sku || 'N/A',
-          "Item Name": d.item?.name_en || 'N/A',
+          "Item Name": formatItemNameWithDesc(d.item),
           Location: d.location?.code || 'N/A',
           Available: available,
           "Daily Velocity (ADU)": vel,

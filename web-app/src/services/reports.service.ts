@@ -2,6 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { getActiveClientAction } from '@/app/actions/client.actions'
 import { getItemDynamicThresholdsMap, DynamicItemThreshold } from './inventory.service'
 
+export function formatItemDisplayName(nameEn?: string | null, descEn?: string | null): string {
+  const name = nameEn?.trim() || 'N/A'
+  const desc = descEn?.trim()
+  return desc ? `${name} (${desc})` : name
+}
+
 export interface ReorderItemReport {
   itemId: string
   sku: string
@@ -203,7 +209,7 @@ export async function getInventoryReportsData(): Promise<InventoryReportsData> {
           id: row.id,
           itemId: item.id,
           sku: item.sku,
-          nameEn: item.name_en,
+          nameEn: formatItemDisplayName(item.name_en, item.desc_en),
           locationCode: locCode,
           zoneType: zone,
           lotNo: row.lot_no || 'N/A',
@@ -243,7 +249,7 @@ export async function getInventoryReportsData(): Promise<InventoryReportsData> {
       reorderItems.push({
         itemId,
         sku: agg.item.sku,
-        nameEn: agg.item.name_en,
+        nameEn: formatItemDisplayName(agg.item.name_en, agg.item.desc_en),
         descEn: agg.item.desc_en,
         locationCode: locSummary,
         zoneType: zoneSummary,
@@ -271,7 +277,7 @@ export async function getInventoryReportsData(): Promise<InventoryReportsData> {
         stockoutRiskItems.push({
           itemId,
           sku: agg.item.sku,
-          nameEn: agg.item.name_en,
+          nameEn: formatItemDisplayName(agg.item.name_en, agg.item.desc_en),
           locationCode: locSummary,
           zoneType: zoneSummary,
           available,
@@ -288,7 +294,7 @@ export async function getInventoryReportsData(): Promise<InventoryReportsData> {
       surplusItems.push({
         itemId,
         sku: agg.item.sku,
-        nameEn: agg.item.name_en,
+        nameEn: formatItemDisplayName(agg.item.name_en, agg.item.desc_en),
         locationCode: locSummary,
         zoneType: zoneSummary,
         available,
@@ -301,7 +307,7 @@ export async function getInventoryReportsData(): Promise<InventoryReportsData> {
       surplusItems.push({
         itemId,
         sku: agg.item.sku,
-        nameEn: agg.item.name_en,
+        nameEn: formatItemDisplayName(agg.item.name_en, agg.item.desc_en),
         locationCode: locSummary,
         zoneType: zoneSummary,
         available,
