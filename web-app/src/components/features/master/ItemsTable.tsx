@@ -145,7 +145,7 @@ const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => 
     header: "Registered Date",
     cell: ({ row }) => {
       const date = new Date(row.original.created_at)
-      return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('ko-KR')}</div>
+      return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('en-US')}</div>
     }
   },
   {

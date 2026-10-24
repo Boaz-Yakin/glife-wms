@@ -50,7 +50,7 @@ const columns: ColumnDef<AuditData>[] = [
     header: "Date/Time",
     cell: ({ row }) => {
       const date = new Date(row.original.created_at)
-      return <div className="tabular-nums">{date.toLocaleString('ko-KR')}</div>
+      return <div className="tabular-nums text-sm">{date.toLocaleString('en-US')}</div>
     }
   },
   {
@@ -133,7 +133,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
 
   const handleExport = () => {
     const flattened = data.map((d) => ({
-      "Date/Time": d.created_at ? new Date(d.created_at).toLocaleString('ko-KR') : '',
+      "Date/Time": d.created_at ? new Date(d.created_at).toLocaleString('en-US') : '',
       Location: d.inventory?.location?.code || 'N/A',
       SKU: d.inventory?.item?.sku || 'N/A',
       "Item Name": d.inventory?.item?.desc_en ? `${d.inventory?.item?.name_en} (${d.inventory?.item?.desc_en})` : (d.inventory?.item?.name_en || 'N/A'),

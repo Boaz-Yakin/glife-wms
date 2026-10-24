@@ -290,7 +290,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         "Safety Stock": d.item?.dynamicThreshold?.safetyStock ?? d.item?.min_stock_qty ?? 10,
         "Reorder Point": d.item?.dynamicThreshold?.reorderPoint ?? 50,
         "Lead Time (Days)": d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7,
-        "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString() : '',
+        "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString('en-US') : '',
       }
     })
 
