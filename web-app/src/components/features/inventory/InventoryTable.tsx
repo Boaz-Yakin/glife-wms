@@ -27,8 +27,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Download, SlidersHorizontal, RotateCcw, Zap, Sliders, Info } from "lucide-react"
-import { exportToExcel } from "@/lib/export"
+import { Download, SlidersHorizontal, RotateCcw, Zap, Sliders, Info, FileSpreadsheet } from "lucide-react"
+import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { DynamicItemThreshold } from "@/services/inventory.service"
@@ -267,23 +267,170 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
   }
 
   const handleExport = () => {
-    const flattened = data.map((d) => ({
-      Location: d.location?.code || 'N/A',
-      Zone: d.location?.zone_type || 'N/A',
-      SKU: d.item?.sku || 'N/A',
-      "Item Name": d.item?.desc_en ? `${d.item?.name_en} (${d.item?.desc_en})` : (d.item?.name_en || 'N/A'),
-      "Exp. Date": d.expiration_date || 'N/A',
-      "Lot No": d.lot_no || 'N/A',
-      "On Hand": d.on_hand_qty,
-      Allocated: d.allocated_qty,
-      Available: d.on_hand_qty - d.allocated_qty,
-      "Daily Velocity (ADU)": d.item?.dynamicThreshold?.dailyVelocity ?? 0,
-      "Safety Stock": d.item?.dynamicThreshold?.safetyStock ?? d.item?.min_stock_qty ?? 10,
-      "Reorder Point": d.item?.dynamicThreshold?.reorderPoint ?? 50,
-      "Lead Time (Days)": d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7,
-      "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString() : '',
-    }))
-    exportToExcel(flattened, "Inventory_Report")
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    // 1. All Inventory Sheet
+    const allSheet = data.map((d) => {
+      const available = d.on_hand_qty - d.allocated_qty
+      const vel = d.item?.dynamicThreshold?.dailyVelocity ?? 0
+      const dos = vel > 0 ? Math.round((available / vel) * 10) / 10 : 'N/A'
+      return {
+        Location: d.location?.code || 'N/A',
+        Zone: d.location?.zone_type || 'N/A',
+        SKU: d.item?.sku || 'N/A',
+        "Item Name": d.item?.desc_en ? `${d.item?.name_en} (${d.item?.desc_en})` : (d.item?.name_en || 'N/A'),
+        "Exp. Date": d.expiration_date || 'N/A',
+        "Lot No": d.lot_no || 'N/A',
+        "On Hand": d.on_hand_qty,
+        Allocated: d.allocated_qty,
+        Available: available,
+        "Daily Velocity (ADU)": vel,
+        "Days of Supply (DOS)": dos,
+        "Safety Stock": d.item?.dynamicThreshold?.safetyStock ?? d.item?.min_stock_qty ?? 10,
+        "Reorder Point": d.item?.dynamicThreshold?.reorderPoint ?? 50,
+        "Lead Time (Days)": d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7,
+        "Updated At": d.updated_at ? new Date(d.updated_at).toLocaleString() : '',
+      }
+    })
+
+    // 2. Reorder Suggestions Sheet (Available <= Reorder Point)
+    const reorderSheet: any[] = []
+    data.forEach((d) => {
+      const available = d.on_hand_qty - d.allocated_qty
+      const rop = d.item?.dynamicThreshold?.reorderPoint ?? 50
+      const ss = d.item?.dynamicThreshold?.safetyStock ?? d.item?.min_stock_qty ?? 10
+      const leadTime = d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7
+      const vel = d.item?.dynamicThreshold?.dailyVelocity ?? 0
+
+      if (available <= rop) {
+        const deficit = Math.max(0, rop - available)
+        const roq = Math.max(0, (rop + ss) - available)
+        let urgency = "NORMAL (Below ROP)"
+        if (available <= 0) urgency = "CRITICAL (Stockout)"
+        else if (available <= ss) urgency = "HIGH (Below Safety Stock)"
+
+        reorderSheet.push({
+          Urgency: urgency,
+          SKU: d.item?.sku || 'N/A',
+          "Item Name": d.item?.name_en || 'N/A',
+          Location: d.location?.code || 'N/A',
+          Available: available,
+          "Safety Stock": ss,
+          "Reorder Point": rop,
+          "Deficit Qty": deficit,
+          "Recommended Order Qty (ROQ)": roq,
+          "Daily Velocity (ADU)": vel,
+          "Lead Time (Days)": leadTime,
+        })
+      }
+    })
+    reorderSheet.sort((a, b) => (a.Available - b.Available))
+
+    // 3. Stockout Risk Sheet (DOS <= 14 days and vel > 0)
+    const stockoutSheet: any[] = []
+    data.forEach((d) => {
+      const available = d.on_hand_qty - d.allocated_qty
+      const vel = d.item?.dynamicThreshold?.dailyVelocity ?? 0
+      if (vel > 0) {
+        const dos = Math.round((available / vel) * 10) / 10
+        if (dos <= 14) {
+          let risk = "WATCH (≤14 Days)"
+          if (dos <= 3) risk = "URGENT (≤3 Days)"
+          else if (dos <= 7) risk = "WARNING (≤7 Days)"
+
+          stockoutSheet.push({
+            "Risk Level": risk,
+            SKU: d.item?.sku || 'N/A',
+            "Item Name": d.item?.name_en || 'N/A',
+            Location: d.location?.code || 'N/A',
+            Available: available,
+            "Daily Velocity (ADU)": vel,
+            "Days of Supply (DOS)": dos,
+            "Lead Time (Days)": d.item?.dynamicThreshold?.leadTimeDays ?? d.item?.lead_time_days ?? 7,
+          })
+        }
+      }
+    })
+    stockoutSheet.sort((a, b) => (a["Days of Supply (DOS)"] - b["Days of Supply (DOS)"]))
+
+    // 4. FEFO & Expiry Alert Sheet
+    const expirySheet: any[] = []
+    data.forEach((d) => {
+      if (d.expiration_date) {
+        const expDate = new Date(d.expiration_date)
+        expDate.setHours(0, 0, 0, 0)
+        const diffDays = Math.ceil((expDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        if (diffDays <= 90) {
+          let status = `WATCH (D-${diffDays})`
+          if (diffDays <= 0) status = diffDays === 0 ? "D-Day (Expires Today)" : `EXPIRED (${Math.abs(diffDays)}d ago)`
+          else if (diffDays <= 14) status = `CRITICAL (D-${diffDays})`
+          else if (diffDays <= 45) status = `WARNING (D-${diffDays})`
+
+          expirySheet.push({
+            Status: status,
+            "Days Remaining": diffDays,
+            "Exp. Date": d.expiration_date,
+            "Lot No": d.lot_no || 'N/A',
+            SKU: d.item?.sku || 'N/A',
+            "Item Name": d.item?.name_en || 'N/A',
+            Location: d.location?.code || 'N/A',
+            "On Hand Qty": d.on_hand_qty,
+            Allocated: d.allocated_qty,
+          })
+        }
+      }
+    })
+    expirySheet.sort((a, b) => (a["Days Remaining"] - b["Days Remaining"]))
+
+    // 5. Overstock & Dead Stock
+    const overstockSheet: any[] = []
+    data.forEach((d) => {
+      const available = d.on_hand_qty - d.allocated_qty
+      const vel = d.item?.dynamicThreshold?.dailyVelocity ?? 0
+      const surplus = d.item?.dynamicThreshold?.surplusPoint ?? 200
+
+      if (available > 0 && vel === 0) {
+        overstockSheet.push({
+          Classification: "DEAD STOCK (No Outbound in 30d)",
+          SKU: d.item?.sku || 'N/A',
+          "Item Name": d.item?.name_en || 'N/A',
+          Location: d.location?.code || 'N/A',
+          Available: available,
+          "Daily Velocity (ADU)": 0,
+          "Surplus Point": surplus,
+        })
+      } else if (available >= surplus) {
+        overstockSheet.push({
+          Classification: "SURPLUS (Excess Stock)",
+          SKU: d.item?.sku || 'N/A',
+          "Item Name": d.item?.name_en || 'N/A',
+          Location: d.location?.code || 'N/A',
+          Available: available,
+          "Daily Velocity (ADU)": vel,
+          "Surplus Point": surplus,
+        })
+      }
+    })
+    overstockSheet.sort((a, b) => (b.Available - a.Available))
+
+    toast.promise(
+      new Promise<void>((resolve) => {
+        exportMultiSheetExcel([
+          { sheetName: "All Inventory", data: allSheet },
+          { sheetName: "Reorder Suggestions", data: reorderSheet },
+          { sheetName: "Stockout Risk (DOS)", data: stockoutSheet },
+          { sheetName: "FEFO Expiry Alert", data: expirySheet },
+          { sheetName: "Overstock & Dead Stock", data: overstockSheet },
+        ], `Inventory_Executive_Report_${new Date().toISOString().slice(0, 10)}`)
+        resolve()
+      }),
+      {
+        loading: "Generating 5-in-1 Executive Report...",
+        success: "5-in-1 Executive Inventory Report downloaded!",
+        error: "Failed to generate Excel report"
+      }
+    )
   }
 
   const columns = React.useMemo<ColumnDef<InventoryData>[]>(() => [
@@ -572,9 +719,14 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
             </PopoverContent>
           </Popover>
 
-          <Button variant="outline" className="shrink-0 bg-background" onClick={handleExport}>
-            <Download className="mr-2 size-4" />
-            Download Excel
+          <Button 
+            variant="outline" 
+            className="shrink-0 bg-background gap-2 font-medium cursor-pointer border-emerald-600/30 hover:bg-emerald-500/5 hover:border-emerald-600/50" 
+            onClick={handleExport}
+            title="Export 5-in-1 Executive Multi-Sheet Excel (Inventory, Reorder, DOS, FEFO, Dead Stock)"
+          >
+            <FileSpreadsheet className="size-4 text-emerald-600 dark:text-emerald-400" />
+            <span>Executive Report (.xlsx)</span>
           </Button>
         </div>
       </div>

@@ -558,6 +558,29 @@
   - 역할 수정/삭제 완료 후 `router.refresh()` 및 로컬 상태 동기화로 무새로고침 즉각 반영
 - [x] 50.5 Next.js 16 프로덕션 빌드(`npm run build`) 검증 100% 통과 완료
 
+---
+
+## 📊 Phase 51: [1단계] 다중 시트 통합 재고 리포트(Executive Multi-Sheet Excel) 체계 구축
+- [x] 51.1 `lib/export.ts` 다중 시트 엑셀 내보내기 엔진 (`exportMultiSheetExcel`) 구현 (열 너비 자동 계산 및 워크시트 분할)
+- [x] 51.2 5대 전문 워크시트 자동 생성 파이프라인 구축 ([`InventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryTable.tsx)):
+  - Sheet 1: `All Inventory` (전체 재고 현황 및 로케이션, ADU, SS, ROP, DOS)
+  - Sheet 2: `Reorder Suggestions` (발주 제안서: Available ≤ ROP, 긴급도 Critical/High/Normal, 부족 수량, 추천 발주량 ROQ, 리드타임)
+  - Sheet 3: `Stockout Risk (DOS)` (결품 위험: DOS ≤ 7일 품목 정렬, 일일 소진율, 잔여일수)
+  - Sheet 4: `FEFO & Expiry Alert` (유통기한 임박/만료: D-Day 순 정렬, 잔여 일수, Lot 번호, 상태 라벨)
+  - Sheet 5: `Overstock & Dead Stock` (잉여/부동 재고: Available ≥ Surplus 및 최근 30일 무출고 품목)
+- [x] 51.3 `InventoryTable` 상단에 [Export All Reports (5-in-1 .xlsx)] 스마트 내보내기 버튼 탑재
+
+---
+
+## 📈 Phase 52: [2단계] 종합 재고 분석 보고서 허브(`/inventory/reports`) 구축
+- [x] 52.1 리포트 전용 백엔드 집계 서비스 구축 ([`services/reports.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/reports.service.ts))
+- [x] 52.2 4대 핵심 KPI 카드 및 인터랙티브 탭 UI 구현 ([`InventoryReportsView.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryReportsView.tsx))
+- [x] 52.3 보고서 전용 라우트 생성 ([`app/(dashboard)/inventory/reports/page.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/inventory/reports/page.tsx))
+- [x] 52.4 사이드바 네비게이션 서브메뉴 연동 ([`AppSidebar.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/AppSidebar.tsx))
+- [x] 52.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
+
+
 
 
 

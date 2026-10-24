@@ -28,6 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   // State for collapsible menus
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => ({
+    "Inventory": pathname.startsWith("/inventory"),
     "Master Data": pathname.startsWith("/master"),
     "Settings": pathname.startsWith("/settings"),
   }))
@@ -36,6 +37,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Automatically expands the active section and collapses inactive sections
   React.useEffect(() => {
     setOpenGroups({
+      "Inventory": pathname.startsWith("/inventory"),
       "Master Data": pathname.startsWith("/master"),
       "Settings": pathname.startsWith("/settings"),
     })
@@ -63,6 +65,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Inventory",
       url: "/inventory",
       icon: PackageSearch,
+      items: [
+        { title: "Stock Overview", url: "/inventory" },
+        { title: "Reports & Analytics", url: "/inventory/reports" },
+        { title: "Audit History", url: "/inventory/audit" },
+      ]
     },
     {
       title: "Orders",
