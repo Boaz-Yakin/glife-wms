@@ -191,8 +191,47 @@ export async function getLocations({ search = '' }: { search?: string } = {}) {
 }
 
 
-export async function getClients() {
+export interface ClientData {
+  id: string
+  name: string
+  code: string
+  is_active: boolean
+  created_at: string
+  updated_at?: string
+  item_count?: number
+  store_count?: number
+  order_count?: number
+}
+
+export async function getClients(options: { withStats?: boolean } = {}) {
   const supabase = await createClient()
-  const { data } = await supabase.from('clients').select('*').order('name')
-  return { data }
+  const { data, error } = await supabase.from('clients').select('*').order('name')
+  if (error || !data) {
+    return { data: [], error: error?.message || null }
+  }
+
+  if (options.withStats) {
+    const clientsWithStats: ClientData[] = await Promise.all(
+      data.map(async (c: any) => {
+        const [
+          { count: itemCount },
+          { count: storeCount },
+          { count: orderCount },
+        ] = await Promise.all([
+          supabase.from('items').select('*', { count: 'exact', head: true }).eq('client_id', c.id),
+          supabase.from('stores').select('*', { count: 'exact', head: true }).eq('client_id', c.id),
+          supabase.from('orders').select('*', { count: 'exact', head: true }).eq('client_id', c.id),
+        ])
+        return {
+          ...c,
+          item_count: itemCount || 0,
+          store_count: storeCount || 0,
+          order_count: orderCount || 0,
+        }
+      })
+    )
+    return { data: clientsWithStats, error: null }
+  }
+
+  return { data, error: null }
 }

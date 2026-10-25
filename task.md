@@ -652,6 +652,24 @@
   - `Shelf Life / Policy` 컬럼 추가: 품목별 기준 수명(`180 Days`) 및 출고 최소 잔여일(`Min: 14d`)을 직관적인 2단 타이포로 표시
 - [x] 57.4 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 🏢 Phase 58: 3PL 화주사 마스터(Client Master) 관리 기능 및 온보딩 파이프라인 구축
+- [x] 58.1 `master.service.ts`의 `getClients({ withStats: true })` 확장:
+  - 각 화주사별 보유 SKU 수(`item_count`), 배송지 매장 수(`store_count`), 누적 주문 수(`order_count`) 통계 집계 기능 추가
+- [x] 58.2 Server Actions (`master/clients/actions.ts`):
+  - `createClientAction`: 화주사명 기반 고유 코드 자동 슬러그(`CLIENT-***`) 생성 및 중복 방지
+  - `updateClientAction`: 화주사명, 코드, 활성 상태 수정
+  - `toggleClientStatusAction`: 화주사 원클릭 활성/비활성 토글
+  - `deleteClientAction`: 종속된 아이템/매장/주문이 존재할 경우 삭제 방지 및 비활성화 권고(Safety Guard)
+- [x] 58.3 UI 컴포넌트 개발:
+  - `ClientFormDialog.tsx`: 화주사 등록/수정 모달 다이얼로그 (이름 입력 시 코드 자동 완성)
+  - `ClientsTable.tsx`: 화주사 목록 그리드 (Warehouse Footprint 통계, Active Tenant 배지, 옵션 메뉴, 즉시 테넌트 전환 지원)
+  - `/master/clients/page.tsx`: 3PL Client Master 메인 페이지 구축
+- [x] 58.4 네비게이션 연동:
+  - `AppSidebar.tsx` 내 `Master Data` 첫 번째 하위 메뉴로 `Clients (3PL)` 등록
+- [x] 58.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
 
 
 

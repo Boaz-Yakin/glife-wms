@@ -81,6 +81,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/master",
       icon: Database,
       items: [
+        { title: "Clients (3PL)", url: "/master/clients" },
         { title: "Items (SKU)", url: "/master/items" },
         { title: "Stores", url: "/master/stores" },
         { title: "Locations", url: "/master/locations" },
