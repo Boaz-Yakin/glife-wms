@@ -35,14 +35,6 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import type { ClientData } from "@/services/master.service"
 import { ClientFormDialog } from "./ClientFormDialog"
 import {
@@ -183,23 +175,31 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {
-        const active = row.original.is_active
+        const client = row.original
+        const active = client.is_active
         return (
-          <Badge
-            variant={active ? "outline" : "secondary"}
-            className={
-              active
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium"
-                : "bg-zinc-500/10 text-zinc-600 border-zinc-500/20 font-medium"
-            }
+          <button
+            type="button"
+            onClick={() => handleToggleStatus(client)}
+            className="cursor-pointer group flex items-center"
+            title="Click to toggle active status"
           >
-            {active ? (
-              <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
-            ) : (
-              <XCircle className="w-3 h-3 mr-1 text-zinc-500" />
-            )}
-            {active ? "Active" : "Inactive"}
-          </Badge>
+            <Badge
+              variant={active ? "outline" : "secondary"}
+              className={
+                active
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium hover:bg-emerald-500/20 transition-colors"
+                  : "bg-zinc-500/10 text-zinc-600 border-zinc-500/20 font-medium hover:bg-zinc-500/20 transition-colors"
+              }
+            >
+              {active ? (
+                <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-600" />
+              ) : (
+                <XCircle className="w-3 h-3 mr-1 text-zinc-500" />
+              )}
+              {active ? "Active" : "Inactive"}
+            </Badge>
+          </button>
         )
       },
     },
@@ -220,47 +220,15 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
         const isBusy = actionId === client.id
 
         return (
-          <div className="text-right">
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted focus:outline-none cursor-pointer"
-                disabled={isBusy}
-              >
-                {isBusy ? (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                ) : (
-                  <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="sr-only">Open menu</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>Client Options</DropdownMenuLabel>
-                {!isCurrent && client.is_active && (
-                  <DropdownMenuItem onClick={() => handleSelectActive(client.id)} className="cursor-pointer">
-                    <Radio className="mr-2 h-4 w-4 text-emerald-600" />
-                    Switch to this Client
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={() => handleOpenEdit(client)} className="cursor-pointer">
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Edit Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleToggleStatus(client)} className="cursor-pointer">
-                  <Power className="mr-2 h-4 w-4" />
-                  {client.is_active ? "Deactivate Client" : "Activate Client"}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => handleDelete(client)}
-                  variant="destructive"
-                  className="cursor-pointer"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Client
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          <ClientActionsMenu
+            client={client}
+            isCurrent={isCurrent}
+            isBusy={isBusy}
+            onSelectActive={handleSelectActive}
+            onEdit={handleOpenEdit}
+            onToggleStatus={handleToggleStatus}
+            onDelete={handleDelete}
+          />
         )
       },
     },
@@ -289,7 +257,7 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
       </div>
 
       {/* Table Container */}
-      <div className="rounded-lg border bg-card shadow-xs overflow-hidden">
+      <div className="rounded-lg border bg-card shadow-xs">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -335,6 +303,155 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
         onSubmit={handleSubmit}
         loading={loading}
       />
+    </div>
+  )
+}
+
+interface ClientActionsMenuProps {
+  client: ClientData
+  isCurrent: boolean
+  isBusy: boolean
+  onSelectActive: (id: string) => void
+  onEdit: (client: ClientData) => void
+  onToggleStatus: (client: ClientData) => void
+  onDelete: (client: ClientData) => void
+}
+
+function ClientActionsMenu({
+  client,
+  isCurrent,
+  isBusy,
+  onSelectActive,
+  onEdit,
+  onToggleStatus,
+  onDelete,
+}: ClientActionsMenuProps) {
+  const [open, setOpen] = React.useState(false)
+  const menuRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    if (!open) return
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [open])
+
+  return (
+    <div className="flex items-center justify-end gap-1 relative" ref={menuRef}>
+      {/* Quick Edit button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 hover:bg-muted"
+        onClick={() => onEdit(client)}
+        disabled={isBusy}
+        title="Edit Client"
+      >
+        <Edit2 className="h-4 w-4 text-muted-foreground" />
+        <span className="sr-only">Edit Client</span>
+      </Button>
+
+      {/* Quick Delete button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8 text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={() => onDelete(client)}
+        disabled={isBusy}
+        title="Delete Client"
+      >
+        <Trash2 className="h-4 w-4" />
+        <span className="sr-only">Delete Client</span>
+      </Button>
+
+      {/* More ... Dropdown Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className={`h-8 w-8 hover:bg-muted cursor-pointer ${open ? "bg-muted" : ""}`}
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((v) => !v)
+        }}
+        disabled={isBusy}
+        title="More actions"
+      >
+        {isBusy ? (
+          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+        ) : (
+          <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
+        )}
+        <span className="sr-only">Open options</span>
+      </Button>
+
+      {/* Dropdown Menu Popup */}
+      {open && (
+        <div className="absolute right-0 top-full mt-1.5 w-52 rounded-lg border bg-popover p-1.5 text-popover-foreground shadow-xl z-50 text-left text-xs space-y-0.5">
+          <div className="px-2 py-1 font-semibold text-muted-foreground border-b border-border/60 mb-1">
+            {client.name}
+          </div>
+
+          {!isCurrent && client.is_active && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                setOpen(false)
+                onSelectActive(client.id)
+              }}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted text-foreground cursor-pointer transition-colors"
+            >
+              <Radio className="h-4 w-4 text-emerald-600 shrink-0" />
+              <span>Switch to this Client</span>
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(false)
+              onEdit(client)
+            }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted text-foreground cursor-pointer transition-colors"
+          >
+            <Edit2 className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span>Edit Details</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(false)
+              onToggleStatus(client)
+            }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted text-foreground cursor-pointer transition-colors"
+          >
+            <Power className="h-4 w-4 text-muted-foreground shrink-0" />
+            <span>{client.is_active ? "Deactivate Client" : "Activate Client"}</span>
+          </button>
+
+          <div className="border-t border-border/60 my-1" />
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              setOpen(false)
+              onDelete(client)
+            }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-destructive/10 text-destructive cursor-pointer transition-colors"
+          >
+            <Trash2 className="h-4 w-4 shrink-0" />
+            <span>Delete Client</span>
+          </button>
+        </div>
+      )}
     </div>
   )
 }
