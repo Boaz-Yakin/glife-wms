@@ -222,7 +222,10 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
         return (
           <div className="text-right">
             <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-8 w-8" disabled={isBusy} />}>
+              <DropdownMenuTrigger
+                className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted focus:outline-none cursor-pointer"
+                disabled={isBusy}
+              >
                 {isBusy ? (
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 ) : (
@@ -249,7 +252,8 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => handleDelete(client)}
-                  className="cursor-pointer text-destructive focus:text-destructive"
+                  variant="destructive"
+                  className="cursor-pointer"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete Client
