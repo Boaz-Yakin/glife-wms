@@ -179,7 +179,11 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="shelf_life_days" className="text-right text-sm">Shelf Life (Days)</Label>
-                <Input id="shelf_life_days" name="shelf_life_days" type="number" defaultValue={initialData?.shelf_life_days || ""} className="col-span-3" />
+                <Input id="shelf_life_days" name="shelf_life_days" type="number" placeholder="e.g. 180" defaultValue={initialData?.shelf_life_days || ""} className="col-span-3" />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="min_outbound_days" className="text-right text-sm">Min Outbound Days</Label>
+                <Input id="min_outbound_days" name="min_outbound_days" type="number" placeholder="Default: 14" defaultValue={initialData?.min_outbound_days ?? 14} className="col-span-3" />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="manufacturer_id" className="text-right text-sm">Manufacturer</Label>

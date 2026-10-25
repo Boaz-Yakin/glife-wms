@@ -21,6 +21,7 @@ export interface ItemData {
   item_volume?: number | null
   volume_unit?: string | null
   shelf_life_days?: number | null
+  min_outbound_days?: number | null
   desc_en?: string | null
   image_url?: string | null
   note?: string | null

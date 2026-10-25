@@ -34,6 +34,7 @@ export async function createItemAction(formData: FormData) {
   const item_volume = formData.get("item_volume") ? parseFloat(formData.get("item_volume")!.toString()) : null
   const volume_unit = formData.get("volume_unit")?.toString() || "m3"
   const shelf_life_days = formData.get("shelf_life_days") ? parseInt(formData.get("shelf_life_days")!.toString()) : null
+  const min_outbound_days = formData.get("min_outbound_days") ? parseInt(formData.get("min_outbound_days")!.toString()) : 14
   const desc_en = formData.get("desc_en")?.toString() || null
   const image_url = formData.get("image_url")?.toString() || null
   const note = formData.get("note")?.toString() || null
@@ -66,6 +67,7 @@ export async function createItemAction(formData: FormData) {
     item_volume,
     volume_unit,
     shelf_life_days,
+    min_outbound_days,
     desc_en,
     image_url,
     note,

@@ -136,6 +136,21 @@ const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => 
     header: "Zone",
   },
   {
+    accessorKey: "shelf_life_days",
+    header: "Shelf Life / Policy",
+    cell: ({ row }) => {
+      const days = row.original.shelf_life_days
+      const minDays = row.original.min_outbound_days ?? 14
+      if (!days) return <span className="text-muted-foreground text-xs font-mono">-</span>
+      return (
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold tabular-nums text-foreground">{days} Days</span>
+          <span className="text-[10px] text-muted-foreground font-mono">Min: {minDays}d</span>
+        </div>
+      )
+    },
+  },
+  {
     accessorKey: "manufacturer",
     header: "Manufacturer",
     cell: ({ row }) => <div className="text-muted-foreground">{row.original.manufacturer?.name || '-'}</div>,

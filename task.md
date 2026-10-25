@@ -640,6 +640,18 @@
   - `exportToExcel` 매핑에 `Audited By` 필드 추가 ("이름 (역할)" 포맷 및 System (Auto) 지원)
 - [x] 56.4 Next.js 16 프로덕션 빌드(`npm run build`) 통과 검증 완료
 
+---
+
+## 📦 Phase 57: 아이템 마스터(Item Master) 유통기한 정책(Shelf Life / Min Outbound Days) 관리 UI 구현
+- [x] 57.1 `ItemData` 및 Server Actions 확장:
+  - [`master.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/master.service.ts) `ItemData`에 `min_outbound_days` 필드 추가
+  - [`actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/master/items/actions.ts)의 `createItemAction`에서 `min_outbound_days` 폼 데이터 추출 및 저장/업데이트 지원 (기본 14일)
+- [x] 57.2 등록/수정 팝업(`ItemFormDialog.tsx`)에 출고 제한 기준일 필드 탑재:
+  - `Settings & Details` 탭의 `Shelf Life (Days)` 바로 아래에 `Min Outbound Days` (출고 보증 최소 잔여일수, 기본 14일) 입력 컨트롤 추가
+- [x] 57.3 마스터 테이블 그리드(`ItemsTable.tsx`) 컬럼 신설:
+  - `Shelf Life / Policy` 컬럼 추가: 품목별 기준 수명(`180 Days`) 및 출고 최소 잔여일(`Min: 14d`)을 직관적인 2단 타이포로 표시
+- [x] 57.4 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
 
 
 
