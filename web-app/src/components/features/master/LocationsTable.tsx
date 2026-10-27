@@ -33,6 +33,7 @@ import {
   Inbox,
   Clock,
   Settings2,
+  PackageCheck,
 } from "lucide-react"
 
 const columns: ColumnDef<LocationData>[] = [
@@ -52,17 +53,22 @@ const columns: ColumnDef<LocationData>[] = [
     header: "Zone",
     cell: ({ row }) => {
       const isCold = row.original.zone_type === "F"
+      const isStaging = row.original.zone_type === "S"
       return (
         <Badge
           variant="outline"
           className={`gap-1 font-medium text-xs ${
             isCold
               ? "border-cyan-500/30 text-cyan-600 dark:text-cyan-400 bg-cyan-500/10"
-              : "border-amber-500/30 text-amber-600 dark:text-amber-400 bg-amber-500/10"
+              : isStaging
+              ? "border-amber-500/40 text-amber-600 dark:text-amber-400 bg-amber-500/15"
+              : "border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
           }`}
         >
           {isCold ? (
             <ThermometerSnowflake className="h-3 w-3" />
+          ) : isStaging ? (
+            <PackageCheck className="h-3 w-3" />
           ) : (
             <SunMedium className="h-3 w-3" />
           )}
@@ -173,7 +179,7 @@ interface LocationsTableProps {
 
 export function LocationsTable({ data }: LocationsTableProps) {
   const [globalFilter, setGlobalFilter] = React.useState("")
-  const [zoneFilter, setZoneFilter] = React.useState<"all" | "A" | "F">("all")
+  const [zoneFilter, setZoneFilter] = React.useState<"all" | "A" | "F" | "S">("all")
 
   const filteredData = React.useMemo(() => {
     let list = data
@@ -204,6 +210,9 @@ export function LocationsTable({ data }: LocationsTableProps) {
 
   const totalCount = data.length
   const occupiedCount = data.filter((d) => d.onHandQty > 0).length
+  const zoneACount = React.useMemo(() => data.filter((d) => d.zone_type === "A").length, [data])
+  const zoneFCount = React.useMemo(() => data.filter((d) => d.zone_type === "F").length, [data])
+  const zoneSCount = React.useMemo(() => data.filter((d) => d.zone_type === "S").length, [data])
 
   return (
     <div className="space-y-4">
@@ -230,7 +239,7 @@ export function LocationsTable({ data }: LocationsTableProps) {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              All Zones ({totalCount})
+              All ({totalCount})
             </button>
             <button
               type="button"
@@ -241,8 +250,8 @@ export function LocationsTable({ data }: LocationsTableProps) {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              <SunMedium className="h-3 w-3 text-amber-500" />
-              <span>Zone A</span>
+              <SunMedium className="h-3 w-3 text-emerald-500" />
+              <span>Zone A ({zoneACount})</span>
             </button>
             <button
               type="button"
@@ -254,7 +263,19 @@ export function LocationsTable({ data }: LocationsTableProps) {
               }`}
             >
               <ThermometerSnowflake className="h-3 w-3 text-cyan-500" />
-              <span>Zone F</span>
+              <span>Zone F ({zoneFCount})</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setZoneFilter("S")}
+              className={`px-2.5 py-1 rounded-md font-medium transition-all flex items-center gap-1 ${
+                zoneFilter === "S"
+                  ? "bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <PackageCheck className="h-3 w-3 text-amber-600" />
+              <span>Zone S ({zoneSCount})</span>
             </button>
           </div>
         </div>

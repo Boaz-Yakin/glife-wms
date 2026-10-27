@@ -47,6 +47,8 @@ export async function getWarehouseStructureConfigAction(): Promise<{
     const levelsA = new Set<string>()
     let maxAisleF = 1, maxBayF = 1, maxBinF = 1
     const levelsF = new Set<string>()
+    let maxAisleS = 1, maxBayS = 1, maxBinS = 1
+    const levelsS = new Set<string>()
 
     for (const loc of locRows) {
       const match = (loc.code || '').match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
@@ -67,6 +69,11 @@ export async function getWarehouseStructureConfigAction(): Promise<{
           if (bay > maxBayF) maxBayF = bay
           if (bin > maxBinF) maxBinF = bin
           levelsF.add(level)
+        } else if (zone === 'S') {
+          if (aisle > maxAisleS) maxAisleS = aisle
+          if (bay > maxBayS) maxBayS = bay
+          if (bin > maxBinS) maxBinS = bin
+          levelsS.add(level)
         }
       }
     }
@@ -85,6 +92,13 @@ export async function getWarehouseStructureConfigAction(): Promise<{
         bays: maxBayF || 10,
         levels: levelsF.size > 0 ? levelsF.size : 2,
         bins: maxBinF || 2,
+      },
+      zoneS: {
+        zoneType: 'S',
+        aisles: maxAisleS || 1,
+        bays: maxBayS || 10,
+        levels: levelsS.size > 0 ? levelsS.size : 1,
+        bins: maxBinS || 1,
       },
     }
 
@@ -196,16 +210,19 @@ export async function applyWarehouseStructureAction(
           .filter(([code]) => targetCodeSet.has(code))
           .map(([, id]) => id))
 
-        const firstValidLocA = targetLocations.find((l) => l.zone_type === 'A')
+        const firstValidLocA = targetLocations.find((l) => l.code.startsWith('LOC-A'))
         const firstValidLocIdA = firstValidLocA ? existingLocMap.get(firstValidLocA.code) : null
-        const firstValidLocF = targetLocations.find((l) => l.zone_type === 'F')
+        const firstValidLocF = targetLocations.find((l) => l.code.startsWith('LOC-F'))
         const firstValidLocIdF = firstValidLocF ? existingLocMap.get(firstValidLocF.code) : null
+        const firstValidLocS = targetLocations.find((l) => l.code.startsWith('LOC-S'))
+        const firstValidLocIdS = firstValidLocS ? existingLocMap.get(firstValidLocS.code) : null
 
         for (const inv of currentInvs) {
           if (!validLocationIds.has(inv.location_id)) {
             const oldCode = existingIdMap.get(inv.location_id) || ''
             const isF = oldCode.startsWith('LOC-F')
-            const targetLocId = (isF ? firstValidLocIdF : firstValidLocIdA) || Array.from(validLocationIds)[0]
+            const isS = oldCode.startsWith('LOC-S')
+            const targetLocId = (isS ? firstValidLocIdS : isF ? firstValidLocIdF : firstValidLocIdA) || Array.from(validLocationIds)[0]
 
             if (targetLocId) {
               await (supabase as any)

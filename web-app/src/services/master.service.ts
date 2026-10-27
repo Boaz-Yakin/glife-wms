@@ -92,7 +92,7 @@ export interface LocationData {
   id: string
   code: string
   barcode: string
-  zone_type: 'A' | 'F'
+  zone_type: 'A' | 'F' | 'S'
   zone: string
   aisle: string
   section: string
@@ -148,21 +148,27 @@ export async function getLocations({ search = '' }: { search?: string } = {}) {
     const code = loc.code || ''
     const match = code.match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
     
-    let zoneCode = (loc.zone_type || 'A') as 'A' | 'F'
+    let zoneCode: 'A' | 'F' | 'S' = (loc.zone_type || 'A') as 'A' | 'F'
     let aisleNum = '01'
     let bayNum = '01'
     let levelCode = 'A'
     let binNum = '01'
 
     if (match) {
-      zoneCode = match[1] as 'A' | 'F'
+      zoneCode = (match[1] as 'A' | 'F' | 'S') || zoneCode
       aisleNum = match[2]
       bayNum = match[3]
       levelCode = match[4]
       binNum = match[5]
+    } else if (code.startsWith('LOC-S')) {
+      zoneCode = 'S'
     }
 
-    const zoneLabel = zoneCode === 'F' ? 'Zone F (Cold Storage)' : 'Zone A (Ambient)'
+    const zoneLabel = zoneCode === 'F'
+      ? 'Zone F (Cold Storage)'
+      : zoneCode === 'S'
+      ? 'Zone S (Staging Floor)'
+      : 'Zone A (Ambient)'
     const isGolden = levelCode === 'A'
     const invInfo = invMap.get(loc.id)
 

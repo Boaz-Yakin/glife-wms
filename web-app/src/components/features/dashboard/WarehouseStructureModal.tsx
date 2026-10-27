@@ -31,6 +31,7 @@ import {
   Layers,
   CheckCircle2,
   AlertTriangle,
+  PackageCheck,
 } from "lucide-react"
 
 interface WarehouseStructureModalProps {
@@ -81,11 +82,18 @@ export function WarehouseStructureModal({
     config.zoneF.bins
   )
 
-  const grandTotal = zoneATotal + zoneFTotal
+  const zoneSTotal = calcZoneLocations(
+    config.zoneS?.aisles || 1,
+    config.zoneS?.bays || 10,
+    config.zoneS?.levels || 1,
+    config.zoneS?.bins || 1
+  )
+
+  const grandTotal = zoneATotal + zoneFTotal + zoneSTotal
 
   const handleApplyPreset120 = () => {
     setConfig(DEFAULT_WAREHOUSE_CONFIG)
-    toast.info("Applied preset: 1 Aisle, 10 Bays, 3 Levels, 2 Bins (120 total)")
+    toast.info("Applied preset: 1 Aisle, 10 Bays, 2 Tiers, 2 Bins (A & F) + 10 Staging Bays (S)")
   }
 
   const handleSave = async () => {
@@ -326,6 +334,99 @@ export function WarehouseStructureModal({
                     }
                     className="h-8 text-xs font-mono"
                   />
+                </div>
+              </div>
+            </div>
+
+            {/* Zone S: Staging Floor Configuration Card */}
+            <div className="p-4 rounded-xl border border-amber-600/30 bg-amber-500/5 flex flex-col gap-3">
+              <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                <div className="flex items-center gap-2">
+                  <PackageCheck className="h-4 w-4 text-amber-600 dark:text-amber-500" />
+                  <span className="font-semibold text-xs text-foreground uppercase tracking-wider">
+                    Zone S (Staging Floor / 바닥 적치)
+                  </span>
+                </div>
+                <Badge variant="outline" className="border-amber-600/30 text-amber-600 dark:text-amber-400 text-[11px] font-mono">
+                  {zoneSTotal} Bays (Pallet Slots)
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Aisles (통로)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={config.zoneS?.aisles || 1}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        zoneS: {
+                          ...(config.zoneS || DEFAULT_WAREHOUSE_CONFIG.zoneS),
+                          aisles: parseInt(e.target.value, 10) || 1,
+                        },
+                      })
+                    }
+                    className="h-8 text-xs font-mono"
+                  />
+                  <span className="text-[9px] text-muted-foreground block">
+                    Default: 1 Corridor
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Bays (바닥 구획 수)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={50}
+                    value={config.zoneS?.bays || 10}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        zoneS: {
+                          ...(config.zoneS || DEFAULT_WAREHOUSE_CONFIG.zoneS),
+                          bays: parseInt(e.target.value, 10) || 1,
+                        },
+                      })
+                    }
+                    className="h-8 text-xs font-mono"
+                  />
+                  <span className="text-[9px] text-muted-foreground block">
+                    LOC-S0101 ~ LOC-S01{String(config.zoneS?.bays || 10).padStart(2, "0")}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Tiers (단수)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1}
+                    disabled
+                    value={1}
+                    className="h-8 text-xs font-mono opacity-70 cursor-not-allowed bg-muted/40"
+                  />
+                  <span className="text-[9px] text-muted-foreground block">
+                    Fixed: Floor Level (A)
+                  </span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-[11px] text-muted-foreground">Bins / Bay</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={1}
+                    disabled
+                    value={1}
+                    className="h-8 text-xs font-mono opacity-70 cursor-not-allowed bg-muted/40"
+                  />
+                  <span className="text-[9px] text-muted-foreground block">
+                    Fixed: 1 Pallet Slot (01)
+                  </span>
                 </div>
               </div>
             </div>

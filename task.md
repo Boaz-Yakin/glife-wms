@@ -670,6 +670,25 @@
   - `AppSidebar.tsx` 내 `Master Data` 첫 번째 하위 메뉴로 `Clients (3PL)` 등록
 - [x] 58.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 🏗️ Phase 59: 창고 구조 설정(Structure Settings) Zone S (Staging Floor) 설정 연동 및 동기화 지원
+- [x] 59.1 레이아웃 설정 인터페이스 확장 ([`warehouse-layout.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/types/warehouse-layout.ts)):
+  - `ZoneStructureConfig` zoneType에 `'S'` 지원 및 `WarehouseStructureConfig`에 `zoneS` 추가
+  - `DEFAULT_WAREHOUSE_CONFIG`에 Zone S 기본값(1 Aisle, 10 Bays, 1 Level, 1 Bin) 정의
+  - `generateLocationCodes()`에서 Zone S 로케이션(`LOC-S0101A01~LOC-S0110A01`) 일괄 자동 생성 및 DB enum 호환 매핑 탑재
+- [x] 59.2 Server Actions 동기화 및 고아 재고 보호 ([`warehouse-layout.actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/actions/warehouse-layout.actions.ts)):
+  - `getWarehouseStructureConfigAction`: DB 내 `LOC-S` 정규식 감지 및 Zone S 구획 수(Bays) 동적 감지
+  - `applyWarehouseStructureAction`: 구조 재편성 시 기존 `LOC-S` 로케이션 보존 및 고아 재고 재라우팅 대상에 Zone S 포함
+- [x] 59.3 구조 설정 UI 모달 확장 ([`WarehouseStructureModal.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/dashboard/WarehouseStructureModal.tsx)):
+  - Zone S (Staging Floor / 바닥 적치 구역) 전용 설정 카드 추가 (앰버/주황 테마, 바닥 구획 수 실시간 조절)
+  - 랙 생성 총 개수(`grandTotal`)에 Zone S 바닥 구획 합산 및 프리셋 반영
+- [x] 59.4 로케이션 마스터 및 서비스 연동:
+  - [`master.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/master.service.ts): `LocationData`에 `zone_type: 'S'` 및 `Zone S (Staging Floor)` 명칭 매핑
+  - [`LocationsTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/LocationsTable.tsx): 앰버 뱃지 스타일링 및 존 필터 탭(`Zone S (n)`) 신설
+- [x] 59.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
+
+
 
 
 
