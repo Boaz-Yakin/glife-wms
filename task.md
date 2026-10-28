@@ -688,6 +688,29 @@
   - [`LocationsTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/LocationsTable.tsx): 앰버 뱃지 스타일링 및 존 필터 탭(`Zone S (n)`) 신설
 - [x] 59.5 Next.js 16 프로덕션 빌드(`npm run build`) 100% 통과 검증 완료
 
+---
+
+## 📲 Phase 60: 카카오 개발자 REST API 연동 및 신규 주문 실시간 자동 보고 체계 구축
+- [x] 60.1 데이터 모델 및 마이그레이션 (`20261027205000_add_system_settings.sql`):
+  - 동적 설정 관리를 위한 `public.system_settings` 테이블 신설 및 RLS 정책 적용
+  - `kakao_notification` 기본 설정 레코드(enabled, rest_api_key, access_token, refresh_token, notify_on_new_order) 초기화 및 원격 Supabase DB 반영 완료
+- [x] 60.2 카카오 REST API 서비스 모듈 신설 ([`kakao.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/kakao.service.ts)):
+  - "나에게 보내기" REST API(`POST https://kapi.kakao.com/v2/api/talk/memo/default/send`) 전송 클라이언트 구현
+  - 토큰 만료(401) 시 카카오 OAuth 토큰 자동 갱신(`refreshKakaoAccessToken`) 및 `system_settings` 자동 저장 매커니즘 구현
+  - 신규 주문 상세 보고서 포맷팅(`sendKakaoOrderNotification`): 주문번호, 발주매장, 품목요약, 총수량, 청구금액, 메모, WMS 바로가기 버튼 링크
+  - 실시간 연동 검증용 테스트 메시지 발송(`sendKakaoTestMessage`) 기능 구현
+- [x] 60.3 서버 액션 및 웹훅/API 라우트:
+  - [`actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/%28dashboard%29/settings/notifications/actions.ts): 설정 조회, 저장, ON/OFF 원클릭 토글, 테스트 발송 Server Actions
+  - [`/api/notifications/kakao/order`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/api/notifications/kakao/order/route.ts): 주문 ID 기반 비동기 알림 트리거 API 라우트
+  - [`OrderAPP /api/order/route.ts`](file:///c:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/order/route.ts): 신규 주문 DB 커밋 직후 WMS 카카오 알림 API 안전 비동기 연동
+- [x] 60.4 UI 관리자 대시보드 구축 ([`settings/notifications/page.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/%28dashboard%29/settings/notifications/page.tsx)):
+  - 대형 원클릭 ON/OFF 마스터 스위치 및 실시간 상태 뱃지 (ON 정상작동, OFF 비활성, 토큰 만료, 미설정)
+  - REST API Key, Access Token, Refresh Token 설정 폼 및 실시간 "테스트 메시지 발송" 피드백
+  - 3분 만에 카카오 토큰 발급받는 단계별 가이드 아코디언 및 실제 전송 메시지 프리뷰 카드 탑재
+  - 사이드바 네비게이션([`AppSidebar.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/AppSidebar.tsx)): Settings 하위에 `Notifications (카카오톡)` 등록
+- [x] 60.5 Next.js 16 프로덕션 빌드(`web-app`, `OrderAPP`) 100% 통과 검증 완료
+
+
 
 
 

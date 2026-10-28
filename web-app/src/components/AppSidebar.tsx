@@ -97,6 +97,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { title: "Account Information", url: "/settings/profile" },
         { title: "Security & Google OTP", url: "/settings/security" },
         { title: "Users", url: "/settings/users" },
+        { title: "Notifications (카카오톡)", url: "/settings/notifications" },
       ]
     },
   ]

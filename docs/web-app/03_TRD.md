@@ -127,3 +127,75 @@ src/
 - **UI 제공 위치 및 정책**:
   1. `OrdersTable`: 테이블 행의 Status 컬럼은 고정된 뱃지(Read-Only)로 표시하여 실수로 인한 오작동을 방지하고 명확한 가독성을 유지.
   2. `OrderDetailsDialog`: 주문 상세 다이얼로그(DETAILS)의 상단 헤더에 Status 선택 드롭다운을 제공하여 주문 상태를 안전하게 확인하고 수정할 수 있도록 지원 (`isDirty` 감지 및 `Save Changes` 통합 반영).
+
+---
+
+## 7. Notification System - KakaoTalk Developers REST API (신규 주문 카카오톡 자동 보고 및 ON/OFF 제어)
+
+### 7.1 요구사항 및 기능 범위
+- **목적**: 매장에서 새로운 주문(`orders`)이 접수되면, 관리자의 카카오톡(나에게 보내기)으로 주문 번호, 발주 매장, 품목 요약, 총 수량, 총 금액 등의 핵심 정보를 실시간 자동 보고.
+- **ON/OFF 스위치**: 관리자가 시스템 설정 화면에서 카카오톡 알림 기능을 자유롭게 켜고(ON) 끌(OFF) 수 있는 토글 제어 제공.
+- **무과금/공식 REST API**: 별도의 유료 알림톡 중계사 계약 없이 카카오 개발자 센터(Kakao Developers)의 무료 "나에게 기본 템플릿 보내기" REST API(`kapi.kakao.com`) 활용.
+- **원클릭 테스트**: 설정 화면에서 실시간 "테스트 메시지 발송" 버튼을 통해 설정된 토큰과 연동 상태를 즉시 검증 가능.
+
+### 7.2 데이터 모델 (`public.system_settings`)
+- 테이블 정의:
+  ```sql
+  CREATE TABLE IF NOT EXISTS public.system_settings (
+      key VARCHAR(100) PRIMARY KEY,
+      value JSONB NOT NULL DEFAULT '{}'::jsonb,
+      description TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  );
+  ```
+- `key = 'kakao_notification'` 설정 JSONB 스키마:
+  ```json
+  {
+    "enabled": false,
+    "rest_api_key": "YOUR_KAKAO_REST_API_KEY",
+    "access_token": "YOUR_KAKAO_ACCESS_TOKEN",
+    "refresh_token": "YOUR_KAKAO_REFRESH_TOKEN",
+    "token_expires_at": null,
+    "notify_on_new_order": true,
+    "last_status": "NOT_CONFIGURED",
+    "last_sent_at": null,
+    "last_error": null
+  }
+  ```
+
+### 7.3 카카오 REST API 발송 및 템플릿 명세
+- **Endpoint**: `POST https://kapi.kakao.com/v2/api/talk/memo/default/send`
+- **Headers**:
+  - `Authorization: Bearer ${access_token}`
+  - `Content-Type: application/x-www-form-urlencoded`
+- **Body**: `template_object`:
+  ```json
+  {
+    "object_type": "text",
+    "text": "[GLIFE WMS - 신규 주문 접수 알림] 🔔\n\n• 주문번호: ORD-20261027-0001\n• 발주매장: 강남 1호점\n• 주문일시: 2026-10-27 20:45\n• 품목요약: 냉동 삼겹살 외 3건\n• 총 주문수량: 45 EA\n• 총 주문금액: 348,000원\n• 배송요청일: 2026-10-28",
+    "link": {
+      "web_url": "https://wms.glife.com/orders",
+      "mobile_web_url": "https://wms.glife.com/orders"
+    },
+    "button_title": "WMS 주문 확인하기"
+  }
+  ```
+
+### 7.4 토큰 갱신 및 장애 대응 (Failover Policy)
+- 카카오 Access Token 만료(HTTP 401) 감지 시, `refresh_token` 및 `rest_api_key`가 존재하면 `https://kauth.kakao.com/oauth/token` (`grant_type=refresh_token`)을 호출하여 새 Access Token을 자동 발급받아 `system_settings`에 저장 후 재전송.
+- 발송 실패 시 주문 생성 트랜잭션이 중단되지 않도록 비동기 안전 격리(`try-catch`) 처리 및 `last_error` 상태 기록.
+
+### 7.5 아키텍처 및 계층 분리
+- **서비스 계층 (`src/services/kakao.service.ts`)**:
+  - `getKakaoNotificationConfig()`: `system_settings`에서 설정 조회
+  - `updateKakaoNotificationConfig(config)`: ON/OFF 및 키/토큰 저장
+  - `sendKakaoOrderNotification(orderId)`: 주문 상세 데이터 조회 후 카카오톡 발송
+  - `sendKakaoTestMessage()`: 연결 확인용 테스트 메시지 전송
+- **API 라우트 (`src/app/api/notifications/kakao/order/route.ts`)**:
+  - `POST`: OrderAPP 또는 외부 시스템에서 주문 ID를 수신하여 카카오 알림 비동기 트리거
+- **UI 화면 (`src/app/(dashboard)/settings/notifications/page.tsx`)**:
+  - ON/OFF 마스터 스위치 (Switch)
+  - 카카오 REST API Key, Access Token, Refresh Token 입력 및 토큰 발급 가이드 안내
+  - 연결 상태 인디케이터 (활성화됨 / 비활성화됨 / 토큰 필요)
+  - "테스트 메시지 발송" 버튼 및 최근 발송 이력(시간, 상태) 표시
