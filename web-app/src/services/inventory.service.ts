@@ -58,7 +58,6 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
   const supabase = await createClient()
 
   const locationJoin = (zone && zone !== 'ALL') ? '!inner' : ''
-  const itemJoin = search ? '!inner' : ''
   
   let query = (supabase as any).from('inventory').select(`
     id,
@@ -66,7 +65,7 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
     allocated_qty,
     updated_at,
     created_at,
-    item:item_id${itemJoin} ( id, sku, name_en, desc_en, shelf_life_days, min_stock_qty, lead_time_days ),
+    item:item_id ( id, sku, name_en, desc_en, shelf_life_days, min_stock_qty, lead_time_days ),
     location:location_id${locationJoin} ( code, zone_type )
   `, { count: 'exact' })
   
@@ -82,8 +81,35 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
     query = query.eq('location.zone_type', zone)
   }
 
-  if (search) {
-    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%,desc_en.ilike.%${search}%`, { foreignTable: 'item' })
+  const cleanSearch = search.trim()
+  if (cleanSearch) {
+    const unhyphenated = cleanSearch.replace(/-/g, '')
+    const locSearchQuery = cleanSearch !== unhyphenated
+      ? (supabase as any).from('locations').select('id').or(`code.ilike.%${cleanSearch}%,code.ilike.%${unhyphenated}%`)
+      : (supabase as any).from('locations').select('id').ilike('code', `%${cleanSearch}%`)
+
+    // Search both items (SKU, name_en, desc_en) and locations (code) in parallel
+    const [{ data: matchingItems }, { data: matchingLocs }] = await Promise.all([
+      (supabase as any)
+        .from('items')
+        .select('id')
+        .or(`sku.ilike.%${cleanSearch}%,name_en.ilike.%${cleanSearch}%,desc_en.ilike.%${cleanSearch}%`),
+      locSearchQuery,
+    ])
+
+    const itemIds = (matchingItems || []).map((i: any) => i.id)
+    const locIds = (matchingLocs || []).map((l: any) => l.id)
+
+    if (itemIds.length > 0 && locIds.length > 0) {
+      query = query.or(`item_id.in.(${itemIds.join(',')}),location_id.in.(${locIds.join(',')})`)
+    } else if (itemIds.length > 0) {
+      query = query.in('item_id', itemIds)
+    } else if (locIds.length > 0) {
+      query = query.in('location_id', locIds)
+    } else {
+      // No matches for this search keyword in either items or locations
+      return { data: [], count: 0, error: null }
+    }
   }
   
   const from = (page - 1) * limit

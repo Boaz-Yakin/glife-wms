@@ -9,13 +9,14 @@ export default async function InventoryPage({
 }) {
   const params = await searchParams
   
-  const page = typeof params.page === 'string' ? parseInt(params.page, 10) : 1
+  const page = typeof params.page === 'string' ? Math.max(1, parseInt(params.page, 10) || 1) : 1
+  const limit = typeof params.limit === 'string' ? Math.max(1, parseInt(params.limit, 10) || 20) : 20
   const search = typeof params.search === 'string' ? params.search : ''
   const zone = typeof params.zone === 'string' ? params.zone : 'ALL'
   
   const { data, count, error } = await getInventoryList({
     page,
-    limit: 20,
+    limit,
     search,
     zone
   })
@@ -34,7 +35,12 @@ export default async function InventoryPage({
           Failed to load data. ({error})
         </div>
       ) : (
-        <InventoryTable data={data || []} totalCount={count} />
+        <InventoryTable 
+          data={data || []} 
+          totalCount={count} 
+          currentPage={page}
+          pageSize={limit}
+        />
       )}
     </div>
   )

@@ -27,7 +27,19 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import { Download, SlidersHorizontal, RotateCcw, Zap, Sliders, Info, FileSpreadsheet } from "lucide-react"
+import {
+  Download,
+  SlidersHorizontal,
+  RotateCcw,
+  Zap,
+  Sliders,
+  Info,
+  FileSpreadsheet,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react"
 import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -161,9 +173,16 @@ function getExpirationBadge(expDateStr?: string | null) {
 interface InventoryTableProps {
   data: InventoryData[]
   totalCount: number
+  currentPage?: number
+  pageSize?: number
 }
 
-export function InventoryTable({ data, totalCount }: InventoryTableProps) {
+export function InventoryTable({
+  data,
+  totalCount,
+  currentPage = 1,
+  pageSize = 20,
+}: InventoryTableProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -172,6 +191,42 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
   const defaultZone = searchParams.get("zone") || "ALL"
 
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+
+  // Pagination calculations
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
+  const startItem = totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0
+  const endItem = Math.min(currentPage * pageSize, totalCount)
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("page", newPage.toString())
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const handlePageSizeChange = (newSize: string | null) => {
+    if (!newSize) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set("limit", newSize)
+    params.set("page", "1")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const getVisiblePages = () => {
+    const pages: (number | string)[] = []
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      if (currentPage <= 4) {
+        pages.push(1, 2, 3, 4, 5, "...", totalPages)
+      } else if (currentPage >= totalPages - 3) {
+        pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages)
+      } else {
+        pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages)
+      }
+    }
+    return pages
+  }
 
   // Threshold mode: "auto" (Statistical velocity & lead time) or "manual" (Global fixed thresholds)
   const [mode, setMode] = React.useState<ThresholdMode>("auto")
@@ -519,7 +574,7 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 items-center gap-2">
           <Input 
-            placeholder="Search Item Name, SKU, or Description..." 
+            placeholder="Search Location, SKU, Item Name, or Description..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="max-w-sm bg-background" 
@@ -789,35 +844,129 @@ export function InventoryTable({ data, totalCount }: InventoryTableProps) {
         </Table>
       </div>
       
-      {/* Footer Info & Dynamic Status Indicator */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
-        <div>Total {totalCount} records</div>
-        <div className="flex items-center gap-3">
-          <span className="text-muted-foreground font-medium flex items-center gap-1">
-            {mode === "auto" ? (
-              <span className="inline-flex items-center gap-1 text-primary font-semibold">
-                <Zap className="size-3" /> Auto Velocity:
-              </span>
-            ) : (
-              "Available:"
-            )}
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-rose-500" />
-            <span className="font-mono">&le;0 (Stockout)</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-amber-500" />
-            <span className="font-mono">{mode === "auto" ? "≤Safety Stock" : `≤${thresholds.low}`}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-emerald-500" />
-            <span className="font-mono">{mode === "auto" ? "≤Reorder Point" : `≤${thresholds.optimal}`}</span>
-          </span>
-          <span className="inline-flex items-center gap-1">
-            <span className="size-2 rounded-full bg-sky-500" />
-            <span className="font-mono">{mode === "auto" ? ">Surplus" : `>${thresholds.optimal}`}</span>
-          </span>
+      {/* Pagination & Status Footer */}
+      <div className="space-y-3 pt-1">
+        {/* Pagination Bar */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span>
+              Showing <strong className="font-semibold text-foreground">{startItem}</strong> to{" "}
+              <strong className="font-semibold text-foreground">{endItem}</strong> of{" "}
+              <strong className="font-semibold text-foreground">{totalCount}</strong> records
+            </span>
+            <span className="text-slate-300">|</span>
+            <div className="flex items-center gap-1.5">
+              <span>Per page:</span>
+              <Select value={pageSize.toString()} onValueChange={handlePageSizeChange}>
+                <SelectTrigger className="h-7 w-[68px] text-xs bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                  <SelectItem value="200">200</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(1)}
+                disabled={currentPage <= 1}
+                className="h-8 w-8 p-0"
+                title="First Page"
+              >
+                <ChevronsLeft className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage <= 1}
+                className="h-8 px-2 text-xs flex items-center gap-1"
+              >
+                <ChevronLeft className="size-4" />
+                Prev
+              </Button>
+
+              <div className="flex items-center gap-1 px-1">
+                {getVisiblePages().map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === currentPage ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => handlePageChange(p as number)}
+                      className={`h-8 w-8 p-0 text-xs ${p === currentPage ? "font-bold" : ""}`}
+                    >
+                      {p}
+                    </Button>
+                  )
+                )}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage >= totalPages}
+                className="h-8 px-2 text-xs flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="size-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={currentPage >= totalPages}
+                className="h-8 w-8 p-0"
+                title="Last Page"
+              >
+                <ChevronsRight className="size-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Dynamic Status Legend */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-end gap-2 text-xs text-muted-foreground pt-1 border-t border-border/40">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-muted-foreground font-medium flex items-center gap-1">
+              {mode === "auto" ? (
+                <span className="inline-flex items-center gap-1 text-primary font-semibold">
+                  <Zap className="size-3" /> Auto Velocity:
+                </span>
+              ) : (
+                "Available:"
+              )}
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2 rounded-full bg-rose-500" />
+              <span className="font-mono">&le;0 (Stockout)</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2 rounded-full bg-amber-500" />
+              <span className="font-mono">{mode === "auto" ? "≤Safety Stock" : `≤${thresholds.low}`}</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2 rounded-full bg-emerald-500" />
+              <span className="font-mono">{mode === "auto" ? "≤Reorder Point" : `≤${thresholds.optimal}`}</span>
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2 rounded-full bg-sky-500" />
+              <span className="font-mono">{mode === "auto" ? ">Surplus" : `>${thresholds.optimal}`}</span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
