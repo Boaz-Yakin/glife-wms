@@ -13,12 +13,16 @@ export default async function InventoryPage({
   const limit = typeof params.limit === 'string' ? Math.max(1, parseInt(params.limit, 10) || 20) : 20
   const search = typeof params.search === 'string' ? params.search : ''
   const zone = typeof params.zone === 'string' ? params.zone : 'ALL'
+  const sortBy = typeof params.sortBy === 'string' ? params.sortBy : undefined
+  const sortOrder = params.sortOrder === 'asc' ? 'asc' : params.sortOrder === 'desc' ? 'desc' : undefined
   
   const { data, count, error } = await getInventoryList({
     page,
     limit,
     search,
-    zone
+    zone,
+    sortBy,
+    sortOrder,
   })
 
   return (

@@ -6,6 +6,8 @@ export interface GetInventoryParams {
   limit?: number
   search?: string
   zone?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface DynamicItemThreshold {
@@ -54,7 +56,14 @@ export async function getItemDynamicThresholdsMap(clientId?: string | null): Pro
   }
 }
 
-export async function getInventoryList({ page = 1, limit = 20, search = '', zone = 'ALL' }: GetInventoryParams) {
+export async function getInventoryList({
+  page = 1,
+  limit = 20,
+  search = '',
+  zone = 'ALL',
+  sortBy,
+  sortOrder = 'desc',
+}: GetInventoryParams) {
   const supabase = await createClient()
 
   const locationJoin = (zone && zone !== 'ALL') ? '!inner' : ''
@@ -114,10 +123,52 @@ export async function getInventoryList({ page = 1, limit = 20, search = '', zone
   
   const from = (page - 1) * limit
   const to = from + limit - 1
+
+  // Dynamic sorting logic
+  const isAsc = sortOrder === 'asc'
+  let orderedQuery = query
+  switch (sortBy) {
+    case 'location':
+    case 'location.code':
+      orderedQuery = orderedQuery.order('location(code)', { ascending: isAsc })
+      break
+    case 'sku':
+    case 'item.sku':
+      orderedQuery = orderedQuery.order('item(sku)', { ascending: isAsc })
+      break
+    case 'name':
+    case 'item.name_en':
+    case 'item_name':
+      orderedQuery = orderedQuery.order('item(name_en)', { ascending: isAsc })
+      break
+    case 'expiration_date':
+      orderedQuery = orderedQuery.order('expiration_date', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'lot_no':
+      orderedQuery = orderedQuery.order('lot_no', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'on_hand_qty':
+    case 'on_hand':
+      orderedQuery = orderedQuery.order('on_hand_qty', { ascending: isAsc })
+      break
+    case 'allocated_qty':
+    case 'allocated':
+      orderedQuery = orderedQuery.order('allocated_qty', { ascending: isAsc })
+      break
+    case 'available':
+    case 'available_qty':
+      orderedQuery = orderedQuery
+        .order('on_hand_qty', { ascending: isAsc })
+        .order('allocated_qty', { ascending: !isAsc })
+      break
+    default:
+      orderedQuery = orderedQuery.order('updated_at', { ascending: false })
+      break
+  }
   
   // Parallel fetch: inventory page data + dynamic thresholds map
   const [listRes, thresholdMap] = await Promise.all([
-    query.range(from, to).order('updated_at', { ascending: false }),
+    orderedQuery.range(from, to),
     getItemDynamicThresholdsMap(activeClientId)
   ])
 

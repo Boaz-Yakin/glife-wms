@@ -39,6 +39,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react"
 import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
 import { cn } from "@/lib/utils"
@@ -226,6 +229,54 @@ export function InventoryTable({
       }
     }
     return pages
+  }
+
+  // Sorting state & handler
+  const currentSortBy = searchParams.get("sortBy") || ""
+  const currentSortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc"
+
+  const handleSort = (sortKey: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (currentSortBy === sortKey) {
+      if (currentSortOrder === "asc") {
+        params.set("sortOrder", "desc")
+      } else {
+        // Toggle off: reset sort to default
+        params.delete("sortBy")
+        params.delete("sortOrder")
+      }
+    } else {
+      params.set("sortBy", sortKey)
+      params.set("sortOrder", "asc")
+    }
+    params.delete("page") // Reset to page 1 on sort change
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const renderSortableHeader = (label: string, sortKey: string, alignRight = false) => {
+    const isSorted = currentSortBy === sortKey
+    return (
+      <button
+        type="button"
+        onClick={() => handleSort(sortKey)}
+        className={cn(
+          "inline-flex items-center gap-1.5 font-semibold text-xs transition-colors hover:text-foreground cursor-pointer select-none group",
+          alignRight ? "justify-end w-full text-right" : "justify-start text-left",
+          isSorted ? "text-foreground font-bold" : "text-muted-foreground"
+        )}
+      >
+        <span>{label}</span>
+        {isSorted ? (
+          currentSortOrder === "asc" ? (
+            <ArrowUp className="size-3.5 text-primary shrink-0" />
+          ) : (
+            <ArrowDown className="size-3.5 text-primary shrink-0" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0" />
+        )}
+      </button>
+    )
   }
 
   // Threshold mode: "auto" (Statistical velocity & lead time) or "manual" (Global fixed thresholds)
@@ -498,17 +549,17 @@ export function InventoryTable({
   const columns = React.useMemo<ColumnDef<InventoryData>[]>(() => [
     {
       accessorKey: "location.code",
-      header: "Location",
+      header: () => renderSortableHeader("Location", "location"),
       cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.code || 'N/A'}</div>,
     },
     {
       accessorKey: "item.sku",
-      header: "SKU",
+      header: () => renderSortableHeader("SKU", "sku"),
       cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.item?.sku || 'N/A'}</div>,
     },
     {
       accessorKey: "item.name_en",
-      header: "Item Name",
+      header: () => renderSortableHeader("Item Name", "name"),
       cell: ({ row }) => {
         const name = row.original.item?.name_en || 'N/A'
         const desc = row.original.item?.desc_en?.trim()
@@ -525,12 +576,12 @@ export function InventoryTable({
     },
     {
       accessorKey: "expiration_date",
-      header: "Exp. Date / D-Day",
+      header: () => renderSortableHeader("Exp. Date / D-Day", "expiration_date"),
       cell: ({ row }) => getExpirationBadge(row.original.expiration_date),
     },
     {
       accessorKey: "lot_no",
-      header: "Lot No.",
+      header: () => renderSortableHeader("Lot No.", "lot_no"),
       cell: ({ row }) => (
         <div className="text-xs font-mono text-muted-foreground tabular-nums">
           {row.original.lot_no || 'N/A'}
@@ -539,17 +590,17 @@ export function InventoryTable({
     },
     {
       accessorKey: "on_hand_qty",
-      header: () => <div className="text-right">On Hand</div>,
+      header: () => renderSortableHeader("On Hand", "on_hand_qty", true),
       cell: ({ row }) => <div className="text-right font-medium tabular-nums">{row.original.on_hand_qty}</div>,
     },
     {
       accessorKey: "allocated_qty",
-      header: () => <div className="text-right">Allocated</div>,
+      header: () => renderSortableHeader("Allocated", "allocated_qty", true),
       cell: ({ row }) => <div className="text-right text-muted-foreground tabular-nums">{row.original.allocated_qty}</div>,
     },
     {
       id: "available_qty",
-      header: () => <div className="text-right">Available</div>,
+      header: () => renderSortableHeader("Available", "available", true),
       cell: ({ row }) => {
         const available = row.original.on_hand_qty - row.original.allocated_qty
         const dyn = row.original.item?.dynamicThreshold
@@ -560,7 +611,7 @@ export function InventoryTable({
         )
       },
     },
-  ], [thresholds, mode])
+  ], [thresholds, mode, currentSortBy, currentSortOrder])
 
   const table = useReactTable({
     data,
