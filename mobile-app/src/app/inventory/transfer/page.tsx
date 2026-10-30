@@ -407,9 +407,9 @@ export default function TransferPage() {
               <span className="text-zinc-500">From Source Bin:</span>
               <span className="font-mono font-bold text-white">{sourceLoc?.code}</span>
             </div>
-            <div className="flex justify-between">
-              <span className="text-zinc-500">Moving Product:</span>
-              <span className="font-bold text-white">{selectedItem.sku} ({transferQty} BOX)</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-zinc-500 shrink-0">Moving Product:</span>
+              <span className="font-bold text-white text-right">{selectedItem.sku} • {selectedItem.name} ({transferQty} BOX)</span>
             </div>
             <div className="flex justify-between items-center pt-2 border-t border-zinc-800">
               <span className="text-zinc-500">To Destination Bin:</span>

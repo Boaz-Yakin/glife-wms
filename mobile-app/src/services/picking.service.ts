@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { formatItemNameWithDesc } from './inventory.service';
 
 export interface Order {
   id: string;
@@ -68,6 +69,7 @@ export interface PickingItem {
   items?: {
     sku: string;
     name: string;
+    desc?: string;
     upc: string;
   };
 }
@@ -113,7 +115,7 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
       item_id,
       qty,
       picked_qty,
-      items:item_id ( id, sku, name_en, upc, category, zone_type )
+      items:item_id ( id, sku, name_en, desc_en, upc, category, zone_type )
     `)
     .eq('order_id', orderId);
 
@@ -170,7 +172,8 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
       items: itemData
         ? {
             sku: itemData.sku || 'SKU-UNKNOWN',
-            name: itemData.name_en || 'Unnamed Item',
+            name: formatItemNameWithDesc(itemData.name_en, itemData.desc_en),
+            desc: itemData.desc_en || '',
             upc: itemData.upc || '',
           }
         : { sku: 'SKU-UNKNOWN', name: 'Unknown Item', upc: '' },

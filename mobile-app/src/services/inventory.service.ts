@@ -23,7 +23,15 @@ export interface CycleCountRequest {
   reported_by: string;
   created_at: string;
   locations?: { code: string };
-  items?: { sku: string; name?: string; name_en?: string; uom?: string };
+  items?: { sku: string; name?: string; name_en?: string; desc_en?: string; uom?: string };
+}
+
+export function formatItemNameWithDesc(name?: string | null, desc?: string | null): string {
+  const cleanName = name?.trim() || 'Unnamed Item';
+  const cleanDesc = desc?.trim();
+  if (!cleanDesc) return cleanName;
+  if (cleanName.toLowerCase().includes(cleanDesc.toLowerCase())) return cleanName;
+  return `${cleanName} (${cleanDesc})`;
 }
 
 export interface LocationLookupResult {
@@ -37,6 +45,7 @@ export interface LocationLookupResult {
     itemId: string;
     sku: string;
     name: string;
+    desc?: string;
     upc: string;
     uom: string;
     onHandQty: number;
@@ -50,6 +59,7 @@ export interface ItemLookupResult {
     id: string;
     sku: string;
     name: string;
+    desc?: string;
     upc: string;
     uom: string;
     category?: string;
@@ -129,14 +139,14 @@ export async function findLocationRecord(
 export async function findItemRecord(
   supabase: SupabaseClient,
   skuOrUpcOrId: string
-): Promise<{ id: string; sku: string; name_en: string; upc: string; uom: string; category?: string; client_id?: string | null; shelf_life_days?: number | null; min_outbound_days?: number | null } | null> {
+): Promise<{ id: string; sku: string; name_en: string; desc_en?: string | null; upc: string; uom: string; category?: string; client_id?: string | null; shelf_life_days?: number | null; min_outbound_days?: number | null } | null> {
   const clean = skuOrUpcOrId.trim();
   if (!clean) return null;
 
   if (isUUID(clean)) {
     const { data } = await supabase
       .from('items')
-      .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+      .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
       .eq('id', clean)
       .maybeSingle();
     return data;
@@ -145,7 +155,7 @@ export async function findItemRecord(
   // 1. Try exact UPC match
   const { data: byUpc } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+    .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
     .eq('upc', clean)
     .maybeSingle();
   if (byUpc) return byUpc;
@@ -153,7 +163,7 @@ export async function findItemRecord(
   // 2. Try exact or case-insensitive SKU match
   const { data: bySku } = await supabase
     .from('items')
-    .select('id, sku, name_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+    .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
     .ilike('sku', clean)
     .maybeSingle();
   if (bySku) return bySku;
@@ -181,7 +191,7 @@ export async function lookupByLocation(
       item_id,
       on_hand_qty,
       allocated_qty,
-      items:item_id ( id, sku, name_en, upc, uom, category )
+      items:item_id ( id, sku, name_en, desc_en, upc, uom, category )
     `)
     .eq('location_id', loc.id)
     .or('on_hand_qty.gt.0,allocated_qty.gt.0');
@@ -202,7 +212,8 @@ export async function lookupByLocation(
       inventoryId: row.id,
       itemId: row.item_id,
       sku: it.sku || 'SKU-UNKNOWN',
-      name: it.name_en || 'Unnamed Item',
+      name: formatItemNameWithDesc(it.name_en, it.desc_en),
+      desc: it.desc_en || '',
       upc: it.upc || '',
       uom: it.uom || 'BOX',
       onHandQty: onHand,
@@ -248,7 +259,8 @@ export async function lookupByItem(
       item: {
         id: it.id,
         sku: it.sku,
-        name: it.name_en,
+        name: formatItemNameWithDesc(it.name_en, it.desc_en),
+        desc: it.desc_en || '',
         upc: it.upc || '',
         uom: it.uom || 'BOX',
         category: it.category,
@@ -278,7 +290,8 @@ export async function lookupByItem(
     item: {
       id: it.id,
       sku: it.sku,
-      name: it.name_en,
+      name: formatItemNameWithDesc(it.name_en, it.desc_en),
+      desc: it.desc_en || '',
       upc: it.upc || '',
       uom: it.uom || 'BOX',
       category: it.category,
@@ -469,7 +482,7 @@ export async function getPendingCycleCountQueue(
       reported_by,
       created_at,
       locations:location_id ( code ),
-      items:item_id ( sku, name_en, uom )
+      items:item_id ( sku, name_en, desc_en, uom )
     `)
     .eq('status', status)
     .order('priority', { ascending: false }) // URGENT first
@@ -492,8 +505,9 @@ export async function getPendingCycleCountQueue(
     items: row.items
       ? {
           sku: row.items.sku,
-          name: row.items.name_en,
-          name_en: row.items.name_en,
+          name: formatItemNameWithDesc(row.items.name_en, row.items.desc_en),
+          name_en: formatItemNameWithDesc(row.items.name_en, row.items.desc_en),
+          desc_en: row.items.desc_en || '',
           uom: row.items.uom,
         }
       : undefined,
@@ -547,6 +561,7 @@ export interface PutAwayResult {
   itemId: string;
   sku: string;
   name: string;
+  desc?: string;
   uom: string;
   previousQty: number;
   newQty: number;
@@ -678,7 +693,8 @@ export async function putAwayStock(
     locationCode: loc.code,
     itemId: itm.id,
     sku: itm.sku,
-    name: itm.name_en,
+    name: formatItemNameWithDesc(itm.name_en, itm.desc_en),
+    desc: itm.desc_en || '',
     uom: itm.uom || 'BOX',
     previousQty,
     newQty,
