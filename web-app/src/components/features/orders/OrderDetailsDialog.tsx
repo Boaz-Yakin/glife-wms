@@ -208,7 +208,7 @@ export function OrderDetailsDialog({
         setLoading(true)
         const { data } = await getOrderDetails(order.id)
         const mapped: EditableItem[] = ((data as any[]) || []).map((row) => {
-          const effectivePrice = Number(row.price || getOrderItemEffectivePrice(row))
+          const effectivePrice = getOrderItemEffectivePrice(row)
           const effectiveQty = row.picked_qty != null ? Number(row.picked_qty) : Number(row.qty || 1)
           return {
             id: row.id,

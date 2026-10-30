@@ -102,7 +102,7 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
   const formattedData = (data || []).map((order: any) => {
     const itemsTotal = (order.order_items || []).reduce(
       (sum: number, item: any) => {
-        const effectivePrice = Number(item.price || getOrderItemEffectivePrice(item))
+        const effectivePrice = getOrderItemEffectivePrice(item)
         const effectiveQty = item.picked_qty != null ? Number(item.picked_qty) : Number(item.qty || 0)
         return sum + (effectiveQty * effectivePrice)
       },
