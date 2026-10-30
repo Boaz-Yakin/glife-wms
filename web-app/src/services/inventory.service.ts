@@ -219,3 +219,186 @@ export async function getInventoryList({
   return { data: enrichedData, count: count || 0, error: null }
 }
 
+export interface ItemInventoryLocation {
+  code: string
+  zone: string
+  onHand: number
+  allocated: number
+  available: number
+}
+
+export interface ItemInventoryRow {
+  itemId: string
+  sku: string
+  name: string
+  desc?: string | null
+  category: string
+  uom: string
+  totalOnHand: number
+  totalAllocated: number
+  totalAvailable: number
+  locationCount: number
+  locations: ItemInventoryLocation[]
+  dynamicThreshold?: DynamicItemThreshold
+}
+
+export interface GetItemInventoryParams {
+  page?: number
+  limit?: number
+  search?: string
+  category?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+}
+
+/**
+ * 아이템별 창고 전체 재고 집계 목록 반환 (Item-Level Warehouse Stock Aggregation)
+ */
+export async function getItemInventoryList({
+  page = 1,
+  limit = 20,
+  search = '',
+  category = 'ALL',
+  sortBy = 'available',
+  sortOrder = 'desc',
+}: GetItemInventoryParams) {
+  const supabase = await createClient()
+  const activeClientId = await getActiveClientAction()
+
+  let query = (supabase as any).from('inventory').select(`
+    id,
+    item_id,
+    on_hand_qty,
+    allocated_qty,
+    client_id,
+    locations:location_id ( id, code, zone_type ),
+    items:item_id ( id, sku, name_en, desc_en, category, uom, is_active )
+  `)
+
+  if (activeClientId) {
+    query = query.or(`client_id.eq.${activeClientId},client_id.is.null`)
+  }
+  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0')
+
+  const [{ data: invRows, error }, thresholdsMap] = await Promise.all([
+    query,
+    getItemDynamicThresholdsMap(activeClientId)
+  ])
+
+  if (error || !invRows) {
+    console.error('getItemInventoryList error:', error)
+    return { data: [], count: 0, categories: [], error: error?.message || 'Failed to fetch items inventory' }
+  }
+
+  const itemMap = new Map<string, ItemInventoryRow>()
+  const categoriesSet = new Set<string>()
+
+  invRows.forEach((row: any) => {
+    const it = row.items
+    if (!it) return
+
+    const cat = it.category || 'General'
+    categoriesSet.add(cat)
+
+    if (!itemMap.has(it.id)) {
+      itemMap.set(it.id, {
+        itemId: it.id,
+        sku: it.sku || 'N/A',
+        name: it.name_en || 'Unnamed Item',
+        desc: it.desc_en || null,
+        category: cat,
+        uom: it.uom || 'BOX',
+        totalOnHand: 0,
+        totalAllocated: 0,
+        totalAvailable: 0,
+        locationCount: 0,
+        locations: [],
+        dynamicThreshold: thresholdsMap[it.id],
+      })
+    }
+
+    const agg = itemMap.get(it.id)!
+    const onHand = Number(row.on_hand_qty || 0)
+    const allocated = Number(row.allocated_qty || 0)
+    const avail = Math.max(0, onHand - allocated)
+
+    agg.totalOnHand += onHand
+    agg.totalAllocated += allocated
+    agg.totalAvailable += avail
+
+    agg.locations.push({
+      code: row.locations?.code || 'UNKNOWN',
+      zone: row.locations?.zone_type || 'A',
+      onHand,
+      allocated,
+      available: avail,
+    })
+  })
+
+  // Finalize location counts & sort per-item bins by available desc
+  let list = Array.from(itemMap.values()).map(item => ({
+    ...item,
+    locationCount: item.locations.length,
+    locations: item.locations.sort((a, b) => b.available - a.available),
+  }))
+
+  // Category filter
+  if (category && category !== 'ALL') {
+    list = list.filter(item => item.category === category)
+  }
+
+  // Search filter
+  const cleanSearch = search.trim().toLowerCase()
+  if (cleanSearch) {
+    const unhyphenated = cleanSearch.replace(/-/g, '')
+    list = list.filter(item => {
+      const matchSku = item.sku.toLowerCase().includes(cleanSearch)
+      const matchName = item.name.toLowerCase().includes(cleanSearch)
+      const matchDesc = (item.desc || '').toLowerCase().includes(cleanSearch)
+      const matchCat = item.category.toLowerCase().includes(cleanSearch)
+      const matchLoc = item.locations.some(loc => {
+        const c = loc.code.toLowerCase()
+        return c.includes(cleanSearch) || (unhyphenated ? c.replace(/-/g, '').includes(unhyphenated) : false)
+      })
+      return matchSku || matchName || matchDesc || matchCat || matchLoc
+    })
+  }
+
+  // Sorting
+  const isAsc = sortOrder === 'asc'
+  list.sort((a, b) => {
+    switch (sortBy) {
+      case 'sku':
+        return isAsc ? a.sku.localeCompare(b.sku) : b.sku.localeCompare(a.sku)
+      case 'name':
+        return isAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
+      case 'category':
+        return isAsc ? a.category.localeCompare(b.category) : b.category.localeCompare(a.category)
+      case 'on_hand':
+      case 'on_hand_qty':
+        return isAsc ? a.totalOnHand - b.totalOnHand : b.totalOnHand - a.totalOnHand
+      case 'allocated':
+      case 'allocated_qty':
+        return isAsc ? a.totalAllocated - b.totalAllocated : b.totalAllocated - a.totalAllocated
+      case 'bins':
+      case 'locationCount':
+        return isAsc ? a.locationCount - b.locationCount : b.locationCount - a.locationCount
+      case 'available':
+      case 'available_qty':
+      default:
+        return isAsc ? a.totalAvailable - b.totalAvailable : b.totalAvailable - a.totalAvailable
+    }
+  })
+
+  const totalCount = list.length
+  const from = (page - 1) * limit
+  const paginatedData = list.slice(from, from + limit)
+
+  return {
+    data: paginatedData,
+    count: totalCount,
+    categories: Array.from(categoriesSet).sort(),
+    error: null,
+  }
+}
+
