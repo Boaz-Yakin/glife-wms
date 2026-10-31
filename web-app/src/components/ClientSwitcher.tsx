@@ -48,7 +48,7 @@ export function ClientSwitcher({ clients, activeClientId }: ClientSwitcherProps)
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger 
-        className="inline-flex items-center justify-between whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-background shadow-sm hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2 w-[200px] border-dashed"
+        className="inline-flex items-center justify-between whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 border border-input bg-card shadow-2xs hover:bg-muted hover:border-primary/60 hover:text-foreground h-9 px-3.5 py-2 w-[220px] cursor-pointer"
         aria-expanded={open}
       >
         <div className="flex items-center gap-2 truncate">

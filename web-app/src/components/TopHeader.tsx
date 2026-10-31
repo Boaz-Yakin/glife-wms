@@ -57,11 +57,11 @@ export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b bg-background px-4">
+    <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4 shadow-2xs">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1" />
+        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hover:bg-muted" />
         <Separator orientation="vertical" className="mr-2 h-4" />
-        <h1 className="text-sm font-medium">Dashboard</h1>
+        <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Admin Console</span>
       </div>
       
       <div className="flex flex-1 items-center justify-center">
@@ -69,8 +69,8 @@ export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
       </div>
 
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="size-5 text-muted-foreground" />
+        <Button variant="ghost" size="icon" className="relative hover:bg-muted text-muted-foreground hover:text-foreground">
+          <Bell className="size-5" />
           {unreadCount > 0 && (
             <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-destructive"></span>
           )}
@@ -80,18 +80,18 @@ export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
         <Link
           href="/settings/profile"
           id="account-information-btn"
-          className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-primary/40 hover:shadow-xs transition-all cursor-pointer group"
+          className="flex items-center gap-2.5 px-3 py-1.5 rounded-md border border-border bg-card hover:bg-muted/60 hover:border-primary/50 hover:shadow-2xs transition-all cursor-pointer group"
           title="Account Information - Edit Profile & Password"
         >
-          <Avatar className="size-8 border border-slate-100 group-hover:border-primary/30">
-            <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
+          <Avatar className="size-8 border border-border group-hover:border-primary/40">
+            <AvatarFallback className="bg-primary/15 text-primary font-black text-xs">
               {userName.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
           <div className="flex flex-col items-start leading-none gap-1">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs font-semibold text-slate-800 group-hover:text-primary transition-colors">{userName}</span>
-              <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-medium uppercase tracking-wider">{userRole}</Badge>
+              <span className="text-xs font-semibold text-foreground group-hover:text-primary transition-colors">{userName}</span>
+              <Badge variant="secondary" className="h-4 px-1.5 text-[9px] font-semibold uppercase tracking-wider bg-secondary text-secondary-foreground border border-border/80">{userRole}</Badge>
             </div>
             <span className="text-[11px] font-medium text-primary flex items-center gap-1 group-hover:underline">
               <UserCog className="size-3" />

@@ -103,17 +103,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ]
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader>
+    <Sidebar collapsible="icon" {...props} className="border-r border-sidebar-border bg-sidebar text-sidebar-foreground">
+      <SidebarHeader className="border-b border-sidebar-border/60 pb-3">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <Package2 className="size-4" />
+            <SidebarMenuButton size="lg" render={<Link href="/dashboard" />} className="hover:bg-sidebar-accent transition-colors">
+              <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-black shadow-xs">
+                <Package2 className="size-4.5" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-semibold">Glife WMS</span>
-                <span className="text-xs text-muted-foreground">Admin Portal</span>
+                <span className="font-bold tracking-tight text-white">Glife WMS</span>
+                <span className="text-[11px] font-medium text-sidebar-foreground/60">Logistics B2B Portal</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -121,7 +121,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       
       <SidebarContent>
-        <SidebarMenu className="px-2 mt-4">
+        <SidebarMenu className="px-2 mt-3 space-y-1">
           {navItems.map((item) => {
             const hasSubItems = !!item.items
             const isOpen = openGroups[item.title] ?? false
@@ -130,28 +130,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               : pathname.startsWith(item.url)
 
             return (
-              <SidebarMenuItem key={item.title} className="mt-1">
+              <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton 
                   onClick={hasSubItems ? () => toggleGroup(item.title) : undefined}
                   render={!hasSubItems ? <Link href={item.url} /> : undefined}
                   isActive={!hasSubItems && isParentActive} 
                   tooltip={item.title}
-                  className="cursor-pointer select-none"
+                  className={cn(
+                    "cursor-pointer select-none transition-colors hover:bg-sidebar-accent hover:text-white",
+                    !hasSubItems && isParentActive && "bg-sidebar-accent text-sidebar-primary font-semibold border-l-3 border-sidebar-primary rounded-l-none pl-2"
+                  )}
                 >
                   {!hasSubItems ? (
                     <>
-                      <item.icon className="size-4" />
-                      <span>{item.title}</span>
+                      <item.icon className={cn("size-4", isParentActive ? "text-sidebar-primary" : "text-sidebar-foreground/80")} />
+                      <span className={isParentActive ? "text-sidebar-primary font-semibold" : "text-sidebar-foreground/90"}>{item.title}</span>
                     </>
                   ) : (
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center">
-                        <item.icon className="size-4 mr-2" />
-                        <span className="font-semibold">{item.title}</span>
+                        <item.icon className={cn("size-4 mr-2", isParentActive ? "text-sidebar-primary" : "text-sidebar-foreground/80")} />
+                        <span className={cn(isParentActive ? "font-semibold text-white" : "font-medium text-sidebar-foreground/90")}>{item.title}</span>
                       </div>
                       <ChevronDown 
                         className={cn(
-                          "size-4 text-muted-foreground transition-transform duration-200",
+                          "size-4 text-sidebar-foreground/50 transition-transform duration-200",
                           isOpen ? "rotate-180" : "rotate-0"
                         )} 
                       />
@@ -159,17 +162,26 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   )}
                 </SidebarMenuButton>
                 {hasSubItems && isOpen && (
-                  <SidebarMenuSub className="transition-all duration-200 animate-in fade-in-50 slide-in-from-top-1">
-                    {item.items.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton 
-                          render={<Link href={subItem.url} />}
-                          isActive={pathname === subItem.url}
-                        >
-                          <span>{subItem.title}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
+                  <SidebarMenuSub className="transition-all duration-200 animate-in fade-in-50 slide-in-from-top-1 border-l border-sidebar-border ml-3 pl-2.5 my-1 space-y-0.5">
+                    {item.items.map((subItem) => {
+                      const isSubActive = pathname === subItem.url
+                      return (
+                        <SidebarMenuSubItem key={subItem.title}>
+                          <SidebarMenuSubButton 
+                            render={<Link href={subItem.url} />}
+                            isActive={isSubActive}
+                            className={cn(
+                              "text-xs transition-colors rounded-sm hover:bg-sidebar-accent hover:text-white",
+                              isSubActive 
+                                ? "text-sidebar-primary font-bold bg-sidebar-accent border-l-2 border-sidebar-primary -ml-[11px] pl-[9px] rounded-l-none" 
+                                : "text-sidebar-foreground/75"
+                            )}
+                          >
+                            <span>{subItem.title}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      )
+                    })}
                   </SidebarMenuSub>
                 )}
               </SidebarMenuItem>
@@ -178,20 +190,20 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="border-t border-sidebar-border/60 pt-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
               render={<Link href="/settings/profile" />}
               isActive={pathname === "/settings/profile"}
-              className="text-slate-700 hover:text-primary hover:bg-primary/5"
+              className="text-sidebar-foreground/80 hover:text-sidebar-primary hover:bg-sidebar-accent transition-colors"
             >
               <UserCog className="size-4" />
               <span>Account Information</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={handleLogout} className="text-muted-foreground hover:text-destructive hover:bg-destructive/10">
+            <SidebarMenuButton onClick={handleLogout} className="text-sidebar-foreground/70 hover:text-destructive hover:bg-destructive/10 transition-colors">
               <LogOut className="size-4" />
               <span>Logout</span>
             </SidebarMenuButton>
