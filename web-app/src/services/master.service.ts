@@ -36,14 +36,18 @@ export async function getItems({
   limit = 20,
   search = '',
   clientId,
+  sortBy,
+  sortOrder = 'asc',
 }: {
   page?: number
   limit?: number
   search?: string
   clientId?: string | null
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 } = {}) {
   const supabase = await createClient()
-  let query = supabase.from('items').select(`
+  let query = supabase.from('items_with_pricing').select(`
     *,
     manufacturer:manufacturer_id(name)
   `, { count: 'exact' })
@@ -59,8 +63,48 @@ export async function getItems({
   
   const from = (page - 1) * limit
   const to = from + limit - 1
+
+  const isAsc = sortOrder === 'asc'
+  let orderedQuery = query
+
+  switch (sortBy) {
+    case 'sku':
+      orderedQuery = orderedQuery.order('sku', { ascending: isAsc })
+      break
+    case 'name':
+    case 'name_en':
+      orderedQuery = orderedQuery
+        .order('name_en', { ascending: isAsc })
+        .order('desc_en', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'uom':
+      orderedQuery = orderedQuery.order('uom', { ascending: isAsc })
+      break
+    case 'price':
+    case 'unit_price':
+    case 'effective_price':
+      orderedQuery = orderedQuery.order('effective_price', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'zone_type':
+    case 'zone':
+      orderedQuery = orderedQuery.order('zone_type', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'shelf_life_days':
+    case 'shelf_life':
+      orderedQuery = orderedQuery.order('shelf_life_days', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'manufacturer':
+      orderedQuery = orderedQuery.order('manufacturer(name)', { ascending: isAsc, nullsFirst: false })
+      break
+    case 'created_at':
+      orderedQuery = orderedQuery.order('created_at', { ascending: isAsc })
+      break
+    default:
+      orderedQuery = orderedQuery.order('created_at', { ascending: false }).order('sku', { ascending: true })
+      break
+  }
   
-  const { data, count, error } = await query.range(from, to).order('created_at', { ascending: false }).order('sku', { ascending: true })
+  const { data, count, error } = await orderedQuery.range(from, to)
   
   if (error) {
     console.error('getItems error:', error)

@@ -14,11 +14,15 @@ export default async function MasterItemsPage({
   const page = typeof params.page === 'string' ? Math.max(1, parseInt(params.page, 10)) : 1
   const limit = typeof params.limit === 'string' ? Math.max(10, parseInt(params.limit, 10)) : 50
   const search = typeof params.search === 'string' ? params.search : ''
+  const sortBy = typeof params.sortBy === 'string' ? params.sortBy : undefined
+  const sortOrder = params.sortOrder === 'desc' ? 'desc' : (params.sortOrder === 'asc' ? 'asc' : undefined)
   
   const { data, count, error } = await getItems({
     page,
     limit,
-    search
+    search,
+    sortBy,
+    sortOrder,
   })
 
   const { data: partners } = await getPartners()

@@ -30,8 +30,12 @@ import {
   ChevronLeft, 
   ChevronRight, 
   ChevronsLeft, 
-  ChevronsRight 
+  ChevronsRight,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 // Dialog components moved to ItemFormDialog
 import { Label } from "@/components/ui/label"
@@ -96,79 +100,6 @@ const ActionCell = ({ item, onEdit }: { item: ItemData, onEdit: (item: ItemData)
   )
 }
 
-const getColumns = (onEdit: (item: ItemData) => void): ColumnDef<ItemData>[] => [
-  {
-    accessorKey: "sku",
-    header: "SKU",
-    cell: ({ row }) => <div className="font-medium">{row.original.sku}</div>,
-  },
-  {
-    accessorKey: "name_en",
-    header: "Item Name",
-    cell: ({ row }) => {
-      const name = row.original.name_en
-      const desc = row.original.desc_en?.trim()
-      return (
-        <div className="font-medium">
-          {name}
-          {desc ? (
-            <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
-          ) : null}
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "uom",
-    header: "UOM",
-  },
-  {
-    id: "price",
-    accessorFn: (row) => getItemEffectivePrice(row),
-    header: () => <div className="text-center">Price</div>,
-    cell: ({ row }) => {
-      const price = getItemEffectivePrice(row.original)
-      return <div className="text-center tabular-nums">${price.toFixed(2)}</div>
-    },
-  },
-  {
-    accessorKey: "zone_type",
-    header: "Zone",
-  },
-  {
-    accessorKey: "shelf_life_days",
-    header: "Shelf Life / Policy",
-    cell: ({ row }) => {
-      const days = row.original.shelf_life_days
-      const minDays = row.original.min_outbound_days ?? 14
-      if (!days) return <span className="text-muted-foreground text-xs font-mono">-</span>
-      return (
-        <div className="flex flex-col">
-          <span className="text-xs font-semibold tabular-nums text-foreground">{days} Days</span>
-          <span className="text-[10px] text-muted-foreground font-mono">Min: {minDays}d</span>
-        </div>
-      )
-    },
-  },
-  {
-    accessorKey: "manufacturer",
-    header: "Manufacturer",
-    cell: ({ row }) => <div className="text-muted-foreground">{row.original.manufacturer?.name || '-'}</div>,
-  },
-  {
-    accessorKey: "created_at",
-    header: "Registered Date",
-    cell: ({ row }) => {
-      const date = new Date(row.original.created_at)
-      return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('en-US')}</div>
-    }
-  },
-  {
-    id: "actions",
-    cell: ({ row }) => <ActionCell item={row.original} onEdit={onEdit} />,
-  },
-]
-
 interface Partner {
   id: string
   name: string
@@ -198,6 +129,54 @@ export function ItemsTable({
   const searchParams = useSearchParams()
   const pathname = usePathname()
   const router = useRouter()
+
+  // Sorting state & handler (mirrors Inventory Status)
+  const currentSortBy = searchParams.get("sortBy") || ""
+  const currentSortOrder = (searchParams.get("sortOrder") as "asc" | "desc") || "desc"
+
+  const handleSort = (sortKey: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (currentSortBy === sortKey) {
+      if (currentSortOrder === "asc") {
+        params.set("sortOrder", "desc")
+      } else {
+        // Toggle off: reset sort to default
+        params.delete("sortBy")
+        params.delete("sortOrder")
+      }
+    } else {
+      params.set("sortBy", sortKey)
+      params.set("sortOrder", "asc")
+    }
+    params.delete("page") // Reset to page 1 on sort change
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const renderSortableHeader = (label: string, sortKey: string, alignRight = false) => {
+    const isSorted = currentSortBy === sortKey
+    return (
+      <button
+        type="button"
+        onClick={() => handleSort(sortKey)}
+        className={cn(
+          "inline-flex items-center gap-1.5 font-semibold text-xs transition-colors hover:text-foreground cursor-pointer select-none group",
+          alignRight ? "justify-end w-full text-right" : "justify-start text-left",
+          isSorted ? "text-foreground font-bold" : "text-muted-foreground"
+        )}
+      >
+        <span>{label}</span>
+        {isSorted ? (
+          currentSortOrder === "asc" ? (
+            <ArrowUp className="size-3.5 text-primary shrink-0" />
+          ) : (
+            <ArrowDown className="size-3.5 text-primary shrink-0" />
+          )
+        ) : (
+          <ArrowUpDown className="size-3 text-muted-foreground/40 group-hover:text-muted-foreground shrink-0" />
+        )}
+      </button>
+    )
+  }
   
   const defaultSearch = searchParams.get("search") || ""
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
@@ -217,14 +196,87 @@ export function ItemsTable({
     return () => clearTimeout(timeout)
   }, [searchTerm, pathname, router, searchParams])
   
-  const handleEdit = (item: ItemData) => {
+  const handleEdit = React.useCallback((item: ItemData) => {
     setEditingItem(item)
     setIsDialogOpen(true)
-  }
+  }, [])
+
+  const columns: ColumnDef<ItemData>[] = React.useMemo(() => [
+    {
+      accessorKey: "sku",
+      header: () => renderSortableHeader("SKU", "sku"),
+      cell: ({ row }) => <div className="font-medium">{row.original.sku}</div>,
+    },
+    {
+      accessorKey: "name_en",
+      header: () => renderSortableHeader("Item Name", "name_en"),
+      cell: ({ row }) => {
+        const name = row.original.name_en
+        const desc = row.original.desc_en?.trim()
+        return (
+          <div className="font-medium">
+            {name}
+            {desc ? (
+              <span className="text-muted-foreground ml-1 font-normal">({desc})</span>
+            ) : null}
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "uom",
+      header: () => renderSortableHeader("UOM", "uom"),
+    },
+    {
+      id: "price",
+      accessorFn: (row) => getItemEffectivePrice(row),
+      header: () => renderSortableHeader("Price", "price", true),
+      cell: ({ row }) => {
+        const price = getItemEffectivePrice(row.original)
+        return <div className="text-right tabular-nums pr-2">${price.toFixed(2)}</div>
+      },
+    },
+    {
+      accessorKey: "zone_type",
+      header: () => renderSortableHeader("Zone", "zone_type"),
+    },
+    {
+      accessorKey: "shelf_life_days",
+      header: () => renderSortableHeader("Shelf Life / Policy", "shelf_life_days"),
+      cell: ({ row }) => {
+        const days = row.original.shelf_life_days
+        const minDays = row.original.min_outbound_days ?? 14
+        if (!days) return <span className="text-muted-foreground text-xs font-mono">-</span>
+        return (
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold tabular-nums text-foreground">{days} Days</span>
+            <span className="text-[10px] text-muted-foreground font-mono">Min: {minDays}d</span>
+          </div>
+        )
+      },
+    },
+    {
+      accessorKey: "manufacturer",
+      header: () => renderSortableHeader("Manufacturer", "manufacturer"),
+      cell: ({ row }) => <div className="text-muted-foreground">{row.original.manufacturer?.name || '-'}</div>,
+    },
+    {
+      accessorKey: "created_at",
+      header: () => renderSortableHeader("Registered Date", "created_at"),
+      cell: ({ row }) => {
+        const date = new Date(row.original.created_at)
+        return <div className="tabular-nums text-muted-foreground">{date.toLocaleDateString('en-US')}</div>
+      }
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => <ActionCell item={row.original} onEdit={handleEdit} />,
+    },
+  ], [currentSortBy, currentSortOrder, handleEdit])
 
   const table = useReactTable({
     data,
-    columns: getColumns(handleEdit),
+    columns,
     getCoreRowModel: getCoreRowModel(),
   })
 
