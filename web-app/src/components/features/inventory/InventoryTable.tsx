@@ -550,7 +550,28 @@ export function InventoryTable({
     {
       accessorKey: "location.code",
       header: () => renderSortableHeader("Location", "location"),
-      cell: ({ row }) => <div className="font-medium tabular-nums">{row.original.location?.code || 'N/A'}</div>,
+      cell: ({ row, table }) => {
+        const currentLocation = row.original.location?.code
+        if (!currentLocation) return <span className="text-muted-foreground">-</span>
+
+        const rows = table.getRowModel().rows
+        const currentIndex = row.index
+        const isDuplicate = currentIndex > 0 && rows[currentIndex - 1]?.original.location?.code === currentLocation
+
+        if (isDuplicate) {
+          return (
+            <div 
+              className="text-transparent select-none text-xs" 
+              title={`${currentLocation} (동일 로케이션)`}
+              aria-label={currentLocation}
+            >
+              &nbsp;
+            </div>
+          )
+        }
+
+        return <div className="font-semibold tabular-nums text-foreground">{currentLocation}</div>
+      },
     },
     {
       accessorKey: "item.sku",

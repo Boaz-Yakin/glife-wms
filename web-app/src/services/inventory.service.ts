@@ -162,7 +162,7 @@ export async function getInventoryList({
         .order('allocated_qty', { ascending: !isAsc })
       break
     default:
-      orderedQuery = orderedQuery.order('updated_at', { ascending: false })
+      orderedQuery = orderedQuery.order('location(code)', { ascending: true }).order('updated_at', { ascending: false })
       break
   }
   
