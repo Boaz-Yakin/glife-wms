@@ -651,8 +651,9 @@ export function InventoryTable({
         const bundle = row.original.bundleMeta
 
         if (bundle?.isChild && bundle.virtualAvailable !== undefined) {
-          const multiUnits = (bundle.parentAvailable || 0) * (bundle.conversionRatio || 5)
-          const tooltip = `[Buldak Single Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Avail: ${bundle.parentAvailable || 0} pk (${bundle.parentSku})\n• Multi Equivalent Singles: +${multiUnits} EA (×${bundle.conversionRatio || 5})\n• Grand Total Virtual Available: ${bundle.virtualAvailable} EA`
+          const parentPk = bundle.parentAvailable || 0
+          const multiUnits = parentPk * (bundle.conversionRatio || 5)
+          const tooltip = `[Buldak Single Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Stock: ${parentPk} pk (${bundle.parentSku || 'Multi'})\n• Multi Equivalent Singles: +${multiUnits} EA (${parentPk} pk × ${bundle.conversionRatio || 5})\n• Grand Total Virtual Available: ${bundle.virtualAvailable} EA`
 
           return (
             <div className="flex flex-col items-end gap-0.5">
@@ -660,11 +661,14 @@ export function InventoryTable({
                 {getAvailableBadge(bundle.virtualAvailable, thresholds, dyn, mode)}
               </div>
               <div 
-                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1"
+                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1.5"
                 title={tooltip}
               >
-                <span>Single: {available}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+Multi: {multiUnits}</span>
+                <span>Single: {available} EA</span>
+                <span>|</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Multi: {parentPk} pk (×{bundle.conversionRatio || 5})
+                </span>
               </div>
             </div>
           )

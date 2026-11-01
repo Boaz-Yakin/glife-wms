@@ -465,8 +465,9 @@ export function ItemInventoryTable({
         const dyn = item.dynamicThreshold
 
         if (item.isBundleChild && item.virtualAvailable !== undefined) {
-          const multiUnits = (item.parentAvailable || 0) * (item.bundleRatio || 5)
-          const tooltip = `[Buldak Single Total Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Avail: ${item.parentAvailable || 0} pk (${item.parentSku || 'Multi'})\n• Multi Equivalent Singles: +${multiUnits} EA (×${item.bundleRatio || 5})\n• Grand Total Virtual Available: ${item.virtualAvailable} EA`
+          const parentPk = item.parentAvailable || 0
+          const multiUnits = parentPk * (item.bundleRatio || 5)
+          const tooltip = `[Buldak Single Total Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Stock: ${parentPk} pk (${item.parentSku || 'Multi'})\n• Multi Equivalent Singles: +${multiUnits} EA (${parentPk} pk × ${item.bundleRatio || 5})\n• Grand Total Virtual Available: ${item.virtualAvailable} EA`
           
           return (
             <div className="flex flex-col items-end gap-0.5">
@@ -474,11 +475,14 @@ export function ItemInventoryTable({
                 {getItemAvailableBadge(item.virtualAvailable, thresholds, dyn, mode)}
               </div>
               <div 
-                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1"
+                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1.5"
                 title={tooltip}
               >
-                <span>Single: {available}</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+Multi: {multiUnits}</span>
+                <span>Single: {available} EA</span>
+                <span>|</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+                  Multi: {parentPk} pk (×{item.bundleRatio || 5})
+                </span>
               </div>
             </div>
           )
