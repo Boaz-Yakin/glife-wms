@@ -1,8 +1,15 @@
 "use server"
 
 import { cookies } from "next/headers"
+import { requireAuth } from "@/lib/auth/guard"
 
 export async function setActiveClientAction(clientId: string | null) {
+  try {
+    await requireAuth()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const cookieStore = await cookies()
   if (clientId) {
     cookieStore.set("active_client_id", clientId, { path: '/' })

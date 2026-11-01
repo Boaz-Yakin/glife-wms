@@ -41,6 +41,16 @@ src/
   - `supabase.auth.mfa.enroll({ factorType: 'totp' })`로 SVG QR 코드 및 Base32 Secret Key 발급.
   - 6자리 인증코드 검증 완료 시 Factor를 활성화(`verified`). 언제든지 해제(`unenroll`) 가능.
 
+### 4.2 Server Action & Internal API Guards (심층 방어 인가 가드)
+- **배경**: Next.js Server Action 및 API 라우트는 브라우저에서 직접 HTTP 호출이 가능하므로 미들웨어 보호 외에도 엔드포인트 자체 인가 검증이 필수적임.
+- **가드 구현 (`src/lib/auth/guard.ts`)**:
+  - `requireAuth()`: 현재 세션의 `user`를 검증하고 비인가 요청 시 에러 발생.
+  - `requireRole(allowedRoles: string[])`: `ADMIN`, `SUPERVISOR` 등 허용된 권한만 통과.
+  - `requireAdmin()`: `ADMIN` 전용 작업(사용자 계정 생성/삭제, 화주사 등록 등) 강제.
+  - `requireManager()`: `ADMIN` 및 `SUPERVISOR` 허용 작업(주문 상태 변경, 마스터 데이터 수정 등) 통제.
+- **API 엔드포인트 보안**:
+  - `/api/notifications/kakao/order`: `x-internal-secret` 또는 `Authorization: Bearer <INTERNAL_API_SECRET>` 헤더 검증. 불일치 시 `401 Unauthorized` 반환.
+
 ## 5. Master Data - Stores Management (매장 마스터 관리)
 ### 5.1 데이터 모델 및 스키마 확장 (`public.stores`)
 - `client_id` (UUID, FK to `public.clients.id`, ON DELETE CASCADE): 화주사 1:N 관계

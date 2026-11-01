@@ -2,8 +2,16 @@
 
 import { createClient } from "@supabase/supabase-js"
 import { redirect } from "next/navigation"
+import { requireAuth } from "@/lib/auth/guard"
 
 export async function changePasswordAction(formData: FormData) {
+  let currentUser;
+  try {
+    currentUser = await requireAuth()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Authentication required." }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
@@ -13,12 +21,12 @@ export async function changePasswordAction(formData: FormData) {
     auth: { autoRefreshToken: false, persistSession: false }
   })
 
-  const userId = formData.get("user_id")?.toString()
+  const userId = formData.get("user_id")?.toString() || currentUser.id
   const password = formData.get("password")?.toString()
   const confirmPassword = formData.get("confirm_password")?.toString()
 
-  if (!userId) {
-    return { error: "Authentication information is missing." }
+  if (currentUser.id !== userId) {
+    return { error: "Forbidden: You can only change your own password." }
   }
 
   if (!password || password.length < 6) {

@@ -9,9 +9,11 @@ import {
   UpdateOrderPayload, 
   MasterItemSearchResult 
 } from "@/services/orders.service"
+import { requireManager, requireAuth } from "@/lib/auth/guard"
 
 export async function updateOrderStatusAction(orderId: string, status: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireManager()
     const result = await updateOrderStatus(orderId, status)
     if (!result.success) {
       return { success: false, error: result.error || "Failed to update order status" }
@@ -29,6 +31,7 @@ export async function updateOrderStatusAction(orderId: string, status: string): 
 
 export async function updateOrderAction(payload: UpdateOrderPayload) {
   try {
+    await requireManager()
     const result = await updateOrder(payload)
     if (!result.success) {
       return { success: false, error: result.error || "Failed to update order" }
@@ -46,6 +49,7 @@ export async function updateOrderAction(payload: UpdateOrderPayload) {
 
 export async function searchMasterItemsAction(search: string): Promise<MasterItemSearchResult[]> {
   try {
+    await requireAuth()
     return await searchMasterItemsForOrder(search)
   } catch (err) {
     console.error("searchMasterItemsAction error:", err)
@@ -55,6 +59,7 @@ export async function searchMasterItemsAction(search: string): Promise<MasterIte
 
 export async function deleteOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
   try {
+    await requireManager()
     const result = await deleteOrder(orderId)
     if (!result.success) {
       return { success: false, error: result.error || "Failed to delete order" }

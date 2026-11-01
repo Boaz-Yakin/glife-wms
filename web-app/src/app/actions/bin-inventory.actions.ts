@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getItemEffectivePrice } from '@/lib/pricing'
 import { getActiveClientAction } from './client.actions'
+import { requireManager } from '@/lib/auth/guard'
 
 export interface AssignableItem {
   id: string
@@ -101,6 +102,7 @@ export async function assignItemToBinAction(params: AssignItemToBinParams): Prom
   error?: string
 }> {
   try {
+    await requireManager()
     const { locationCode, itemId, qty, replaceExisting = true } = params
     const supabase = createAdminClient()
     const activeClientId = await getActiveClientAction()
@@ -191,6 +193,7 @@ export async function clearBinInventoryAction(locationCode: string): Promise<{
   error?: string
 }> {
   try {
+    await requireManager()
     const supabase = createAdminClient()
 
     const { data: loc, error: locErr } = await (supabase as any)

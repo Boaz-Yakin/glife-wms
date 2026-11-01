@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+import { requireAdmin, requireAuth } from "@/lib/auth/guard"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -11,6 +12,12 @@ const getAdminClient = () => {
 }
 
 export async function createItemAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
   
   const id = formData.get("id")?.toString()
@@ -93,6 +100,12 @@ export async function createItemAction(formData: FormData) {
 }
 
 export async function bulkCreateItemsAction(items: any[]) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   if (!items || items.length === 0) {
@@ -140,6 +153,12 @@ export async function bulkCreateItemsAction(items: any[]) {
 }
 
 export async function deleteItemAction(id: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   // 1. Check if the item is referenced in any order history
@@ -193,6 +212,13 @@ export async function deleteItemAction(id: string) {
 
 
 export async function getAllItemsForExportAction() {
+  try {
+    await requireAuth()
+  } catch (authErr) {
+    console.error("Export unauthorized:", authErr)
+    return []
+  }
+
   const supabase = getAdminClient()
   const activeClientId = await getActiveClientAction()
   let query = supabase.from("items").select(`

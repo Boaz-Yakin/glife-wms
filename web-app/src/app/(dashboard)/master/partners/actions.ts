@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
+import { requireAdmin } from "@/lib/auth/guard"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -10,6 +11,12 @@ const getAdminClient = () => {
 }
 
 export async function createPartnerAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   const name = formData.get("name")?.toString()
@@ -44,6 +51,12 @@ export async function createPartnerAction(formData: FormData) {
 }
 
 export async function updatePartnerAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
   
   const id = formData.get("id")?.toString()

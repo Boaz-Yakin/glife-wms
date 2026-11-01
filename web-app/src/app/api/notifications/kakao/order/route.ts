@@ -1,8 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendKakaoOrderNotification } from '@/services/kakao.service'
+import { createClient } from '@/lib/supabase/server'
+import { verifyInternalSecret } from '@/lib/auth/guard'
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Verify Authorization: Internal secret token or valid user session
+    const secretHeader = req.headers.get('x-internal-secret') || req.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+    const isSecretValid = verifyInternalSecret(secretHeader)
+
+    if (!isSecretValid) {
+      const supabase = await createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        return NextResponse.json(
+          { error: 'Unauthorized: Missing or invalid authentication token.' },
+          { status: 401 }
+        )
+      }
+    }
+
     const body = await req.json().catch(() => ({}))
     const orderId = body.order_id || body.orderId
 

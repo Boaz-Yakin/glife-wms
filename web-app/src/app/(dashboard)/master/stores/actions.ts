@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { checkStoreOrderCount } from "@/services/stores.service"
+import { requireAdmin } from "@/lib/auth/guard"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
@@ -11,6 +12,12 @@ const getAdminClient = () => {
 }
 
 export async function createStoreAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   const clientId = formData.get("client_id")?.toString()
@@ -58,6 +65,12 @@ export async function createStoreAction(formData: FormData) {
 }
 
 export async function updateStoreAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   const id = formData.get("id")?.toString()
@@ -111,6 +124,12 @@ export async function updateStoreAction(formData: FormData) {
 }
 
 export async function toggleStoreStatusAction(id: string, nextStatus: boolean) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   const { error } = await (supabase as any)
@@ -131,6 +150,12 @@ export async function toggleStoreStatusAction(id: string, nextStatus: boolean) {
 }
 
 export async function deleteStoreAction(id: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   // Check if there are linked orders
   const { count, error: countError } = await checkStoreOrderCount(id)
   if (countError) {

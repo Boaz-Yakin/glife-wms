@@ -2,8 +2,15 @@
 
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
+import { requireAdmin } from "@/lib/auth/guard"
 
 export async function createUserAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
@@ -70,6 +77,12 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserRoleAction(userId: string, newRole: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
@@ -105,6 +118,12 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
 }
 
 export async function updateUserAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
@@ -168,6 +187,12 @@ export async function updateUserAction(formData: FormData) {
 }
 
 export async function deleteUserAction(userId: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   
@@ -213,6 +238,12 @@ export async function deleteUserAction(userId: string) {
 }
 
 export async function resetUserPasswordAction(userId: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ''
   

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { requireAdmin, requireAuth } from '@/lib/auth/guard'
 
 import {
   type WarehouseStructureConfig,
@@ -20,6 +21,7 @@ export async function getWarehouseStructureConfigAction(): Promise<{
   error?: string
 }> {
   try {
+    await requireAuth()
     const supabase = createAdminClient()
     const { data: locRows, error } = await (supabase as any)
       .from('locations')
@@ -132,6 +134,7 @@ export async function applyWarehouseStructureAction(
   options?: StructureApplyOptions | boolean
 ) {
   try {
+    await requireAdmin()
     const opts: StructureApplyOptions = typeof options === 'boolean'
       ? { seedDemoData: options, wipeAllInventory: false }
       : (options || {})

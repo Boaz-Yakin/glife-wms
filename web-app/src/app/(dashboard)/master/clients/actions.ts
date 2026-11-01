@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { cookies } from "next/headers"
+import { requireAdmin } from "@/lib/auth/guard"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
@@ -13,6 +14,12 @@ const getAdminClient = () => {
 }
 
 export async function createClientAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
   const name = formData.get("name")?.toString().trim()
   let code = formData.get("code")?.toString().trim().toUpperCase()
@@ -52,6 +59,12 @@ export async function createClientAction(formData: FormData) {
 }
 
 export async function updateClientAction(formData: FormData) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
   const id = formData.get("id")?.toString()
   const name = formData.get("name")?.toString().trim()
@@ -86,6 +99,12 @@ export async function updateClientAction(formData: FormData) {
 }
 
 export async function toggleClientStatusAction(id: string, currentStatus: boolean) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
   const newStatus = !currentStatus
 
@@ -104,6 +123,12 @@ export async function toggleClientStatusAction(id: string, currentStatus: boolea
 }
 
 export async function deleteClientAction(id: string) {
+  try {
+    await requireAdmin()
+  } catch (authErr) {
+    return { error: authErr instanceof Error ? authErr.message : "Unauthorized" }
+  }
+
   const supabase = getAdminClient()
 
   // 1. Safety Check: Verify if client has dependent items, stores, or orders
