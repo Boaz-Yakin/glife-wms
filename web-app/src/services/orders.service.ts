@@ -165,6 +165,17 @@ export async function getOrders({
     )
   }
 
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanSearch)
+  const baseOrderFilters = [
+    `order_no.ilike.%${cleanSearch}%`,
+    `shipping_address.ilike.%${cleanSearch}%`,
+    `invoice_number.ilike.%${cleanSearch}%`,
+  ]
+  if (isUuid) {
+    baseOrderFilters.push(`id.eq.${cleanSearch}`)
+  }
+  const orderOrFilterString = baseOrderFilters.join(',')
+
   // 검색 조건 분기 적용
   if (isItemSearch && itemKeyword) {
     // 아이템 전용 검색 모드
@@ -177,7 +188,7 @@ export async function getOrders({
     let directOrderQuery = supabase
       .from('orders')
       .select('id')
-      .or(`id.ilike.%${cleanSearch}%,order_no.ilike.%${cleanSearch}%,shipping_address.ilike.%${cleanSearch}%,invoice_number.ilike.%${cleanSearch}%`)
+      .or(orderOrFilterString)
       .order('created_at', { ascending: false })
       
     if (activeClientId) {
@@ -193,7 +204,7 @@ export async function getOrders({
     query = query.in('id', combinedOrderIds.slice(0, 250))
   } else if (cleanSearch) {
     // 주문/송장 기본 검색 모드
-    query = query.or(`id.ilike.%${cleanSearch}%,order_no.ilike.%${cleanSearch}%,shipping_address.ilike.%${cleanSearch}%,invoice_number.ilike.%${cleanSearch}%`)
+    query = query.or(orderOrFilterString)
     if (cleanItemSearch && matchedItemOrderIds !== null) {
       if (matchedItemOrderIds.length === 0) {
         return { data: [], count: 0, error: null }
