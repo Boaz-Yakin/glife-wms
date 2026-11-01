@@ -746,6 +746,19 @@
   - `StockBadge`: 가맹점/바이어에게 복잡한 번들 용어 없이 깔끔하게 `재고 N EA`로 표시되어 가맹점 혼선 완전 방지
   - OrderAPP 빌드 검증 및 GitHub 배포 완료 (`glife-orderapp` commit `583d3c2`)
 
+---
+
+## 🌐 Phase 63: 멀티테넌트 B2B SaaS 제품화 마스터 플랜 및 Phase 1 상세 구현 명세서 수립
+- [x] 63.1 B2B SaaS 제품화 마스터 플랜 문서 작성 ([`docs/SaaS_Productization_Master_Plan.md`](file:///c:/Users/boazn/Projects/WMS/docs/SaaS_Productization_Master_Plan.md)):
+  - 4대 시스템(`WMS Web`, `WMS Mobile`, `OrderAPP`, `G-Manager`) 멀티테넌시 통합 로드맵 수립
+  - 4단계(Phase 1~4) 6개월 진화 계획 및 구독 수익화(Monetization) 티어 설계
+- [x] 63.2 Phase 1 상세 개발 명세서 작성 ([`docs/SaaS_Phase1_Implementation_Spec.md`](file:///c:/Users/boazn/Projects/WMS/docs/SaaS_Phase1_Implementation_Spec.md)):
+  - Week 1: `tenants`, `tenant_settings` 스키마 및 10대 핵심 테이블 `tenant_id` 백필 & 복합 인덱스, RLS 정책 명세
+  - Week 2: Next.js 도메인/서브도메인 기반 테넌트 리졸버, 가상 이메일/고정 UUID 하드코딩 제거, 화이트라벨 브랜딩 주입 명세
+  - Week 3: 범용 번들 해체(De-kitting) 관리 GUI(`/master/conversions`) 및 테넌트별 운영 정책 스위치(`/settings`) 명세
+  - Week 4: RLS 데이터 격리 침투 테스트 및 2호 테넌트(Acme Food) 30분 온보딩 실증 & Zero-Downtime 회귀 검증 계획 수립
+
+
 
 
 
