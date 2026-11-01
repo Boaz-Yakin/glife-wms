@@ -42,7 +42,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  Boxes,
 } from "lucide-react"
+import { DeKitDialog } from "./DeKitDialog"
 import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -57,6 +59,15 @@ export type InventoryData = {
   lot_no?: string | null
   updated_at: string
   created_at?: string
+  bundleMeta?: {
+    isChild?: boolean
+    parentSku?: string
+    parentItemId?: string
+    isParent?: boolean
+    childSku?: string
+    childItemId?: string
+    conversionRatio?: number
+  }
   item: {
     id: string
     sku: string
@@ -194,6 +205,15 @@ export function InventoryTable({
   const defaultZone = searchParams.get("zone") || "ALL"
 
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+  const [selectedParentForDekit, setSelectedParentForDekit] = React.useState<{
+    id: string
+    sku: string
+    name: string
+    desc?: string | null
+    available: number
+    childSku?: string
+    conversionRatio?: number
+  } | null>(null)
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
@@ -632,6 +652,53 @@ export function InventoryTable({
         )
       },
     },
+    {
+      id: "actions",
+      header: () => <div className="text-center">Action</div>,
+      cell: ({ row }) => {
+        const item = row.original.item
+        const bundle = row.original.bundleMeta
+        const available = row.original.on_hand_qty - row.original.allocated_qty
+
+        if (bundle?.isParent) {
+          return (
+            <div className="text-center">
+              <Button
+                variant="outline"
+                size="xs"
+                className="h-6 px-2 text-[11px] gap-1 font-medium bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/40 border-dashed"
+                onClick={() =>
+                  setSelectedParentForDekit({
+                    id: item?.id,
+                    sku: item?.sku,
+                    name: item?.name_en,
+                    desc: item?.desc_en,
+                    available,
+                    childSku: bundle.childSku,
+                    conversionRatio: bundle.conversionRatio || 5,
+                  })
+                }
+                disabled={available <= 0}
+                title={`De-kit Multi 5pk into Single (${bundle.childSku || 'Single'} @ LOC-S0105A01)`}
+              >
+                <Boxes className="h-3 w-3 text-primary shrink-0" />
+                <span>De-kit</span>
+              </Button>
+            </div>
+          )
+        }
+        if (bundle?.isChild) {
+          return (
+            <div className="text-center">
+              <Badge variant="outline" className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/5">
+                Single
+              </Badge>
+            </div>
+          )
+        }
+        return null
+      },
+    },
   ], [thresholds, mode, currentSortBy, currentSortOrder])
 
   const table = useReactTable({
@@ -1041,6 +1108,19 @@ export function InventoryTable({
           </div>
         </div>
       </div>
+
+      {/* Manual 1-Click De-kit Dialog */}
+      <DeKitDialog
+        isOpen={!!selectedParentForDekit}
+        onClose={() => setSelectedParentForDekit(null)}
+        parentItem={selectedParentForDekit}
+        childSku={selectedParentForDekit?.childSku}
+        conversionRatio={selectedParentForDekit?.conversionRatio || 5}
+        targetLocation="LOC-S0105A01"
+        onSuccess={() => {
+          router.refresh()
+        }}
+      />
     </div>
   )
 }

@@ -43,7 +43,9 @@ import {
   ArrowUpDown,
   MapPin,
   Layers,
+  Boxes,
 } from "lucide-react"
+import { DeKitDialog } from "./DeKitDialog"
 import { exportMultiSheetExcel } from "@/lib/export"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
@@ -134,6 +136,7 @@ export function ItemInventoryTable({
   const [thresholds, setThresholds] = React.useState<StockThresholdConfig>(DEFAULT_STOCK_THRESHOLDS)
   const [tempThresholds, setTempThresholds] = React.useState<StockThresholdConfig>(DEFAULT_STOCK_THRESHOLDS)
   const [isSettingsOpen, setIsSettingsOpen] = React.useState(false)
+  const [selectedParentForDekit, setSelectedParentForDekit] = React.useState<ItemInventoryRow | null>(null)
 
   // Load preferences from localStorage
   React.useEffect(() => {
@@ -457,8 +460,30 @@ export function ItemInventoryTable({
       accessorKey: "totalAvailable",
       header: () => renderSortableHeader("Total Available", "available", true),
       cell: ({ row }) => {
-        const available = row.original.totalAvailable
-        const dyn = row.original.dynamicThreshold
+        const item = row.original
+        const available = item.totalAvailable
+        const dyn = item.dynamicThreshold
+
+        if (item.isBundleChild && item.virtualAvailable !== undefined) {
+          const multiUnits = (item.parentAvailable || 0) * (item.bundleRatio || 5)
+          const tooltip = `[Buldak Single Total Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Avail: ${item.parentAvailable || 0} pk (${item.parentSku || 'Multi'})\n• Multi Equivalent Singles: +${multiUnits} EA (×${item.bundleRatio || 5})\n• Grand Total Virtual Available: ${item.virtualAvailable} EA`
+          
+          return (
+            <div className="flex flex-col items-end gap-0.5">
+              <div title={tooltip} className="cursor-help">
+                {getItemAvailableBadge(item.virtualAvailable, thresholds, dyn, mode)}
+              </div>
+              <div 
+                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1"
+                title={tooltip}
+              >
+                <span>Single: {available}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+Multi: {multiUnits}</span>
+              </div>
+            </div>
+          )
+        }
+
         return (
           <div className="text-right">
             {getItemAvailableBadge(available, thresholds, dyn, mode)}
@@ -474,6 +499,41 @@ export function ItemInventoryTable({
           {row.original.uom}
         </div>
       ),
+    },
+    {
+      id: "actions",
+      header: () => <div className="text-center">Action</div>,
+      cell: ({ row }) => {
+        const item = row.original
+        if (item.isBundleParent) {
+          const hasStock = item.totalAvailable > 0
+          return (
+            <div className="text-center">
+              <Button
+                variant="outline"
+                size="xs"
+                className="h-6 px-2 text-[11px] gap-1 font-medium bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/40 border-dashed"
+                onClick={() => setSelectedParentForDekit(item)}
+                disabled={!hasStock}
+                title={`De-kit Multi 5pk into Single (${item.childSku || 'Single'} @ LOC-S0105A01)`}
+              >
+                <Boxes className="h-3 w-3 text-primary shrink-0" />
+                <span>De-kit</span>
+              </Button>
+            </div>
+          )
+        }
+        if (item.isBundleChild) {
+          return (
+            <div className="text-center">
+              <Badge variant="outline" className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/5">
+                Single ({item.parentSku})
+              </Badge>
+            </div>
+          )
+        }
+        return null
+      },
     },
   ], [thresholds, mode, currentSortBy, currentSortOrder])
 
@@ -833,6 +893,29 @@ export function ItemInventoryTable({
           </div>
         </div>
       </div>
+
+      {/* Manual 1-Click De-kit Dialog */}
+      <DeKitDialog
+        isOpen={!!selectedParentForDekit}
+        onClose={() => setSelectedParentForDekit(null)}
+        parentItem={
+          selectedParentForDekit
+            ? {
+                id: selectedParentForDekit.itemId,
+                sku: selectedParentForDekit.sku,
+                name: selectedParentForDekit.name,
+                desc: selectedParentForDekit.desc,
+                available: selectedParentForDekit.totalAvailable,
+              }
+            : null
+        }
+        childSku={selectedParentForDekit?.childSku}
+        conversionRatio={selectedParentForDekit?.bundleRatio || 5}
+        targetLocation="LOC-S0105A01"
+        onSuccess={() => {
+          router.refresh()
+        }}
+      />
     </div>
   )
 }

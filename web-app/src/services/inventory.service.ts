@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { getActiveClientAction } from '@/app/actions/client.actions'
+import { getBuldakConversionMap } from './dekit.service'
 
 export interface GetInventoryParams {
   page?: number
@@ -166,10 +167,11 @@ export async function getInventoryList({
       break
   }
   
-  // Parallel fetch: inventory page data + dynamic thresholds map
-  const [listRes, thresholdMap] = await Promise.all([
+  // Parallel fetch: inventory page data + dynamic thresholds map + de-kit conversions map
+  const [listRes, thresholdMap, convMaps] = await Promise.all([
     orderedQuery.range(from, to),
-    getItemDynamicThresholdsMap(activeClientId)
+    getItemDynamicThresholdsMap(activeClientId),
+    getBuldakConversionMap(),
   ])
 
   const { data, error, count } = listRes
@@ -204,11 +206,31 @@ export async function getInventoryList({
 
     const itemId = row.item?.id
     const dynThreshold = itemId ? thresholdMap[itemId] : undefined
+    const childConv = itemId ? convMaps.childToParent.get(itemId) : undefined
+    const parentConv = itemId ? convMaps.parentToChild.get(itemId) : undefined
+
+    let bundleMeta: any = undefined
+    if (childConv) {
+      bundleMeta = {
+        isChild: true,
+        parentSku: childConv.parentSku,
+        parentItemId: childConv.parentItemId,
+        conversionRatio: childConv.conversionRatio,
+      }
+    } else if (parentConv) {
+      bundleMeta = {
+        isParent: true,
+        childSku: parentConv.childSku,
+        childItemId: parentConv.childItemId,
+        conversionRatio: parentConv.conversionRatio,
+      }
+    }
 
     return {
       ...row,
       expiration_date: expDate,
       lot_no: lotNo,
+      bundleMeta,
       item: row.item ? {
         ...row.item,
         dynamicThreshold: dynThreshold,
@@ -240,6 +262,16 @@ export interface ItemInventoryRow {
   locationCount: number
   locations: ItemInventoryLocation[]
   dynamicThreshold?: DynamicItemThreshold
+  // Multi <-> Single De-kit Bundle metadata
+  isBundleChild?: boolean
+  parentSku?: string
+  parentItemId?: string
+  parentAvailable?: number
+  virtualAvailable?: number
+  isBundleParent?: boolean
+  childSku?: string
+  childItemId?: string
+  bundleRatio?: number
 }
 
 export interface GetItemInventoryParams {
@@ -280,9 +312,10 @@ export async function getItemInventoryList({
   }
   query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0')
 
-  const [{ data: invRows, error }, thresholdsMap] = await Promise.all([
+  const [{ data: invRows, error }, thresholdsMap, convMaps] = await Promise.all([
     query,
-    getItemDynamicThresholdsMap(activeClientId)
+    getItemDynamicThresholdsMap(activeClientId),
+    getBuldakConversionMap(),
   ])
 
   if (error || !invRows) {
@@ -342,6 +375,28 @@ export async function getItemInventoryList({
     locations: item.locations.sort((a, b) => b.available - a.available),
   }))
 
+  // Apply Multi <-> Single bundle conversions and virtual available stock
+  list.forEach(item => {
+    if (convMaps.childToParent.has(item.itemId)) {
+      const conv = convMaps.childToParent.get(item.itemId)!
+      const parentItem = itemMap.get(conv.parentItemId)
+      const parentAvail = parentItem ? parentItem.totalAvailable : 0
+      item.isBundleChild = true
+      item.parentSku = conv.parentSku
+      item.parentItemId = conv.parentItemId
+      item.parentAvailable = parentAvail
+      item.bundleRatio = conv.conversionRatio
+      // Single available stock = Single physical available + Multi available * 5
+      item.virtualAvailable = item.totalAvailable + (parentAvail * conv.conversionRatio)
+    } else if (convMaps.parentToChild.has(item.itemId)) {
+      const conv = convMaps.parentToChild.get(item.itemId)!
+      item.isBundleParent = true
+      item.childSku = conv.childSku
+      item.childItemId = conv.childItemId
+      item.bundleRatio = conv.conversionRatio
+    }
+  })
+
   // Category filter
   if (category && category !== 'ALL') {
     list = list.filter(item => item.category === category)
@@ -385,8 +440,10 @@ export async function getItemInventoryList({
         return isAsc ? a.locationCount - b.locationCount : b.locationCount - a.locationCount
       case 'available':
       case 'available_qty':
-      default:
-        return isAsc ? a.totalAvailable - b.totalAvailable : b.totalAvailable - a.totalAvailable
+      default: {
+        const getAvail = (x: ItemInventoryRow) => (x.virtualAvailable !== undefined ? x.virtualAvailable : x.totalAvailable)
+        return isAsc ? getAvail(a) - getAvail(b) : getAvail(b) - getAvail(a)
+      }
     }
   })
 

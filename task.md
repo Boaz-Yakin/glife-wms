@@ -710,6 +710,37 @@
   - 사이드바 네비게이션([`AppSidebar.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/AppSidebar.tsx)): Settings 하위에 `Notifications (카카오톡)` 등록
 - [x] 60.5 Next.js 16 프로덕션 빌드(`web-app`, `OrderAPP`) 100% 통과 검증 완료
 
+---
+
+## 🔒 Phase 61: WMS 보안 강화 Phase 1 (Server Actions & API Routes RBAC 가드 전면 적용)
+- [x] 61.1 보안 감사 보고서 및 가이드라인 수립 ([`Security_Audit_and_Hardening_Guide.md`](file:///c:/Users/boazn/Projects/WMS/docs/web-app/Security_Audit_and_Hardening_Guide.md))
+- [x] 61.2 인증/인가 가드 헬퍼 모듈 구축 ([`guard.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/lib/auth/guard.ts)):
+  - `requireAuth()`: 로그인 필수 검증
+  - `requireAdmin()`: ADMIN 권한 필수 검증
+  - `requireManager()`: ADMIN 또는 SUPERVISOR 권한 필수 검증
+  - `verifyInternalSecret()`: 시스템 간 API 호출용 Bearer 토큰 검증
+- [x] 61.3 12개 Server Action 파일 및 카카오 알림 API 라우트 전면 RBAC 가드 적용
+- [x] 61.4 Next.js 16 프로덕션 빌드 통과 및 배포 완료
+
+---
+
+## 🍜 Phase 62: Buldak 라면 Multi 5pk ↔ Single 낱개 해체(De-kitting) 및 가용재고 연동 시스템
+- [x] 62.1 기술 설계서(TRD) Section 6.8 작성 ([`03_TRD.md`](file:///c:/Users/boazn/Projects/WMS/docs/web-app/03_TRD.md))
+- [x] 62.2 DB 마이그레이션 SQL 작성 ([`20261101080000_add_item_conversions_and_auto_dekit.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261101080000_add_item_conversions_and_auto_dekit.sql)):
+  - `item_conversions` 테이블 및 인덱스, RLS 정책 수립
+  - Buldak 8종 맛(Original, Carbonara, Cream Carbonara, 2x Spicy, Cheese, Rose, Quatro, Habanero) Description 매칭 기반 1:1 바인딩 시드
+  - 방법 1 수동 해체 RPC (`dekit_multi_to_single`): Multi 차감, 전용 로케이션 `LOC-S0105A01`에 Single 입고, `inventory_adjustments` 기록
+  - 방법 2 주문할당 자동 해체 RPC (`allocate_single_order_item`): Single 주문 시 물리재고 부족 시 Multi 자동 해체 후 즉시 할당
+  - Single 가상 가용재고 계산 함수 (`get_item_virtual_available_stock`)
+- [x] 62.3 서비스 및 서버 액션 구축 ([`dekit.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/dekit.service.ts), [`bin-inventory.actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/actions/bin-inventory.actions.ts), [`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/services/inventory.service.ts)):
+  - Multi ↔ Single 매칭 맵 및 애플리케이션 레벨 트랜잭션/폴백 구현
+  - `dekitBundleAction` Server Action (`requireManager` 인가 가드 보호)
+  - `getInventoryList` 및 `getItemInventoryList`에 Buldak 번들 메타데이터 및 가용재고(`Single 재고 + Multi 재고 * 5`) 산출 반영
+- [x] 62.4 프론트엔드 UI 구축 ([`DeKitDialog.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/DeKitDialog.tsx), [`ItemInventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/ItemInventoryTable.tsx), [`InventoryTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/inventory/InventoryTable.tsx)):
+  - Single 행: 가용재고에 `Single 재고 + Multi 재고 * 5` 총 수량 표시 및 `Single: X | Multi: +Y` 상세 보조 라벨 & 툴팁 제공
+  - Multi 5pk 행: `De-kit` 원클릭 버튼 및 모달 연동 (해체 수량 선택, 배율 미리보기, 전용 로케이션 `LOC-S0105A01` 입고)
+- [x] 62.5 Next.js 16 프로덕션 빌드 및 TypeScript 무결성 검증 100% 완료
+
 
 
 

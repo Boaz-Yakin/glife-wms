@@ -154,6 +154,20 @@ src/
   - `OrdersTable.tsx`: 검색 바 좌측에 검색 항목(`Select`)을 배치하고, 선택된 항목에 따라 Input의 placeholder를 직관적으로 변경.
   - 아이템 검색 시 테이블 행에 매칭된 아이템 명을 시각적 배지(Badge)로 표시하여 검색 결과의 직관성 극대화.
 
+### 6.8 Multi-to-Single Item Bundle De-kitting System (멀티팩 라면 낱개 자동/수동 해체 및 가용재고 연동)
+- **배경 및 목적**: Buldak 라면 등은 공급사 입고 시 Multi 5pk 단위로만 입고되나, 발주처에서는 Single(낱개)로 주문하는 경우가 많아 창고에서 Multi를 개봉하여 Single로 납품함. 실물과 전산 재고의 불일치를 해결하기 위해 수동(방법 1) 및 주문할당 시점 자동(방법 2) 해체 체계를 동시 구축.
+- **데이터 모델 (`public.item_conversions`)**:
+  - `parent_item_id` (Multi 5pk), `child_item_id` (Single), `conversion_ratio` (5), `target_location_id` (`LOC-S0105A01`), `auto_dekit_on_order` (BOOLEAN).
+  - 매칭 정책: SKU 순서가 아닌 `desc_en`(Flavour: Original, Carbonara, Cream Carbonara, 2x Spicy, Cheese, Rose, Quatro, Habanero) 일치 기준으로 1:1 바인딩.
+- **가용재고 산출 공식**:
+  - Single 가용재고 = `(Single On-Hand - Single Allocated) + (Multi On-Hand - Multi Allocated) * 5`
+  - WMS 재고 목록 및 대시보드에서 물리적 낱개 재고와 Multi 기반 가상 추가 가용수량을 함께 시각화.
+- **방법 1 (수동 1클릭 해체 - `dekit_multi_to_single`)**:
+  - 작업자가 원하는 시점에 Multi N팩을 Single(N*5개)로 변환 실행.
+  - Multi 가용재고 차감, `LOC-S0105A01`에 Single 재고 증가, `inventory_adjustments` 사유 `DE-KITTING: Manual Breakdown` 자동 기록.
+- **방법 2 (주문할당 시점 자동 해체 - `allocate_single_order_item` 확장)**:
+  - Single 주문 인입 시 Single 물리 가용재고가 부족하면, 연결된 Multi 재고에서 부족분만큼 자동으로 Multi를 해체(`LOC-S0105A01`에 Single 생성) 후 주문에 즉시 할당.
+
 ---
 
 ## 7. Notification System - KakaoTalk Developers REST API (신규 주문 카카오톡 자동 보고 및 ON/OFF 제어)

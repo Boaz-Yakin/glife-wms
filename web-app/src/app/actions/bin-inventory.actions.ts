@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getItemEffectivePrice } from '@/lib/pricing'
 import { getActiveClientAction } from './client.actions'
 import { requireManager } from '@/lib/auth/guard'
+import { executeManualDekit, type DekitResult } from '@/services/dekit.service'
 
 export interface AssignableItem {
   id: string
@@ -224,6 +225,49 @@ export async function clearBinInventoryAction(locationCode: string): Promise<{
       message: `Cleared all inventory from ${locationCode}.`,
     }
   } catch (err: any) {
+    return { success: false, error: err.message || 'Unknown error' }
+  }
+}
+
+export interface DekitBundleParams {
+  parentItemId: string
+  qty: number
+  locationId?: string
+}
+
+/**
+ * Method 1: Manual 1-click de-kitting (Multi 5pk -> Single at LOC-S0105A01)
+ */
+export async function dekitBundleAction(params: DekitBundleParams): Promise<{
+  success: boolean
+  message?: string
+  result?: DekitResult
+  error?: string
+}> {
+  try {
+    const user = await requireManager()
+    const result = await executeManualDekit({
+      parentItemId: params.parentItemId,
+      parentQty: params.qty,
+      operatorId: user.id,
+      fromLocationId: params.locationId,
+    })
+
+    if (!result.success) {
+      return { success: false, error: result.error || 'Failed to de-kit bundle.' }
+    }
+
+    revalidatePath('/dashboard')
+    revalidatePath('/inventory')
+    revalidatePath('/master/locations')
+
+    return {
+      success: true,
+      message: `Successfully de-kitted ${result.parentDeducted}x ${result.parentSku} into ${result.childAdded}x ${result.childSku} at ${result.targetLocation}.`,
+      result,
+    }
+  } catch (err: any) {
+    console.error('dekitBundleAction error:', err)
     return { success: false, error: err.message || 'Unknown error' }
   }
 }
