@@ -15,6 +15,9 @@ export default async function OrdersPage({
   const page = typeof params.page === 'string' ? Math.max(1, parseInt(params.page, 10)) : 1
   const limit = typeof params.limit === 'string' ? Math.max(10, parseInt(params.limit, 10)) : 50
   const search = typeof params.search === 'string' ? params.search : ''
+  const searchType = typeof params.searchType === 'string' && ['order', 'item', 'all'].includes(params.searchType) 
+    ? (params.searchType as 'order' | 'item' | 'all') 
+    : 'order'
   const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
   
   const [{ data, count, error }, { data: clients }] = await Promise.all([
@@ -22,6 +25,7 @@ export default async function OrdersPage({
       page,
       limit,
       search,
+      searchType,
       status
     }),
     getClients(),

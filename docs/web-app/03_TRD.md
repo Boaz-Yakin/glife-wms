@@ -128,6 +128,22 @@ src/
   1. `OrdersTable`: 테이블 행의 Status 컬럼은 고정된 뱃지(Read-Only)로 표시하여 실수로 인한 오작동을 방지하고 명확한 가독성을 유지.
   2. `OrderDetailsDialog`: 주문 상세 다이얼로그(DETAILS)의 상단 헤더에 Status 선택 드롭다운을 제공하여 주문 상태를 안전하게 확인하고 수정할 수 있도록 지원 (`isDirty` 감지 및 `Save Changes` 통합 반영).
 
+### 6.7 Order Search by Item (주문 품목/아이템 기반 검색 기능)
+- **목적**: 주문 번호 및 송장 번호뿐만 아니라, 특정 아이템(상품명, SKU, 설명, 수기 품목명)을 검색하여 해당 아이템이 포함된 주문들만 정확하게 리스트업할 수 있도록 지원.
+- **요구사항 및 기능 범위**:
+  - **검색 항목 선택 (Search By)**:
+    - `Order / Invoice`: 기존 주문번호, 송장번호, 배송지 주소 기반 검색.
+    - `Item (SKU, Name)`: 상품명(`name_en`), 품번(`sku`), 설명(`desc_en`), 수기 등록 품목(`custom_item_name`)이 포함된 주문 검색.
+    - `All Fields`: 주문/송장 정보 및 포함 품목 정보를 모두 포괄하여 검색.
+  - **데이터 무결성 및 금액 왜곡 방지**:
+    - PostgREST의 `order_items!inner` 직접 필터링 시 자식 행이 누락되어 `invoice_amount` 및 총 품목 수가 왜곡되는 현상을 방지하기 위해, 2단계 쿼리(아이템 검색 → 매칭된 `order_id` 추출 → `orders` 원본 및 전체 `order_items` 보존 조회) 방식으로 처리.
+    - URL 길이 제한(PostgREST HTTP 414 방지)을 고려하여 최신 주문 순 상위 ID 슬라이싱 및 0건 즉시 반환 최적화 적용.
+- **서비스 계층**:
+  - `orders.service.ts#getOrders`: `searchType` ('order' | 'item' | 'all') 및 `itemSearch` 파라미터 지원, `activeClientId` 멀티 테넌시 격리 적용.
+- **UI 계층**:
+  - `OrdersTable.tsx`: 검색 바 좌측에 검색 항목(`Select`)을 배치하고, 선택된 항목에 따라 Input의 placeholder를 직관적으로 변경.
+  - 아이템 검색 시 테이블 행에 매칭된 아이템 명을 시각적 배지(Badge)로 표시하여 검색 결과의 직관성 극대화.
+
 ---
 
 ## 7. Notification System - KakaoTalk Developers REST API (신규 주문 카카오톡 자동 보고 및 ON/OFF 제어)

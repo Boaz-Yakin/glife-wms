@@ -34,6 +34,22 @@ export interface OrderData {
   // joined fields
   store?: { name: string } | null
   client?: { id: string; name: string; code: string } | null
+  order_items?: Array<{
+    qty: number
+    picked_qty?: number | null
+    price: number
+    uom: string
+    custom_item_name?: string | null
+    item?: {
+      sku: string
+      name_en: string
+      desc_en?: string | null
+      uom?: string | null
+      unit_price?: number | null
+      box_price?: number | null
+      pack_price?: number | null
+    } | null
+  }> | null
 }
 
 export interface OrderItemData {
@@ -61,7 +77,23 @@ export interface OrderItemData {
   } | null
 }
 
-export async function getOrders({ page = 1, limit = 20, search = '', status = '' }) {
+export interface GetOrdersParams {
+  page?: number
+  limit?: number
+  search?: string
+  status?: string
+  searchType?: 'order' | 'item' | 'all'
+  itemSearch?: string
+}
+
+export async function getOrders({
+  page = 1,
+  limit = 20,
+  search = '',
+  status = '',
+  searchType = 'order',
+  itemSearch = '',
+}: GetOrdersParams = {}) {
   const supabase = await getClient()
   let query = supabase.from('orders').select(`
     *,
@@ -72,7 +104,8 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
       picked_qty,
       price,
       uom,
-      item:items(uom, unit_price, box_price, pack_price)
+      custom_item_name,
+      item:items(sku, name_en, desc_en, uom, unit_price, box_price, pack_price)
     )
   `, { count: 'exact' })
   
@@ -81,8 +114,92 @@ export async function getOrders({ page = 1, limit = 20, search = '', status = ''
     query = query.eq('client_id', activeClientId)
   }
 
-  if (search) {
-    query = query.or(`id.ilike.%${search}%,order_no.ilike.%${search}%,shipping_address.ilike.%${search}%,invoice_number.ilike.%${search}%`)
+  const cleanSearch = search.trim()
+  const cleanItemSearch = itemSearch.trim()
+
+  // 아이템 검색 대상 키워드 결정
+  const isItemSearch = searchType === 'item' || cleanItemSearch.length > 0
+  const isAllSearch = searchType === 'all'
+  const itemKeyword = isItemSearch ? (cleanItemSearch || cleanSearch) : (isAllSearch ? cleanSearch : '')
+
+  let matchedItemOrderIds: string[] | null = null
+
+  if (itemKeyword) {
+    // 1. items 테이블에서 SKU, 품목명, 설명 검색
+    let itemsQuery = supabase
+      .from('items')
+      .select('id')
+      .or(`sku.ilike.%${itemKeyword}%,name_en.ilike.%${itemKeyword}%,desc_en.ilike.%${itemKeyword}%`)
+
+    if (activeClientId) {
+      itemsQuery = itemsQuery.eq('client_id', activeClientId)
+    }
+
+    const { data: matchedItems, error: itemsErr } = await itemsQuery.limit(500)
+    if (itemsErr) {
+      console.error('getOrders items search error:', itemsErr)
+    }
+    const matchedItemIds = (matchedItems || []).map((i: { id: string }) => i.id)
+
+    // 2. order_items 테이블에서 매칭되는 order_id 목록 조회
+    let orderItemsQuery = supabase
+      .from('order_items')
+      .select('order_id')
+      .order('created_at', { ascending: false })
+
+    if (matchedItemIds.length > 0) {
+      orderItemsQuery = orderItemsQuery.or(
+        `item_id.in.(${matchedItemIds.join(',')}),custom_item_name.ilike.%${itemKeyword}%`
+      )
+    } else {
+      orderItemsQuery = orderItemsQuery.ilike('custom_item_name', `%${itemKeyword}%`)
+    }
+
+    const { data: matchedOrderItems, error: oiErr } = await orderItemsQuery.limit(1000)
+    if (oiErr) {
+      console.error('getOrders order_items search error:', oiErr)
+    }
+
+    matchedItemOrderIds = Array.from(
+      new Set((matchedOrderItems || []).map((oi: { order_id: string }) => oi.order_id).filter(Boolean))
+    )
+  }
+
+  // 검색 조건 분기 적용
+  if (isItemSearch && itemKeyword) {
+    // 아이템 전용 검색 모드
+    if (!matchedItemOrderIds || matchedItemOrderIds.length === 0) {
+      return { data: [], count: 0, error: null }
+    }
+    query = query.in('id', matchedItemOrderIds.slice(0, 250))
+  } else if (isAllSearch && cleanSearch) {
+    // 전체 통합 검색 모드: 주문/송장 매칭 ID + 아이템 매칭 ID 결합
+    let directOrderQuery = supabase
+      .from('orders')
+      .select('id')
+      .or(`id.ilike.%${cleanSearch}%,order_no.ilike.%${cleanSearch}%,shipping_address.ilike.%${cleanSearch}%,invoice_number.ilike.%${cleanSearch}%`)
+      .order('created_at', { ascending: false })
+      
+    if (activeClientId) {
+      directOrderQuery = directOrderQuery.eq('client_id', activeClientId)
+    }
+    const { data: directOrders } = await directOrderQuery.limit(500)
+    const directOrderIds = (directOrders || []).map((o: { id: string }) => o.id)
+
+    const combinedOrderIds = Array.from(new Set([...(directOrderIds || []), ...(matchedItemOrderIds || [])]))
+    if (combinedOrderIds.length === 0) {
+      return { data: [], count: 0, error: null }
+    }
+    query = query.in('id', combinedOrderIds.slice(0, 250))
+  } else if (cleanSearch) {
+    // 주문/송장 기본 검색 모드
+    query = query.or(`id.ilike.%${cleanSearch}%,order_no.ilike.%${cleanSearch}%,shipping_address.ilike.%${cleanSearch}%,invoice_number.ilike.%${cleanSearch}%`)
+    if (cleanItemSearch && matchedItemOrderIds !== null) {
+      if (matchedItemOrderIds.length === 0) {
+        return { data: [], count: 0, error: null }
+      }
+      query = query.in('id', matchedItemOrderIds.slice(0, 250))
+    }
   }
   
   if (status) {

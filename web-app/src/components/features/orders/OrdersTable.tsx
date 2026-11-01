@@ -70,9 +70,11 @@ export function OrdersTable({
   const searchParams = useSearchParams()
   
   const defaultSearch = searchParams.get("search") || ""
+  const defaultSearchType = searchParams.get("searchType") || "order"
   const defaultStatus = searchParams.get("status") || "ALL"
   
   const [searchTerm, setSearchTerm] = React.useState(defaultSearch)
+  const [searchType, setSearchType] = React.useState(defaultSearchType)
   const [selectedOrder, setSelectedOrder] = React.useState<OrderData | null>(null)
   const [orderToDelete, setOrderToDelete] = React.useState<OrderData | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
@@ -136,10 +138,18 @@ export function OrdersTable({
   }
 
   React.useEffect(() => {
+    const currentSearch = searchParams.get("search") || ""
+    if (searchTerm === currentSearch) return
+
     const timeout = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString())
       if (searchTerm) {
         params.set("search", searchTerm)
+        if (searchType !== 'order') {
+          params.set("searchType", searchType)
+        } else {
+          params.delete("searchType")
+        }
         params.delete("page")
       } else {
         params.delete("search")
@@ -148,7 +158,23 @@ export function OrdersTable({
     }, 300)
     
     return () => clearTimeout(timeout)
-  }, [searchTerm, pathname, router, searchParams])
+  }, [searchTerm, searchType, pathname, router, searchParams])
+
+  const handleSearchTypeChange = (val: string | null) => {
+    if (!val) return
+    setSearchType(val)
+    const params = new URLSearchParams(searchParams.toString())
+    if (val !== 'order') {
+      params.set("searchType", val)
+    } else {
+      params.delete("searchType")
+    }
+    if (searchTerm) {
+      params.set("search", searchTerm)
+    }
+    params.delete("page")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
 
   const handleStatusChange = (val: string | null) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -165,11 +191,37 @@ export function OrdersTable({
     {
       accessorKey: "order_no",
       header: "Order No.",
-      cell: ({ row }) => (
-        <div className="font-semibold tabular-nums text-primary font-mono text-xs">
-          {row.original.order_no || row.original.id}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const order = row.original
+        const searchKeyword = (searchParams.get("search") || "").trim().toLowerCase()
+        const currentType = searchParams.get("searchType") || "order"
+
+        const matchedItemNames = (currentType === 'item' || currentType === 'all') && searchKeyword
+          ? (order.order_items || [])
+              .map(oi => oi.item?.name_en || oi.custom_item_name || oi.item?.sku || '')
+              .filter(name => name.toLowerCase().includes(searchKeyword))
+          : []
+
+        return (
+          <div className="flex flex-col gap-0.5">
+            <div className="font-semibold tabular-nums text-primary font-mono text-xs">
+              {order.order_no || order.id}
+            </div>
+            {matchedItemNames.length > 0 && (
+              <div className="flex items-center gap-1">
+                <Badge 
+                  variant="outline" 
+                  className="text-[10px] px-1 py-0 h-4 font-normal bg-primary/5 text-primary border-primary/20 truncate max-w-[180px]"
+                  title={matchedItemNames.join(', ')}
+                >
+                  Item: {matchedItemNames[0]}
+                  {matchedItemNames.length > 1 ? ` (+${matchedItemNames.length - 1})` : ''}
+                </Badge>
+              </div>
+            )}
+          </div>
+        )
+      },
     },
     {
       accessorKey: "invoice_number",
@@ -316,10 +368,27 @@ export function OrdersTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2">
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <Select value={searchType} onValueChange={handleSearchTypeChange}>
+            <SelectTrigger className="w-[160px] bg-background">
+              <SelectValue placeholder="Search by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="order">Order / Invoice</SelectItem>
+              <SelectItem value="item">Item (SKU, Name)</SelectItem>
+              <SelectItem value="all">All Fields</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Input 
-            placeholder="Search Order No or Invoice..." 
-            className="max-w-sm bg-background" 
+            placeholder={
+              searchType === "item"
+                ? "Search Item (SKU, Name)..."
+                : searchType === "all"
+                ? "Search Order, Invoice, or Item..."
+                : "Search Order No or Invoice..."
+            } 
+            className="w-full sm:w-[260px] md:w-[320px] bg-background" 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
