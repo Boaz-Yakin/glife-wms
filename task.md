@@ -740,6 +740,11 @@
   - Single 행: 가용재고에 `Single 재고 + Multi 재고 * 5` 총 수량 표시 및 `Single: X | Multi: +Y` 상세 보조 라벨 & 툴팁 제공
   - Multi 5pk 행: `De-kit` 원클릭 버튼 및 모달 연동 (해체 수량 선택, 배율 미리보기, 전용 로케이션 `LOC-S0105A01` 입고)
 - [x] 62.5 Next.js 16 프로덕션 빌드 및 TypeScript 무결성 검증 100% 완료
+- [x] 62.6 OrderAPP 방안 A(단순 가용재고) 연동 완료 ([`OrderAPP /api/items`](file:///c:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/items/route.ts), [`OrderAPP /api/order`](file:///c:/Users/boazn/Projects/OrderAPP/dashboard/src/app/api/order/route.ts)):
+  - `/api/items`: 상품 목록 조회 시 Single 품목 가용재고에 `Single 물리재고 + Multi 가용재고 × 5` 자동 계산 적용
+  - `/api/order`: 발주 제출 시 `HARD_LIMIT` 재고 검증에 Multi 연동 가상 가용량 합산 적용하여 낱개 발주 즉시 수용
+  - `StockBadge`: 가맹점/바이어에게 복잡한 번들 용어 없이 깔끔하게 `재고 N EA`로 표시되어 가맹점 혼선 완전 방지
+  - OrderAPP 빌드 검증 및 GitHub 배포 완료 (`glife-orderapp` commit `583d3c2`)
 
 
 
