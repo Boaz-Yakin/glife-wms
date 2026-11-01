@@ -484,6 +484,24 @@ export function ItemInventoryTable({
           )
         }
 
+        if (item.isBundleParent) {
+          const equivSingles = (available || 0) * (item.bundleRatio || 5)
+          const tooltip = `[Buldak Multi 5pk]\n• Multi Available: ${available} pk\n• Single Equivalent: +${equivSingles} EA (×${item.bundleRatio || 5} to ${item.childSku || 'Single'})`
+          return (
+            <div className="flex flex-col items-end gap-0.5">
+              <div title={tooltip} className="cursor-help">
+                {getItemAvailableBadge(available, thresholds, dyn, mode)}
+              </div>
+              <div 
+                className="text-[10px] text-muted-foreground font-mono tabular-nums text-primary/80"
+                title={tooltip}
+              >
+                Single 환산: +{equivSingles} EA
+              </div>
+            </div>
+          )
+        }
+
         return (
           <div className="text-right">
             {getItemAvailableBadge(available, thresholds, dyn, mode)}

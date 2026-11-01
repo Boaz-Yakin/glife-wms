@@ -63,10 +63,13 @@ export type InventoryData = {
     isChild?: boolean
     parentSku?: string
     parentItemId?: string
+    parentAvailable?: number
+    virtualAvailable?: number
     isParent?: boolean
     childSku?: string
     childItemId?: string
     conversionRatio?: number
+    equivalentSingles?: number
   }
   item: {
     id: string
@@ -645,6 +648,45 @@ export function InventoryTable({
       cell: ({ row }) => {
         const available = row.original.on_hand_qty - row.original.allocated_qty
         const dyn = row.original.item?.dynamicThreshold
+        const bundle = row.original.bundleMeta
+
+        if (bundle?.isChild && bundle.virtualAvailable !== undefined) {
+          const multiUnits = (bundle.parentAvailable || 0) * (bundle.conversionRatio || 5)
+          const tooltip = `[Buldak Single Available (가용재고)]\n• Single Physical Avail: ${available} EA\n• Multi 5pk Avail: ${bundle.parentAvailable || 0} pk (${bundle.parentSku})\n• Multi Equivalent Singles: +${multiUnits} EA (×${bundle.conversionRatio || 5})\n• Grand Total Virtual Available: ${bundle.virtualAvailable} EA`
+
+          return (
+            <div className="flex flex-col items-end gap-0.5">
+              <div title={tooltip} className="cursor-help">
+                {getAvailableBadge(bundle.virtualAvailable, thresholds, dyn, mode)}
+              </div>
+              <div 
+                className="text-[10px] text-muted-foreground font-mono tabular-nums flex items-center gap-1"
+                title={tooltip}
+              >
+                <span>Single: {available}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">+Multi: {multiUnits}</span>
+              </div>
+            </div>
+          )
+        }
+
+        if (bundle?.isParent && bundle.equivalentSingles !== undefined) {
+          const tooltip = `[Buldak Multi 5pk]\n• Multi Available: ${available} pk\n• Single Equivalent: ${bundle.equivalentSingles} EA (×${bundle.conversionRatio || 5} to ${bundle.childSku})`
+          return (
+            <div className="flex flex-col items-end gap-0.5">
+              <div title={tooltip} className="cursor-help">
+                {getAvailableBadge(available, thresholds, dyn, mode)}
+              </div>
+              <div 
+                className="text-[10px] text-muted-foreground font-mono tabular-nums text-primary/80"
+                title={tooltip}
+              >
+                Single 환산: +{bundle.equivalentSingles} EA
+              </div>
+            </div>
+          )
+        }
+
         return (
           <div className="text-right">
             {getAvailableBadge(available, thresholds, dyn, mode)}

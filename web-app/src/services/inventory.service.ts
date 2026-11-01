@@ -84,8 +84,8 @@ export async function getInventoryList({
     query = query.or(`client_id.eq.${activeClientId},client_id.is.null`)
   }
 
-  // Only display active inventory slots (on-hand > 0 or allocated > 0)
-  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0')
+  // Only display active inventory slots (on-hand > 0 or allocated > 0) or dedicated single de-kit staging (LOC-S0105A01)
+  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0,location_id.eq.31b632f2-e408-4d5a-bf11-47b52b8db673')
 
   if (zone && zone !== 'ALL') {
     query = query.eq('location.zone_type', zone)
@@ -181,7 +181,22 @@ export async function getInventoryList({
     return { data: [], count: 0, error: error.message }
   }
 
-  // Process expiration_date, lot_no, and attach dynamic threshold metadata
+  // Fetch total available stock for parent Multi items to calculate virtual available stock for Singles
+  const parentItemIds = Array.from(new Set(Array.from(convMaps.childToParent.values()).map(c => c.parentItemId)))
+  const parentAvailMap = new Map<string, number>()
+  if (parentItemIds.length > 0) {
+    const { data: pStockRows } = await (supabase as any)
+      .from('inventory')
+      .select('item_id, on_hand_qty, allocated_qty')
+      .in('item_id', parentItemIds)
+
+    for (const r of pStockRows || []) {
+      const avail = Math.max(0, (r.on_hand_qty || 0) - (r.allocated_qty || 0))
+      parentAvailMap.set(r.item_id, (parentAvailMap.get(r.item_id) || 0) + avail)
+    }
+  }
+
+  // Process expiration_date, lot_no, and attach dynamic threshold & bundle metadata
   const enrichedData = (data || []).map((row: any) => {
     let expDate = row.expiration_date
     let lotNo = row.lot_no
@@ -208,21 +223,28 @@ export async function getInventoryList({
     const dynThreshold = itemId ? thresholdMap[itemId] : undefined
     const childConv = itemId ? convMaps.childToParent.get(itemId) : undefined
     const parentConv = itemId ? convMaps.parentToChild.get(itemId) : undefined
+    const rowAvail = Math.max(0, (row.on_hand_qty || 0) - (row.allocated_qty || 0))
 
     let bundleMeta: any = undefined
     if (childConv) {
+      const parentAvail = parentAvailMap.get(childConv.parentItemId) || 0
+      const ratio = childConv.conversionRatio || 5
       bundleMeta = {
         isChild: true,
         parentSku: childConv.parentSku,
         parentItemId: childConv.parentItemId,
-        conversionRatio: childConv.conversionRatio,
+        parentAvailable: parentAvail,
+        conversionRatio: ratio,
+        virtualAvailable: rowAvail + (parentAvail * ratio),
       }
     } else if (parentConv) {
+      const ratio = parentConv.conversionRatio || 5
       bundleMeta = {
         isParent: true,
         childSku: parentConv.childSku,
         childItemId: parentConv.childItemId,
-        conversionRatio: parentConv.conversionRatio,
+        conversionRatio: ratio,
+        equivalentSingles: rowAvail * ratio,
       }
     }
 
@@ -310,7 +332,7 @@ export async function getItemInventoryList({
   if (activeClientId) {
     query = query.or(`client_id.eq.${activeClientId},client_id.is.null`)
   }
-  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0')
+  query = query.or('on_hand_qty.gt.0,allocated_qty.gt.0,location_id.eq.31b632f2-e408-4d5a-bf11-47b52b8db673')
 
   const [{ data: invRows, error }, thresholdsMap, convMaps] = await Promise.all([
     query,
@@ -367,6 +389,33 @@ export async function getItemInventoryList({
       available: avail,
     })
   })
+
+  // Ensure all bundle child (Single) items are in itemMap even if physical on-hand is 0
+  for (const [childId, conv] of convMaps.childToParent.entries()) {
+    if (!itemMap.has(childId)) {
+      itemMap.set(childId, {
+        itemId: childId,
+        sku: conv.childSku,
+        name: conv.childName,
+        desc: conv.flavour,
+        category: 'Ramen',
+        uom: 'EA',
+        totalOnHand: 0,
+        totalAllocated: 0,
+        totalAvailable: 0,
+        locationCount: 1,
+        locations: [{
+          code: 'LOC-S0105A01',
+          zone: 'A',
+          onHand: 0,
+          allocated: 0,
+          available: 0,
+        }],
+        dynamicThreshold: thresholdsMap[childId],
+      })
+      categoriesSet.add('Ramen')
+    }
+  }
 
   // Finalize location counts & sort per-item bins by available desc
   let list = Array.from(itemMap.values()).map(item => ({
