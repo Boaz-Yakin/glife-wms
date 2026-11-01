@@ -757,6 +757,22 @@
   - Week 2: Next.js 도메인/서브도메인 기반 테넌트 리졸버, 가상 이메일/고정 UUID 하드코딩 제거, 화이트라벨 브랜딩 주입 명세
   - Week 3: 범용 번들 해체(De-kitting) 관리 GUI(`/master/conversions`) 및 테넌트별 운영 정책 스위치(`/settings`) 명세
   - Week 4: RLS 데이터 격리 침투 테스트 및 2호 테넌트(Acme Food) 30분 온보딩 실증 & Zero-Downtime 회귀 검증 계획 수립
+- [x] 63.3 Phase 2 상세 개발 명세서 작성 ([`docs/SaaS_Phase2_Implementation_Spec.md`](file:///c:/Users/boazn/Projects/WMS/docs/SaaS_Phase2_Implementation_Spec.md)):
+  - 2D 비주얼 창고 스튜디오 (Drag & Drop Warehouse Builder) & 1클릭 바코드 라벨 일괄 생성
+  - 모바일 PDA Offline-First (IndexedDB & Background Sync Worker) 및 산업용 스캐너 SDK 탑재
+  - OrderAPP 가맹점/바이어 차등 등급 단가표 및 여신(Credit Limit) 한도 통제 엔진
+  - 동적 파동 피킹 (Wave Picking Planner) 및 멀티 오더 카트 분배 (Pick-to-Tote)
+- [x] 63.4 Phase 3 상세 개발 명세서 작성 ([`docs/SaaS_Phase3_Implementation_Spec.md`](file:///c:/Users/boazn/Projects/WMS/docs/SaaS_Phase3_Implementation_Spec.md)):
+  - 토스페이먼츠/Stripe 정기 구독 결제 웹훅 및 플랜별 기능 제한 가드(Gatekeeper)
+  - 30분 셀프 온보딩 위저드 (`/onboarding`) 및 고성능 엑셀 대량 업로드 검증 엔진
+  - 카카오 알림톡/SMS 종량제 미터링(Metering) 및 국세청 전자세금계산서 자동 발행 연동
+  - 엔터프라이즈 보안 감사 로그(`audit-logs`) 및 인앱 헬프센터 티켓팅
+- [x] 63.5 Phase 4 상세 개발 명세서 작성 ([`docs/SaaS_Phase4_Implementation_Spec.md`](file:///c:/Users/boazn/Projects/WMS/docs/SaaS_Phase4_Implementation_Spec.md)):
+  - Headless WMS Open REST API & Webhooks 디스패처 (외부 ERP/자체 발주몰 연동)
+  - 3PL 다중 화주 일일 파렛트/CBM 보관료 및 입출고 핸들링 피 자동 정산 엔진
+  - 공급사 위탁 재고 포털 (Vendor Managed Inventory, VMI)
+  - 대규모 부하 테스트, SLA 99.9% 보증 체계 및 3개 유통사 파일럿 온보딩 & 정식 GTM
+
 
 
 
