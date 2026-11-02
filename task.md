@@ -773,6 +773,26 @@
   - 공급사 위탁 재고 포털 (Vendor Managed Inventory, VMI)
   - 대규모 부하 테스트, SLA 99.9% 보증 체계 및 3개 유통사 파일럿 온보딩 & 정식 GTM
 
+---
+
+## 📦 Phase 64: 단품(UPC) & 박스(Box Barcode) 듀얼 바코드 체계 구축
+- [x] 64.1 DB 스키마 마이그레이션 및 타입 정의 확장:
+  - [`supabase/migrations/20261101201500_add_box_barcode_to_items.sql`](file:///c:/Users/boazn/Projects/WMS/supabase/migrations/20261101201500_add_box_barcode_to_items.sql) 작성 (`items.box_barcode` 및 `idx_items_box_barcode` 인덱스)
+  - `web-app/src/types/database.ts`, `web-app/src/types/supabase.ts`, `master.service.ts`에 `box_barcode` 타입 반영
+- [x] 64.2 WMS Web-App 관리 기능 고도화:
+  - [`ItemFormDialog.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/ItemFormDialog.tsx): `Unit UPC (낱개)` 및 `Box Barcode (박스)` 분리 입력 지원
+  - [`ItemsTable.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/ItemsTable.tsx): 품목 목록에서 UPC와 `BOX: {box_barcode}` 배지 동시 표시
+  - [`actions.ts`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/master/items/actions.ts): 단일 등록/수정 및 엑셀 일괄 등록(`bulkCreateItemsAction`)에 `box_barcode` 저장 로직 추가
+  - [`items_import_template.csv`](file:///c:/Users/boazn/Projects/WMS/web-app/public/items_import_template.csv): `box_barcode` 헤더 및 샘플 데이터 반영
+  - [`ItemBarcodePrintClient.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/master/labels/ItemBarcodePrintClient.tsx): 박스 바코드 검색 필터 및 뱃지 표시
+- [x] 64.3 WMS Mobile-App 현장 스캔 엔진 고도화:
+  - [`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/services/inventory.service.ts): `findItemRecord`에 `byBoxBarcode` 매치 추가 (1순위 UPC ➔ 2순위 Box Barcode ➔ 3순위 SKU)
+  - [`lookup/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/lookup/page.tsx): 로케이션 및 품목 조회 시 박스 바코드 스캔 지원 및 카드 표기
+  - [`put-away/page.tsx`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/put-away/page.tsx): 박스 스캔 감지(`📦 Box Barcode Verified`) 및 입고 안내 문구 개선
+- [x] 64.4 TRD 기술 설계서 갱신 및 검증 완료:
+  - [`docs/web-app/03_TRD.md`](file:///c:/Users/boazn/Projects/WMS/docs/web-app/03_TRD.md) 섹션 8에 듀얼 바코드 표준 명세 추가
+  - `web-app` 및 `mobile-app` 양측 TypeScript 컴파일 검증 (`npx tsc --noEmit`) 100% 무결성 통과
+
 
 
 

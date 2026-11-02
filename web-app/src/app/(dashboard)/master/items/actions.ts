@@ -24,6 +24,7 @@ export async function createItemAction(formData: FormData) {
   const sku = formData.get("sku")?.toString()
   const name_en = formData.get("name_en")?.toString()
   const upc = formData.get("upc")?.toString() || `${sku}-upc`
+  const box_barcode = formData.get("box_barcode")?.toString()?.trim() || null
   const uom = formData.get("uom")?.toString()
   const unit_price = parseFloat(formData.get("unit_price")?.toString() || "0")
   const zone_type = formData.get("zone_type")?.toString()
@@ -62,6 +63,7 @@ export async function createItemAction(formData: FormData) {
     name_en,
     category,
     upc,
+    box_barcode,
     uom,
     units_per_box,
     unit_price,
@@ -122,6 +124,7 @@ export async function bulkCreateItemsAction(items: any[]) {
     client_id: activeClientId,
     sku: item.sku?.toString(),
     upc: item.upc?.toString() || `${item.sku}-upc`, // UPC is required and UNIQUE
+    box_barcode: item.box_barcode?.toString()?.trim() || null,
     name_en: item.name_en?.toString() || item.sku?.toString(),
     item_volume: item.item_volume ? parseFloat(item.item_volume) : null,
     volume_unit: item.volume_unit?.toString() || "m3",

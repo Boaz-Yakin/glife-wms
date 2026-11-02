@@ -35,9 +35,12 @@ interface ItemData {
   sku: string;
   name: string;
   upc: string;
+  box_barcode?: string | null;
   uom: string;
+  units_per_box?: number | null;
   shelf_life_days?: number | null;
   min_outbound_days?: number | null;
+  scannedViaBox?: boolean;
 }
 
 function PutAwayContent() {
@@ -136,14 +139,19 @@ function PutAwayContent() {
 
       feedback.normal();
       const itm = data.data.item;
+      const isBoxScanned = Boolean(itm.box_barcode && code.trim() === itm.box_barcode.trim());
+
       setSelectedItem({
         id: itm.id,
         sku: itm.sku,
         name: itm.name,
         upc: itm.upc,
+        box_barcode: itm.box_barcode,
         uom: itm.uom || "BOX",
+        units_per_box: itm.units_per_box || 1,
         shelf_life_days: itm.shelf_life_days,
         min_outbound_days: itm.min_outbound_days,
+        scannedViaBox: isBoxScanned,
       });
 
       // Default Expiration Date calculation based on Shelf Life Days
@@ -489,10 +497,10 @@ function PutAwayContent() {
                 <CardContent className="p-4 space-y-3">
                   <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
                     <Package className="w-4 h-4" />
-                    <span>Step 2: Scan Item Barcode (UPC / SKU)</span>
+                    <span>Step 2: Scan Item Barcode (UPC / Box Barcode / SKU)</span>
                   </div>
                   <p className="text-xs text-slate-400">
-                    이 랙에 적치할 상품의 단품 바코드(UPC) 또는 SKU를 스캔하십시오.
+                    이 랙에 적치할 상품의 단품 바코드(UPC), 박스 바코드(ITF-14), 또는 SKU를 스캔하십시오.
                   </p>
 
                   {/* Prominent Full-Width Camera Scan Button */}
@@ -595,8 +603,15 @@ function PutAwayContent() {
                 </div>
 
                 <div>
-                  <div className="text-xs text-slate-400 font-mono">{selectedItem.sku}</div>
-                  <div className="text-base font-black text-white">{selectedItem.name}</div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-slate-400 font-mono">{selectedItem.sku}</span>
+                    {selectedItem.scannedViaBox && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        📦 Box Barcode Verified ({selectedItem.box_barcode})
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-base font-black text-white mt-0.5">{selectedItem.name}</div>
                 </div>
 
                 {/* Reason Pill Selector */}

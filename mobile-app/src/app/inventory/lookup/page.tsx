@@ -21,6 +21,7 @@ interface ItemStock {
   sku: string;
   name: string;
   upc: string;
+  box_barcode?: string | null;
   uom: string;
   onHandQty: number;
   allocatedQty: number;
@@ -32,7 +33,9 @@ interface ItemData {
   sku: string;
   name: string;
   upc: string;
+  box_barcode?: string | null;
   uom: string;
+  units_per_box?: number | null;
   category?: string;
 }
 
@@ -242,7 +245,10 @@ export default function LookupPage() {
                         <div>
                           <div className="text-xs font-mono font-bold text-emerald-400">{it.sku}</div>
                           <div className="text-sm font-bold text-white mt-0.5">{it.name}</div>
-                          {it.upc && <div className="text-[10px] text-zinc-500 font-mono mt-0.5">UPC: {it.upc}</div>}
+                          <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                            {it.upc && <span className="text-[10px] text-zinc-500 font-mono">UPC: {it.upc}</span>}
+                            {it.box_barcode && <span className="text-[10px] text-emerald-400 font-mono font-medium">BOX: {it.box_barcode}</span>}
+                          </div>
                         </div>
                         <span className="text-[10px] bg-zinc-800 px-2 py-0.5 rounded text-zinc-300 font-mono">
                           {it.uom}
@@ -288,9 +294,14 @@ export default function LookupPage() {
                     <div>
                       <div className="text-[10px] uppercase font-bold text-zinc-500">{lookupResult.item.sku}</div>
                       <div className="text-base font-bold text-white">{lookupResult.item.name}</div>
-                      {lookupResult.item.upc && (
-                        <div className="text-[10px] text-zinc-400 font-mono">UPC: {lookupResult.item.upc}</div>
-                      )}
+                      <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                        {lookupResult.item.upc && (
+                          <span className="text-[10px] text-zinc-400 font-mono">UPC: {lookupResult.item.upc}</span>
+                        )}
+                        {lookupResult.item.box_barcode && (
+                          <span className="text-[10px] text-emerald-400 font-mono font-medium">BOX: {lookupResult.item.box_barcode}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   {lookupResult.item.category && (

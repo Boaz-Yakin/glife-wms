@@ -204,8 +204,20 @@ export function ItemsTable({
   const columns: ColumnDef<ItemData>[] = React.useMemo(() => [
     {
       accessorKey: "sku",
-      header: () => renderSortableHeader("SKU", "sku"),
-      cell: ({ row }) => <div className="font-medium">{row.original.sku}</div>,
+      header: () => renderSortableHeader("SKU / Barcode", "sku"),
+      cell: ({ row }) => (
+        <div className="flex flex-col">
+          <span className="font-semibold text-foreground font-mono">{row.original.sku}</span>
+          {row.original.upc && (
+            <span className="text-[10px] text-muted-foreground font-mono">UPC: {row.original.upc}</span>
+          )}
+          {row.original.box_barcode && (
+            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-mono font-medium">
+              BOX: {row.original.box_barcode}
+            </span>
+          )}
+        </div>
+      ),
     },
     {
       accessorKey: "name_en",

@@ -74,8 +74,9 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
       const name = (item.name_en || "").toLowerCase()
       const desc = (item.desc_en || "").toLowerCase()
       const upc = (item.upc || "").toLowerCase()
+      const boxBarcode = (item.box_barcode || "").toLowerCase()
       const cat = (item.category || "").toLowerCase()
-      const searchable = `${sku} ${skuClean} ${name} ${desc} ${upc} ${cat}`
+      const searchable = `${sku} ${skuClean} ${name} ${desc} ${upc} ${boxBarcode} ${cat}`
 
       // All search tokens must be present
       return tokens.every((tok) => {
@@ -374,6 +375,11 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
                         {item.upc && (
                           <span className="font-mono text-[10px] text-muted-foreground bg-muted/60 px-1 rounded">
                             UPC: {item.upc}
+                          </span>
+                        )}
+                        {item.box_barcode && (
+                          <span className="font-mono text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1 rounded font-medium">
+                            BOX: {item.box_barcode}
                           </span>
                         )}
                       </div>

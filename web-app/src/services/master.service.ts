@@ -8,6 +8,7 @@ export interface ItemData {
   name_en: string
   category?: string | null
   upc: string | null
+  box_barcode?: string | null
   uom: string
   units_per_box: number
   unit_price: number

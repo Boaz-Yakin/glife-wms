@@ -239,3 +239,27 @@ src/
   - 카카오 REST API Key, Access Token, Refresh Token 입력 및 토큰 발급 가이드 안내
   - 연결 상태 인디케이터 (활성화됨 / 비활성화됨 / 토큰 필요)
   - "테스트 메시지 발송" 버튼 및 최근 발송 이력(시간, 상태) 표시
+
+## 8. Box Barcode & Dual Barcode Architecture (단품 & 박스 듀얼 바코드 체계)
+### 8.1 데이터 모델 및 스키마 확장 (`public.items`)
+- `box_barcode` (VARCHAR(50), NULL, 마이그레이션 `20261101201500_add_box_barcode_to_items.sql`):
+  - 외포장 골판지 박스 표면 인쇄용 표준 바코드 (ITF-14 / GTIN-14 / Code 128).
+  - 인덱스: `idx_items_box_barcode`를 생성하여 현장 링 스캐너 스캔 시 0.05초 이내 즉각 조회 지원.
+
+### 8.2 WMS Web-App 기능 반영
+- **품목 등록/수정 ([`ItemFormDialog`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/ItemFormDialog.tsx))**:
+  - `Basic Info` 탭에서 `Unit UPC (낱개)` 및 `Box Barcode (박스)`를 분리 입력 지원.
+- **품목 목록 ([`ItemsTable`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/ItemsTable.tsx))**:
+  - SKU 컬럼 하단에 `UPC: {upc}` 및 `BOX: {box_barcode}`를 배지와 함께 명확히 표기.
+- **엑셀 일괄 등록 ([`BulkImportDialog`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/master/BulkImportDialog.tsx))**:
+  - `items_import_template.csv`에 `box_barcode` 컬럼 추가 및 벌크 등록 지원.
+- **바코드 라벨 출력 ([`ItemBarcodePrintClient`](file:///c:/Users/boazn/Projects/WMS/web-app/src/app/(dashboard)/master/labels/ItemBarcodePrintClient.tsx))**:
+  - 상품 검색 시 `box_barcode` 필터링 및 박스 라벨 시각화 지원.
+
+### 8.3 WMS Mobile-App 기능 반영
+- **스캔 조회 엔진 ([`inventory.service.ts`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/services/inventory.service.ts))**:
+  - `findItemRecord`: 1) UPC 일치 ➔ 2) **Box Barcode 일치** ➔ 3) SKU 일치 순서로 자동 판별.
+- **재고 조회 ([`/inventory/lookup`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/lookup/page.tsx))**:
+  - 박스 겉면 바코드 스캔 시에도 해당 품목 카드 및 로케이션 적치 현황을 즉각 표시.
+- **입고 적치 ([`/inventory/put-away`](file:///c:/Users/boazn/Projects/WMS/mobile-app/src/app/inventory/put-away/page.tsx))**:
+  - 박스를 뜯지 않고 외포장 바코드 스캔 시 `📦 Box Barcode Verified` 뱃지를 표시하고 박스 단위 입고를 지원.

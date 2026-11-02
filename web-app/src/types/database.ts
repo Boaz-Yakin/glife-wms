@@ -100,6 +100,7 @@ export type Database = {
           id: string;
           sku: string;
           upc: string | null;
+          box_barcode?: string | null;
           name_en: string;
           item_volume: number | null;
           desc_en: string | null;

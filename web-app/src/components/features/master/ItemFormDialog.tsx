@@ -93,8 +93,12 @@ export function ItemFormDialog({ open, onOpenChange, partners, onSubmit, loading
                 <Input id="sku" name="sku" className="col-span-3" required placeholder="e.g. SKU-1001" defaultValue={initialData?.sku} readOnly={!!initialData} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="upc" className="text-right">UPC / Barcode</Label>
+                <Label htmlFor="upc" className="text-right">Unit UPC (낱개)</Label>
                 <Input id="upc" name="upc" className="col-span-3" placeholder="Leave blank to auto-generate" defaultValue={initialData?.upc || ""} />
+              </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="box_barcode" className="text-right">Box Barcode (박스)</Label>
+                <Input id="box_barcode" name="box_barcode" className="col-span-3" placeholder="e.g. 18801234567897 (ITF-14 / Outer Case)" defaultValue={initialData?.box_barcode || ""} />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="name_en" className="text-right">Item Name <span className="text-red-500">*</span></Label>

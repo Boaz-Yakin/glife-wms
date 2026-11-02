@@ -191,6 +191,7 @@ export type Database = {
       }
       items: {
         Row: {
+          box_barcode: string | null
           box_price: number | null
           category: string | null
           client_id: string
@@ -218,6 +219,7 @@ export type Database = {
           zone_type: Database["public"]["Enums"]["zone_type"]
         }
         Insert: {
+          box_barcode?: string | null
           box_price?: number | null
           category?: string | null
           client_id: string
@@ -245,6 +247,7 @@ export type Database = {
           zone_type?: Database["public"]["Enums"]["zone_type"]
         }
         Update: {
+          box_barcode?: string | null
           box_price?: number | null
           category?: string | null
           client_id?: string

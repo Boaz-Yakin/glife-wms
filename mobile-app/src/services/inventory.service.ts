@@ -47,6 +47,7 @@ export interface LocationLookupResult {
     name: string;
     desc?: string;
     upc: string;
+    box_barcode?: string | null;
     uom: string;
     onHandQty: number;
     allocatedQty: number;
@@ -61,7 +62,9 @@ export interface ItemLookupResult {
     name: string;
     desc?: string;
     upc: string;
+    box_barcode?: string | null;
     uom: string;
+    units_per_box?: number | null;
     category?: string;
     shelf_life_days?: number | null;
     min_outbound_days?: number | null;
@@ -139,31 +142,39 @@ export async function findLocationRecord(
 export async function findItemRecord(
   supabase: SupabaseClient,
   skuOrUpcOrId: string
-): Promise<{ id: string; sku: string; name_en: string; desc_en?: string | null; upc: string; uom: string; category?: string; client_id?: string | null; shelf_life_days?: number | null; min_outbound_days?: number | null } | null> {
+): Promise<{ id: string; sku: string; name_en: string; desc_en?: string | null; upc: string; box_barcode?: string | null; uom: string; units_per_box?: number | null; category?: string; client_id?: string | null; shelf_life_days?: number | null; min_outbound_days?: number | null } | null> {
   const clean = skuOrUpcOrId.trim();
   if (!clean) return null;
 
   if (isUUID(clean)) {
     const { data } = await supabase
       .from('items')
-      .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+      .select('id, sku, name_en, desc_en, upc, box_barcode, uom, units_per_box, category, client_id, shelf_life_days, min_outbound_days')
       .eq('id', clean)
       .maybeSingle();
     return data;
   }
 
-  // 1. Try exact UPC match
+  // 1. Try exact UPC match (Single item barcode)
   const { data: byUpc } = await supabase
     .from('items')
-    .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+    .select('id, sku, name_en, desc_en, upc, box_barcode, uom, units_per_box, category, client_id, shelf_life_days, min_outbound_days')
     .eq('upc', clean)
     .maybeSingle();
   if (byUpc) return byUpc;
 
-  // 2. Try exact or case-insensitive SKU match
+  // 2. Try exact Box Barcode match (Outer carton / ITF-14 / GTIN-14)
+  const { data: byBoxBarcode } = await supabase
+    .from('items')
+    .select('id, sku, name_en, desc_en, upc, box_barcode, uom, units_per_box, category, client_id, shelf_life_days, min_outbound_days')
+    .eq('box_barcode', clean)
+    .maybeSingle();
+  if (byBoxBarcode) return byBoxBarcode;
+
+  // 3. Try exact or case-insensitive SKU match
   const { data: bySku } = await supabase
     .from('items')
-    .select('id, sku, name_en, desc_en, upc, uom, category, client_id, shelf_life_days, min_outbound_days')
+    .select('id, sku, name_en, desc_en, upc, box_barcode, uom, units_per_box, category, client_id, shelf_life_days, min_outbound_days')
     .ilike('sku', clean)
     .maybeSingle();
   if (bySku) return bySku;
@@ -191,7 +202,7 @@ export async function lookupByLocation(
       item_id,
       on_hand_qty,
       allocated_qty,
-      items:item_id ( id, sku, name_en, desc_en, upc, uom, category )
+      items:item_id ( id, sku, name_en, desc_en, upc, box_barcode, uom, category )
     `)
     .eq('location_id', loc.id)
     .or('on_hand_qty.gt.0,allocated_qty.gt.0');
@@ -215,6 +226,7 @@ export async function lookupByLocation(
       name: formatItemNameWithDesc(it.name_en, it.desc_en),
       desc: it.desc_en || '',
       upc: it.upc || '',
+      box_barcode: it.box_barcode || null,
       uom: it.uom || 'BOX',
       onHandQty: onHand,
       allocatedQty: allocated,
@@ -262,7 +274,9 @@ export async function lookupByItem(
         name: formatItemNameWithDesc(it.name_en, it.desc_en),
         desc: it.desc_en || '',
         upc: it.upc || '',
+        box_barcode: it.box_barcode || null,
         uom: it.uom || 'BOX',
+        units_per_box: it.units_per_box || 1,
         category: it.category,
         shelf_life_days: it.shelf_life_days,
         min_outbound_days: it.min_outbound_days,
@@ -293,6 +307,7 @@ export async function lookupByItem(
       name: formatItemNameWithDesc(it.name_en, it.desc_en),
       desc: it.desc_en || '',
       upc: it.upc || '',
+      box_barcode: it.box_barcode || null,
       uom: it.uom || 'BOX',
       category: it.category,
       shelf_life_days: it.shelf_life_days,
