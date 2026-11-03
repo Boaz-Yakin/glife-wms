@@ -123,53 +123,65 @@ BEGIN
     -- 6. Acme 품목 3종 등록 (번들 부모, 낱개 자식, 일반 품목)
     -- 6.1 Coca-Cola 355ml 24-Can Box (부모 품목)
     INSERT INTO public.items (
-        sku, name_en, name_kr, category, uom, unit_price, units_per_box, zone_type, tenant_id
+        sku, name_en, desc_en, category, uom, unit_price, units_per_box, zone_type, client_id, tenant_id
     ) VALUES (
         'ACME-COKE-BOX',
         'Coca-Cola 355ml (24 Cans Box)',
-        '코카콜라 355ml (24캔 박스)',
+        'Coca-Cola 355ml 24-Can Master Box',
         'Beverage',
         'BOX',
         24.00,
         24,
         'A',
+        v_acme_client_id,
         v_acme_tenant_id
     )
-    ON CONFLICT (sku) DO UPDATE SET name_en = EXCLUDED.name_en, tenant_id = EXCLUDED.tenant_id
+    ON CONFLICT (sku) DO UPDATE SET 
+        name_en = EXCLUDED.name_en, 
+        client_id = EXCLUDED.client_id, 
+        tenant_id = EXCLUDED.tenant_id
     RETURNING id INTO v_item_coke_box;
 
     -- 6.2 Coca-Cola 355ml Single Can (자식 품목)
     INSERT INTO public.items (
-        sku, name_en, name_kr, category, uom, unit_price, units_per_box, zone_type, tenant_id
+        sku, name_en, desc_en, category, uom, unit_price, units_per_box, zone_type, client_id, tenant_id
     ) VALUES (
         'ACME-COKE-CAN',
         'Coca-Cola 355ml (Single Can)',
-        '코카콜라 355ml (낱개 캔)',
+        'Coca-Cola 355ml Single Aluminum Can',
         'Beverage',
         'EA',
         1.25,
         1,
         'A',
+        v_acme_client_id,
         v_acme_tenant_id
     )
-    ON CONFLICT (sku) DO UPDATE SET name_en = EXCLUDED.name_en, tenant_id = EXCLUDED.tenant_id
+    ON CONFLICT (sku) DO UPDATE SET 
+        name_en = EXCLUDED.name_en, 
+        client_id = EXCLUDED.client_id, 
+        tenant_id = EXCLUDED.tenant_id
     RETURNING id INTO v_item_coke_can;
 
     -- 6.3 Acme Potato Chips 60g (단일 품목)
     INSERT INTO public.items (
-        sku, name_en, name_kr, category, uom, unit_price, units_per_box, zone_type, tenant_id
+        sku, name_en, desc_en, category, uom, unit_price, units_per_box, zone_type, client_id, tenant_id
     ) VALUES (
         'ACME-CHIP-60G',
         'Acme Potato Chips 60g',
-        '아크메 감자칩 60g',
+        'Acme Crispy Original Potato Chips 60g',
         'Snack',
         'EA',
         2.00,
         1,
         'A',
+        v_acme_client_id,
         v_acme_tenant_id
     )
-    ON CONFLICT (sku) DO UPDATE SET name_en = EXCLUDED.name_en, tenant_id = EXCLUDED.tenant_id
+    ON CONFLICT (sku) DO UPDATE SET 
+        name_en = EXCLUDED.name_en, 
+        client_id = EXCLUDED.client_id, 
+        tenant_id = EXCLUDED.tenant_id
     RETURNING id INTO v_item_chip;
 
     -- 7. Acme 번들 해체(De-kitting) 규칙 등록 (24캔 박스 -> 낱개 캔, Ratio: 24)
