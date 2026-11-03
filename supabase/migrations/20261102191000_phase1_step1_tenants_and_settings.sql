@@ -37,7 +37,6 @@ CREATE TABLE IF NOT EXISTS public.tenant_settings (
     perishable_mode BOOLEAN DEFAULT TRUE,               -- 유통기한/FEFO(선석출) 모드 활성화 여부
     auto_dekit_enabled BOOLEAN DEFAULT TRUE,            -- 번들/멀티팩 자동 해체 활성화 여부
     default_dekit_location_id UUID REFERENCES public.locations(id) ON DELETE SET NULL, -- 해체 입고 기본 로케이션
-    kakao_notification_enabled BOOLEAN DEFAULT FALSE,   -- 카카오 알림톡 연동 활성화 여부
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

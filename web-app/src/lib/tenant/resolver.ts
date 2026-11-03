@@ -30,7 +30,6 @@ const GLIFE_FALLBACK: TenantContext = {
     perishable_mode: true,
     auto_dekit_enabled: true,
     default_dekit_location_id: '31b632f2-e408-4d5a-bf11-47b52b8db673',
-    kakao_notification_enabled: false,
     updated_at: new Date().toISOString(),
   },
 }
@@ -108,3 +107,4 @@ export async function resolveTenantFromHost(hostname: string): Promise<TenantCon
     return GLIFE_FALLBACK
   }
 }
+

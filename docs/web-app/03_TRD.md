@@ -170,7 +170,7 @@ src/
 
 ---
 
-## 7. Notification System - KakaoTalk Developers REST API (신규 주문 카카오톡 자동 보고 및 ON/OFF 제어)
+## 7. [REMOVED] Notification System - KakaoTalk Developers REST API (완전 제거됨)
 
 ### 7.1 요구사항 및 기능 범위
 - **목적**: 매장에서 새로운 주문(`orders`)이 접수되면, 관리자의 카카오톡(나에게 보내기)으로 주문 번호, 발주 매장, 품목 요약, 총 수량, 총 금액 등의 핵심 정보를 실시간 자동 보고.

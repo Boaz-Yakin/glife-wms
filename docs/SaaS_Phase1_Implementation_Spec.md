@@ -12,7 +12,7 @@
 본 명세서는 현재 글라이프(Glife) 단일 기업에 종속되어 있는 4개 시스템을 **다중 고객사를 수용할 수 있는 멀티테넌트(Multi-Tenant) B2B SaaS 코어로 전환**하기 위한 주차별 기술 구현 세부사항을 정의합니다.
 
 ### 🛡️ 3대 무결성 원칙 (Absolute Constraints)
-1. **Zero-Downtime & Zero-Glitch**: 기존 글라이프 물류센터의 실시간 주문 인입, 피킹, 적치, 카카오톡 알림이 마이그레이션 도중 1초도 중단되지 않아야 함.
+1. **Zero-Downtime & Zero-Glitch**: 기존 글라이프 물류센터의 실시간 주문 인입, 피킹, 적치 작업이 마이그레이션 도중 1초도 중단되지 않아야 함.
 2. **100% Data Isolation**: 타 기업의 품목, 재고, 주문 데이터가 교차 조회되거나 오염되는 일을 Supabase RLS(Row-Level Security)로 원천 차단.
 3. **No SI-Hardcoding**: 신규 기업 추가 시 소스 코드를 건드리지 않고, 오직 DB 레코드 삽입(GUI 또는 위저드)만으로 독립 창고가 가동되어야 함.
 
@@ -66,7 +66,6 @@ CREATE TABLE IF NOT EXISTS public.tenant_settings (
     perishable_mode BOOLEAN DEFAULT TRUE,          -- FEFO 선석출 여부
     auto_dekit_enabled BOOLEAN DEFAULT TRUE,       -- 멀티팩 자동 해체 활성화
     default_dekit_location_id UUID REFERENCES public.locations(id),
-    kakao_notification_enabled BOOLEAN DEFAULT FALSE,
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 ```
@@ -285,7 +284,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 6. WMS Web 자동할당 및 모바일 PDA 피킹 검수 확인 $\rightarrow$ 정산 인보이스 발행.
 
 #### [Task 4.3] 글라이프 기존 운영 회귀 테스트 (Zero Side-Effect Check)
-* 기존 글라이프의 모든 기능(라면 Multi/Single 해체, 로케이션 맵, 카카오톡 주문 알림, PDA 입출고)이 마이그레이션 전과 100% 동일하게 완벽 작동함을 검증.
+* 기존 글라이프의 모든 기능(라면 Multi/Single 해체, 로케이션 맵, PDA 입출고)이 마이그레이션 전과 100% 동일하게 완벽 작동함을 검증.
 
 ---
 

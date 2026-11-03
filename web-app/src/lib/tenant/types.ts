@@ -10,7 +10,6 @@ export interface TenantSettings {
   perishable_mode: boolean;
   auto_dekit_enabled: boolean;
   default_dekit_location_id: string | null;
-  kakao_notification_enabled: boolean;
   updated_at: string;
 }
 
@@ -22,3 +21,4 @@ export interface TenantContext {
   subscriptionStatus: string;
   settings: TenantSettings;
 }
+

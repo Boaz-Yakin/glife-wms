@@ -809,37 +809,52 @@
 
 ---
 
-## 🌐 Phase 66: B2B SaaS 멀티테넌트 코어 구축 - Week 2 (Decoupling & Context Injection)
-- [x] 66.1 [Task 2.1] 테넌트 리졸버 및 컨텍스트 주입 모듈 (`web-app/src/lib/tenant/resolver.ts`, `types.ts`, `context.ts`):
-  - 호스트네임(서브도메인/커스텀 도메인) 분석 및 DB 테넌트 식별 (TTL 60초 메모리 캐시 탑재)
-  - 로컬 개발환경(`localhost`, `127.0.0.1`, `vercel.app`)용 `glife` 자동 fallback
-  - Next.js 미들웨어(`middleware.ts`)에서 `x-tenant-id`, `x-tenant-code` 헤더 및 쿠키 자동 주입
-- [x] 66.2 [Task 2.2] WMS Web-App 내 `activeTenantId` 동적 연계 (`master/items/actions.ts`):
-  - 단일 품목 등록/수정 및 엑셀 일괄 등록(`bulkCreateItemsAction`)에 `tenant_id` 자동 주입
-- [x] 66.3 [Task 2.3] 화이트라벨링(White-Labeling) 동적 테넌트 브랜딩 적용 (`AppSidebar.tsx`, `TopHeader.tsx`, `layout.tsx`):
-  - 사이드바 상단 로고, 테마 컬러, 상호명 동적 바인딩
-  - 헤더 상단 테넌트 식별 뱃지 표출
-- [x] 66.4 [Task 2.4] TypeScript 컴파일 검증 (`npx tsc --noEmit`) 100% 무결성 통과
+## 🌐 Phase 67: B2B SaaS 멀티테넌트 코어 구축 - Week 3 (De-kitting GUI & Dynamic Config)
+- [x] 67.1 [Task 3.2] 범용 De-kit 원자적 PostgreSQL RPC 함수 마이그레이션 (`20261102200000_phase1_task3_dekit_rpc_function.sql`):
+  - `public.dekit_bundle_item(...)` 함수 구현 (테넌트 격리, 부모 재고 차감 및 낱개 자식 증액, 감사 로그 자동 기록)
+- [x] 67.2 [Task 3.1] 번들 해체(De-kitting) 관리자 GUI 신설 (`/master/conversions`):
+  - `services/conversion.service.ts`: 테넌트별 번들 변환 규칙 CRUD 로직 구축
+  - `ConversionFormDialog.tsx`: 부모/자식 품목 선택, 환산 배율, 입고 로케이션, 자동 해체 토글 등록 모달
+  - `ManualDekitDialog.tsx`: 작업자가 부모 수량을 입력하여 즉시 낱개로 변환하는 원클릭 해체 모달
+  - `ConversionsTable.tsx`: 배율 시각화 다이어그램, 자동 해체 토글, 즉시 해체 및 삭제 액션 테이블
+  - `ConversionsClient.tsx` & `page.tsx`: 3대 통계 카드(규칙 수, 자동 해체 활성 수, 연계 랙 수) 및 검색 필터 구축
+- [x] 67.3 [Task 3.3] 테넌트별 운영 정책 스위치 관리 화면 (`/settings/policy`):
+  - `stock_policy` (HARD_LIMIT vs BACKORDER) 스위치
+  - `perishable_mode` (FEFO 선석출 강제) 토글
+  - `auto_dekit_enabled` 및 기본 해체 입고 랙 선택
+- [x] 67.4 사이드바 메뉴 연동 (`AppSidebar.tsx`):
+  - `Master Data` ➔ `Conversions (De-kit)`
+  - `Settings` ➔ `Operating Policies`
+- [x] 67.5 TypeScript 컴파일 검증 및 Next.js 18개 라우트 프로덕션 빌드 100% 통과
+## 🌐 Phase 67: B2B SaaS 멀티테넌트 코어 구축 - Week 3 (De-kitting GUI & Dynamic Config)
+- [x] 67.1 [Task 3.2] 범용 De-kit 원자적 PostgreSQL RPC 함수 마이그레이션 (`20261102200000_phase1_task3_dekit_rpc_function.sql`):
+  - `public.dekit_bundle_item(...)` 함수 구현 (테넌트 격리, 부모 재고 차감 및 낱개 자식 증액, 감사 로그 자동 기록)
+- [x] 67.2 [Task 3.1] 번들 해체(De-kitting) 관리자 GUI 신설 (`/master/conversions`):
+  - `services/conversion.service.ts`: 테넌트별 번들 변환 규칙 CRUD 로직 구축
+  - `ConversionFormDialog.tsx`: 부모/자식 품목 선택, 환산 배율, 입고 로케이션, 자동 해체 토글 등록 모달
+  - `ManualDekitDialog.tsx`: 작업자가 부모 수량을 입력하여 즉시 낱개로 변환하는 원클릭 해체 모달
+  - `ConversionsTable.tsx`: 배율 시각화 다이어그램, 자동 해체 토글, 즉시 해체 및 삭제 액션 테이블
+  - `ConversionsClient.tsx` & `page.tsx`: 3대 통계 카드(규칙 수, 자동 해체 활성 수, 연계 랙 수) 및 검색 필터 구축
+- [x] 67.3 [Task 3.3] 테넌트별 운영 정책 스위치 관리 화면 (`/settings/policy`):
+  - `stock_policy` (HARD_LIMIT vs BACKORDER) 스위치
+  - `perishable_mode` (FEFO 선석출 강제) 토글
+  - `auto_dekit_enabled` 및 기본 해체 입고 랙 선택
+- [x] 67.4 사이드바 메뉴 연동 (`AppSidebar.tsx`):
+  - `Master Data` ➔ `Conversions (De-kit)`
+  - `Settings` ➔ `Operating Policies`
+- [x] 67.5 TypeScript 컴파일 검증 및 Next.js 18개 라우트 프로덕션 빌드 100% 통과
 
+---
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+## 🗑️ Phase 68: 카카오톡 알림 기능 및 스키마 완전 영구 제거 (Purge Kakao Notifications)
+- [x] 68.1 DB 스키마 및 데이터 삭제 마이그레이션 (`20261102201000_remove_kakao_notification.sql`):
+  - `tenant_settings.kakao_notification_enabled` 컬럼 삭제
+  - `system_settings` 테이블에서 카카오 관련 모든 레코드 영구 삭제
+- [x] 68.2 소스코드 및 UI 컴포넌트 완전 제거:
+  - `web-app/src/app/api/notifications/kakao/` 라우트 완전 삭제
+  - `web-app/src/app/(dashboard)/settings/notifications/` 대시보드 및 Server Action 완전 삭제
+  - `web-app/src/services/kakao.service.ts` 모듈 삭제
+  - `web-app/src/types/notifications.ts` 타입 정의 삭제
+  - `AppSidebar.tsx` 내비게이션 메뉴에서 카카오 알림톡 항목 제거
+  - `tenant/types.ts`, `tenant/resolver.ts`, `PolicyForm.tsx`, `policy/actions.ts`에서 카카오 관련 필드 및 로직 완전 제거
+- [x] 68.3 TypeScript 컴파일 및 Next.js 16 프로덕션 빌드 무결성 검증 완료

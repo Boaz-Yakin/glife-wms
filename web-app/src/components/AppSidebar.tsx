@@ -88,6 +88,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       items: [
         { title: "Clients (3PL)", url: "/master/clients" },
         { title: "Items (SKU)", url: "/master/items" },
+        { title: "Conversions (De-kit)", url: "/master/conversions" },
         { title: "Stores", url: "/master/stores" },
         { title: "Locations", url: "/master/locations" },
         { title: "Labels", url: "/master/labels" },
@@ -99,10 +100,10 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       url: "/settings",
       icon: Settings,
       items: [
+        { title: "Operating Policies", url: "/settings/policy" },
         { title: "Account Information", url: "/settings/profile" },
         { title: "Security & Google OTP", url: "/settings/security" },
         { title: "Users", url: "/settings/users" },
-        { title: "Notifications (카카오톡)", url: "/settings/notifications" },
       ]
     },
   ]

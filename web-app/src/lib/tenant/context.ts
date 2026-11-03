@@ -16,3 +16,4 @@ export async function getActiveTenantId(): Promise<string> {
   const tenant = await getCurrentTenant()
   return tenant.tenantId
 }
+
