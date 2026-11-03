@@ -13,13 +13,15 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { ClientSwitcher } from "@/components/ClientSwitcher"
 import { createClient } from "@/lib/supabase/client"
+import { TenantContext } from "@/lib/tenant/types"
 
 interface TopHeaderProps {
   clients: any[]
   activeClientId: string | null
+  tenant?: TenantContext
 }
 
-export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
+export function TopHeader({ clients, activeClientId, tenant }: TopHeaderProps) {
   const { unreadCount } = useRealtimeNotifications()
   const router = useRouter()
   const supabase = createClient()
@@ -62,6 +64,11 @@ export function TopHeader({ clients, activeClientId }: TopHeaderProps) {
         <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hover:bg-muted" />
         <Separator orientation="vertical" className="mr-2 h-4" />
         <span className="text-xs font-semibold tracking-wide uppercase text-muted-foreground">Admin Console</span>
+        {tenant && (
+          <Badge variant="outline" className="text-[10px] uppercase font-bold text-primary border-primary/40 bg-primary/5">
+            {tenant.code}
+          </Badge>
+        )}
       </div>
       
       <div className="flex flex-1 items-center justify-center">

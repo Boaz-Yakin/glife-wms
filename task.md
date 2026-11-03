@@ -793,6 +793,37 @@
   - [`docs/web-app/03_TRD.md`](file:///c:/Users/boazn/Projects/WMS/docs/web-app/03_TRD.md) 섹션 8에 듀얼 바코드 표준 명세 추가
   - `web-app` 및 `mobile-app` 양측 TypeScript 컴파일 검증 (`npx tsc --noEmit`) 100% 무결성 통과
 
+---
+
+## 🌐 Phase 65: B2B SaaS 멀티테넌트 코어 구축 - Week 1 (DB Core & Glife 무손실 백필)
+- [x] 65.1 [Step 1] 테넌트 관리 테이블 신설 및 Glife 1호 등록 마이그레이션 작성 (`20261102191000_phase1_step1_tenants_and_settings.sql`):
+  - `tenants`, `tenant_settings` 테이블 정의 및 인덱스 설정
+  - Glife 테넌트(`9df4f04d-b4be-4256-bfa5-aa48c4fd5d13`) 및 기본 설정 자동 삽입
+- [x] 65.2 [Step 2] 11개 핵심 비즈니스 테이블 `tenant_id` 추가 및 Glife ID 백필 (`20261102192000_phase1_step2_add_tenant_id_to_tables.sql`):
+  - 대상: `clients`, `items`, `inventory`, `locations`, `orders`, `order_items`, `users`, `stores`, `partners`, `item_conversions`, `inventory_adjustments`
+  - 기존 레코드 Glife ID 백필 및 신규 삽입용 Glife DEFAULT 부여 (Zero-Downtime 보장)
+  - `users.tenant_id`는 슈퍼관리자 지원을 위해 NULL 허용
+- [x] 65.3 [Step 3] 테넌트별 초고속 조회를 위한 복합 인덱스(Composite Indexes) 생성 (`20261102193000_phase1_step3_tenant_composite_indexes.sql`)
+- [x] 65.4 [Step 4] Supabase Row-Level Security (RLS) 격리 정책 및 슈퍼관리자 우회 함수 적용 (`20261102194000_phase1_step4_tenant_rls_policies.sql`)
+- [x] 65.5 Supabase SQL Editor를 통한 순차 마이그레이션 실행 및 데이터 무결성 검증 완료 (Step 1 ~ Step 4 100% 반영)
+
+---
+
+## 🌐 Phase 66: B2B SaaS 멀티테넌트 코어 구축 - Week 2 (Decoupling & Context Injection)
+- [x] 66.1 [Task 2.1] 테넌트 리졸버 및 컨텍스트 주입 모듈 (`web-app/src/lib/tenant/resolver.ts`, `types.ts`, `context.ts`):
+  - 호스트네임(서브도메인/커스텀 도메인) 분석 및 DB 테넌트 식별 (TTL 60초 메모리 캐시 탑재)
+  - 로컬 개발환경(`localhost`, `127.0.0.1`, `vercel.app`)용 `glife` 자동 fallback
+  - Next.js 미들웨어(`middleware.ts`)에서 `x-tenant-id`, `x-tenant-code` 헤더 및 쿠키 자동 주입
+- [x] 66.2 [Task 2.2] WMS Web-App 내 `activeTenantId` 동적 연계 (`master/items/actions.ts`):
+  - 단일 품목 등록/수정 및 엑셀 일괄 등록(`bulkCreateItemsAction`)에 `tenant_id` 자동 주입
+- [x] 66.3 [Task 2.3] 화이트라벨링(White-Labeling) 동적 테넌트 브랜딩 적용 (`AppSidebar.tsx`, `TopHeader.tsx`, `layout.tsx`):
+  - 사이드바 상단 로고, 테마 컬러, 상호명 동적 바인딩
+  - 헤더 상단 테넌트 식별 뱃지 표출
+- [x] 66.4 [Task 2.4] TypeScript 컴파일 검증 (`npx tsc --noEmit`) 100% 무결성 통과
+
+
+
+
 
 
 

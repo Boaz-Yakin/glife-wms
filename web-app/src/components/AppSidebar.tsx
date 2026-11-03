@@ -5,6 +5,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog, ChevronDown } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { TenantContext } from "@/lib/tenant/types"
 import { cn } from "cn"
 
 import {
@@ -21,7 +22,11 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  tenant?: TenantContext;
+}
+
+export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
   const supabase = createClient()
@@ -108,12 +113,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<Link href="/dashboard" />} className="hover:bg-sidebar-accent transition-colors">
-              <div className="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground font-black shadow-xs">
-                <Package2 className="size-4.5" />
+              <div 
+                className="flex aspect-square size-8 items-center justify-center rounded-md text-white font-black shadow-xs overflow-hidden"
+                style={{ backgroundColor: tenant?.settings.primary_color || "var(--sidebar-primary)" }}
+              >
+                {tenant?.settings.logo_url && tenant.settings.logo_url !== "/logo.png" ? (
+                  <img src={tenant.settings.logo_url} alt={tenant.companyName} className="h-6 w-6 object-contain" />
+                ) : (
+                  <Package2 className="size-4.5" />
+                )}
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-bold tracking-tight text-white">Glife WMS</span>
-                <span className="text-[11px] font-medium text-sidebar-foreground/60">Logistics B2B Portal</span>
+                <span className="font-bold tracking-tight text-white">{tenant?.companyName || "Glife WMS"}</span>
+                <span className="text-[11px] font-medium text-sidebar-foreground/60">{tenant?.code?.toUpperCase() || "GLIFE"} B2B Portal</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>

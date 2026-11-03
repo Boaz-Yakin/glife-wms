@@ -1,10 +1,25 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { resolveTenantFromHost } from '@/lib/tenant/resolver'
 
 export async function updateSession(request: NextRequest) {
+  // 테넌트 호스트네임 식별 및 컨텍스트 주입
+  const host = request.headers.get('host') || 'localhost'
+  const tenant = await resolveTenantFromHost(host)
+
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-tenant-id', tenant.tenantId)
+  requestHeaders.set('x-tenant-code', tenant.code)
+
   let supabaseResponse = NextResponse.next({
-    request,
+    request: {
+      headers: requestHeaders,
+    },
   })
+
+  supabaseResponse.headers.set('x-tenant-id', tenant.tenantId)
+  supabaseResponse.headers.set('x-tenant-code', tenant.code)
+  supabaseResponse.cookies.set('wms_tenant_code', tenant.code, { path: '/' })
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

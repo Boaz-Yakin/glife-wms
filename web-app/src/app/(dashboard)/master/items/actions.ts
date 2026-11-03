@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+import { getActiveTenantId } from "@/lib/tenant/context"
 import { requireAdmin, requireAuth } from "@/lib/auth/guard"
 
 const getAdminClient = () => {
@@ -57,7 +58,10 @@ export async function createItemAction(formData: FormData) {
     return { error: "Please select a client before creating items." }
   }
 
+  const activeTenantId = await getActiveTenantId()
+
   const payload = {
+    tenant_id: activeTenantId,
     client_id: activeClientId,
     sku,
     name_en,
@@ -119,8 +123,11 @@ export async function bulkCreateItemsAction(items: any[]) {
     return { error: "Please select a client before importing items." }
   }
 
+  const activeTenantId = await getActiveTenantId()
+
   // Pre-process items to match DB constraints
   const insertData = items.map(item => ({
+    tenant_id: activeTenantId,
     client_id: activeClientId,
     sku: item.sku?.toString(),
     upc: item.upc?.toString() || `${item.sku}-upc`, // UPC is required and UNIQUE
