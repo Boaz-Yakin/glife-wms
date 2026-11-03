@@ -5,6 +5,9 @@
 --         items, item_conversions, inventory
 -- ==============================================================================
 
+-- 0. zone_type ENUM에 'S' (Staging 구역) 안전 추가
+ALTER TYPE public.zone_type ADD VALUE IF NOT EXISTS 'S';
+
 DO $$
 DECLARE
     v_acme_tenant_id UUID := 'a0000000-0000-0000-0000-000000000001';
@@ -40,7 +43,7 @@ BEGIN
         code = EXCLUDED.code,
         subscription_plan = EXCLUDED.subscription_plan;
 
-    -- 2. Acme 창고 로케이션 사전 생성 (SaaS 격리 환경 검증용 전용 Aisle 09)
+    -- 2. Acme 창고 로케이션 사전 생성 (SaaS 격리 환경 검증용 전용 Aisle 09, Zone 'A')
     -- 2.1 박스 보관 랙 (LOC-A0901A01)
     INSERT INTO public.locations (code, zone_type, tenant_id)
     VALUES ('LOC-A0901A01', 'A', v_acme_tenant_id)
@@ -53,9 +56,9 @@ BEGIN
     ON CONFLICT (code) DO UPDATE SET tenant_id = EXCLUDED.tenant_id
     RETURNING id INTO v_loc_ea;
 
-    -- 2.3 De-kit 전용 Staging 로케이션 (LOC-S0901A01)
+    -- 2.3 De-kit 전용 로케이션 (LOC-A0901A03, Zone 'A' 보장)
     INSERT INTO public.locations (code, zone_type, tenant_id)
-    VALUES ('LOC-S0901A01', 'S', v_acme_tenant_id)
+    VALUES ('LOC-A0901A03', 'A', v_acme_tenant_id)
     ON CONFLICT (code) DO UPDATE SET tenant_id = EXCLUDED.tenant_id
     RETURNING id INTO v_loc_dekit;
 
