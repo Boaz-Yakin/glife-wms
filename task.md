@@ -873,3 +873,12 @@
 - [x] 69.3 [Task 4.3] 글라이프 기존 운영 회귀 테스트 스크립트 작성 (`scripts/test_glife_regression.sql`):
   - 기존 Glife 물류센터 품목, 로케이션, 거래처, 재고의 무손실 100% 보존 검증
 - [x] 69.4 멀티테넌트 보안 감사 보고서 발행 (`docs/Security_RLS_Audit_Report.md`)
+
+---
+
+## 🍜 G-Manager: Pick Ticket 라면류 [Single] 품목 통합 그룹핑
+- [x] Pick Ticket 모달 (`src/app/components/PickTicketModal.tsx`):
+  - 라면류 품목 중 `[Single]`이 포함된 모든 아이템(`NS Soon [Single]`, `NS Chapagetti [Single]`, `Buldak Ramyeon [Single]` 등)을 **"Buldak Ramyeon [Single]"** 단일 그룹으로 자동 통합
+  - 주문 수량(`qty`) 및 피킹 수량(`pickedQty`) 통합 합산 및 피킹 수량 일괄 분배 지원
+  - 하단 세부 내역에 맛/품목명별 수량(`Soon(2), Chapagetti(3), Carbonara(5)` 등) 선명하게 자동 추출 표시
+  - Next.js 16 프로덕션 빌드 통과 및 GitHub 푸시 배포 완료 (`240635f`)
