@@ -71,8 +71,28 @@ export function normalizePhone(raw: string): string {
   return raw.replace(/\D/g, '');
 }
 
-function phoneToEmail(phone: string): string {
-  return `${phone}@glife.com`;
+function phoneToEmail(phone: string, tenantCode: string = 'glife'): string {
+  const code = (tenantCode || 'glife').toLowerCase();
+  if (code === 'glife') {
+    return `${phone}@glife.com`;
+  }
+  return `${phone}@${code}.wms.local`;
+}
+
+async function resolveWorkerEmail(admin: SupabaseClient, phone: string): Promise<string> {
+  try {
+    const { data: userRec } = await admin
+      .from('users')
+      .select('tenant_id, tenants:tenants(code)')
+      .eq('phone', phone)
+      .maybeSingle();
+
+    const code = (userRec?.tenants as any)?.code || 'glife';
+    return phoneToEmail(phone, code);
+  } catch (err) {
+    console.warn('Failed to resolve worker tenant code, defaulting to glife:', err);
+    return `${phone}@glife.com`;
+  }
 }
 
 export async function getWorkerProfile(userId: string): Promise<WorkerProfile | null> {
@@ -152,10 +172,24 @@ export async function loginWorker(rawPhone: string, secret: string): Promise<Log
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: phoneToEmail(phone),
+  const workerEmail = await resolveWorkerEmail(admin, phone);
+
+  let { data, error } = await supabase.auth.signInWithPassword({
+    email: workerEmail,
     password: secret,
   });
+
+  // Fallback retry with legacy Glife email if custom domain sign-in fails
+  if ((error || !data.user) && workerEmail !== `${phone}@glife.com`) {
+    const retry = await supabase.auth.signInWithPassword({
+      email: `${phone}@glife.com`,
+      password: secret,
+    });
+    if (!retry.error && retry.data?.user) {
+      data = retry.data;
+      error = null;
+    }
+  }
 
   if (error || !data.user) {
     const { data: newLock, error: rpcError } = await admin.rpc('record_login_failure', {

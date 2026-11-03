@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { createClient } from "@supabase/supabase-js"
 import { requireAdmin } from "@/lib/auth/guard"
+import { getCurrentTenant } from "@/lib/tenant/context"
+import { formatTenantVirtualEmail } from "@/lib/tenant/auth-helper"
 
 export async function createUserAction(formData: FormData) {
   try {
@@ -30,7 +32,8 @@ export async function createUserAction(formData: FormData) {
   const phone = rawPhone.replace(/[^0-9]/g, "")
   if (phone.length < 10) return { error: "Please enter a valid 10-digit US phone number." }
 
-  const email = `${phone}@glife.com`
+  const tenant = await getCurrentTenant()
+  const email = formatTenantVirtualEmail(phone, tenant.code)
   const isWorker = role === 'PICKER' || role === 'INSPECTOR'
   const password = isWorker ? "123456" : "password123" // 6-digit PIN for workers, password for managers
 
@@ -61,7 +64,8 @@ export async function createUserAction(formData: FormData) {
       last_name,
       role,
       status: "ACTIVE",
-      must_change_pin: isWorker ? true : false
+      must_change_pin: isWorker ? true : false,
+      tenant_id: tenant.tenantId,
     }
   ])
 
@@ -163,7 +167,8 @@ export async function updateUserAction(formData: FormData) {
   }
 
   // 2. Update email & metadata in auth.users
-  const newEmail = `${phone}@glife.com`
+  const tenant = await getCurrentTenant()
+  const newEmail = formatTenantVirtualEmail(phone, tenant.code)
   const authUpdatePayload: Record<string, any> = {
     email: newEmail,
     email_confirm: true

@@ -207,7 +207,7 @@ export default function MyProfilePage() {
                   <Label htmlFor="email" className="text-xs font-medium">System Virtual Account (Read-only)</Label>
                   <Input
                     id="email"
-                    value={profile?.email || `${phone}@glife.com`}
+                    value={profile?.email || (phone ? `${phone}@wms.local` : "")}
                     disabled
                     className="bg-slate-50 text-slate-500 font-mono text-xs"
                   />

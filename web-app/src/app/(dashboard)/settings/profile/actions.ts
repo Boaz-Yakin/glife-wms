@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache"
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
+import { getCurrentTenant } from "@/lib/tenant/context"
+import { formatTenantVirtualEmail } from "@/lib/tenant/auth-helper"
 
 export interface MyProfileData {
   id: string
@@ -120,7 +122,8 @@ export async function updateMyProfileAction(formData: FormData): Promise<{ succe
     }
 
     // 2. Update auth.users email (virtual email based on phone number) & metadata
-    const newVirtualEmail = `${cleanPhone}@glife.com`
+    const tenant = await getCurrentTenant()
+    const newVirtualEmail = formatTenantVirtualEmail(cleanPhone, tenant.code)
     const { error: authError } = await adminClient.auth.admin.updateUserById(user.id, {
       email: newVirtualEmail,
       email_confirm: true,

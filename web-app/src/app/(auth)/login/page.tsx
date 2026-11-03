@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { createClient } from "@/lib/supabase/client"
+import { resolveLoginEmailAction } from "./actions"
 
 export default function LoginPage() {
   const [phone, setPhone] = React.useState("")
@@ -44,13 +45,26 @@ export default function LoginPage() {
     setLoading(true)
     
     try {
-      // Convert phone number to virtual email
-      const virtualEmail = `${cleanPhone}@glife.com`
+      // Convert phone number to dynamic tenant virtual email
+      const hintSubdomain = typeof window !== 'undefined' ? window.location.hostname.split('.')[0] : undefined
+      const virtualEmail = await resolveLoginEmailAction(cleanPhone, hintSubdomain)
       
-      const { data, error } = await supabase.auth.signInWithPassword({
+      let { data, error } = await supabase.auth.signInWithPassword({
         email: virtualEmail,
         password: cleanPassword,
       })
+
+      // Fallback retry with legacy Glife email if custom domain sign-in fails
+      if (error && virtualEmail !== `${cleanPhone}@glife.com`) {
+        const retry = await supabase.auth.signInWithPassword({
+          email: `${cleanPhone}@glife.com`,
+          password: cleanPassword,
+        })
+        if (!retry.error && retry.data?.user) {
+          data = retry.data
+          error = null
+        }
+      }
       
       if (error) {
         console.error("Login attempt failed:", error)

@@ -302,9 +302,12 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 - [x] DB 멀티테넌트 마이그레이션 스크립트 (`supabase/migrations/`)
 - [x] 테넌트 컨텍스트 리졸버 및 미들웨어 (`web-app/src/lib/tenant/`)
-- [ ] OrderAPP 가상 계정 및 하드코딩 제거 패치
+- [x] Web-App & Mobile-App 가상 계정(`${phone}@{tenant}.wms.local`) 동적 테넌트 바인딩 및 호환성 완료
 - [x] 번들 해체(De-kitting) 관리자 GUI 화면 (`/master/conversions`)
 - [x] 멀티테넌트 보안 감사 보고서 (`docs/Security_RLS_Audit_Report.md`)
-- [x] 2호 테넌트 온보딩 실증 완료 보고서
+- [x] 2호 테넌트(Acme Food) 온보딩 실증 완료 보고서 (`scripts/test_rls_penetration.sql`)
+
+> **🎉 Phase 1 달성 완료 (100%)**:  
+> 본 명세서에 수립된 모든 멀티테넌시 데이터 격리(RLS), 테넌트 컨텍스트 주입, 가상 계정 도메인 동적화 및 범용 De-kitting GUI 구축이 완료되어 시스템이 완전한 **Multi-Tenant B2B SaaS 코어**로 전환되었습니다.
 
 본 명세서에 따라 Phase 1을 완수하면, 4주 후 본 시스템은 **언제든 신규 유통사를 30분 만에 입주시킬 수 있는 완전한 B2B SaaS 코어로 거듭나게 됩니다.**
