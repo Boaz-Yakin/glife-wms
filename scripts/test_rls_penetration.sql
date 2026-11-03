@@ -46,7 +46,7 @@ BEGIN
     -- Glife 세션에서 Acme 품목의 재고를 9999로 조작 시도
     WITH attempt_update AS (
         UPDATE public.inventory
-        SET on_hand = 9999
+        SET on_hand_qty = 9999
         WHERE tenant_id = v_acme_tenant_id
         RETURNING id
     )

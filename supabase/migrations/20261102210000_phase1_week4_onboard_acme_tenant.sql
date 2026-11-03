@@ -203,25 +203,25 @@ BEGIN
         auto_dekit_on_order = EXCLUDED.auto_dekit_on_order,
         tenant_id = EXCLUDED.tenant_id;
 
-    -- 8. Acme 초기 재고 등록
-    -- 8.1 코카콜라 박스 10박스 보관 (on_hand = 10)
+    -- 8. Acme 초기 재고 등록 (on_hand_qty, allocated_qty)
+    -- 8.1 코카콜라 박스 10박스 보관 (on_hand_qty = 10)
     INSERT INTO public.inventory (
-        item_id, location_id, on_hand, allocated, tenant_id
+        item_id, location_id, on_hand_qty, allocated_qty, tenant_id
     ) VALUES (
         v_item_coke_box, v_loc_box, 10, 0, v_acme_tenant_id
     )
     ON CONFLICT (item_id, location_id) DO UPDATE SET
-        on_hand = EXCLUDED.on_hand,
+        on_hand_qty = EXCLUDED.on_hand_qty,
         tenant_id = EXCLUDED.tenant_id;
 
-    -- 8.2 감자칩 50봉지 보관 (on_hand = 50)
+    -- 8.2 감자칩 50봉지 보관 (on_hand_qty = 50)
     INSERT INTO public.inventory (
-        item_id, location_id, on_hand, allocated, tenant_id
+        item_id, location_id, on_hand_qty, allocated_qty, tenant_id
     ) VALUES (
         v_item_chip, v_loc_ea, 50, 0, v_acme_tenant_id
     )
     ON CONFLICT (item_id, location_id) DO UPDATE SET
-        on_hand = EXCLUDED.on_hand,
+        on_hand_qty = EXCLUDED.on_hand_qty,
         tenant_id = EXCLUDED.tenant_id;
 
     RAISE NOTICE 'Acme Food Logistics (tenant_id: %) onboarded successfully with initial items and stock!', v_acme_tenant_id;
