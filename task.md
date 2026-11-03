@@ -858,3 +858,18 @@
   - `AppSidebar.tsx` 내비게이션 메뉴에서 카카오 알림톡 항목 제거
   - `tenant/types.ts`, `tenant/resolver.ts`, `PolicyForm.tsx`, `policy/actions.ts`에서 카카오 관련 필드 및 로직 완전 제거
 - [x] 68.3 TypeScript 컴파일 및 Next.js 16 프로덕션 빌드 무결성 검증 완료
+
+---
+
+## 🎯 Phase 69: B2B SaaS 멀티테넌트 코어 구축 - Week 4 (보안 침투 검증, QA & 2호 테넌트 온보딩)
+- [x] 69.1 [Task 4.2] 가상 2호 테넌트 ('Acme Food Logistics') 온보딩 시드 구축 (`supabase/migrations/20261102210000_phase1_week4_onboard_acme_tenant.sql`):
+  - 테넌트 마스터, Sky Blue 브랜딩(#0284c7), USD 통화, HARD_LIMIT 정책 등록
+  - 전용 파트너, 클라이언트, 발주 매장 등록
+  - 전용 랙 3개(`LOC-A0901A01`, `LOC-A0901A02`, `LOC-S0901A01`) 등록
+  - 음료/스낵 품목 3종(코카콜라 24캔 박스, 낱개 캔, 감자칩) 등록
+  - 코카콜라 24캔 박스 -> 낱개 캔 De-kit 번들 규칙(Ratio: 24) 및 초기 재고 등록
+- [x] 69.2 [Task 4.1] RLS 데이터 교차 조회(Cross-Tenant Leak) 침투 테스트 스크립트 작성 (`scripts/test_rls_penetration.sql`):
+  - 6대 보안 시나리오(타 테넌트 품목 조회 차단, 재고 임의 변조 차단, De-kit 규칙 격리, 본인 데이터 정상 가시성, 환경설정 격리) 검증
+- [x] 69.3 [Task 4.3] 글라이프 기존 운영 회귀 테스트 스크립트 작성 (`scripts/test_glife_regression.sql`):
+  - 기존 Glife 물류센터 품목, 로케이션, 거래처, 재고의 무손실 100% 보존 검증
+- [x] 69.4 멀티테넌트 보안 감사 보고서 발행 (`docs/Security_RLS_Audit_Report.md`)
