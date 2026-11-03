@@ -1,9 +1,33 @@
 -- ==============================================================================
 -- Phase 1 - Week 4: Multi-Tenant RLS Penetration & Cross-Leak Security Audit
 -- Description: Glife vs Acme 간 PostgreSQL Row-Level Security 침투 및 데이터 누출 방어 검증
--- Usage: Supabase SQL Editor에서 실행하여 종합 테스트 통과 여부(PASS/FAIL) 확인
 -- ==============================================================================
 
+-- 1. 10대 비즈니스 테이블에 FORCE ROW LEVEL SECURITY 적용 (테이블 소유자도 RLS 적용)
+DO $$
+DECLARE
+    tbl TEXT;
+BEGIN
+    FOR tbl IN SELECT unnest(ARRAY[
+        'clients',
+        'items',
+        'inventory',
+        'locations',
+        'orders',
+        'order_items',
+        'stores',
+        'partners',
+        'item_conversions',
+        'inventory_adjustments'
+    ])
+    LOOP
+        IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = tbl) THEN
+            EXECUTE format('ALTER TABLE public.%I FORCE ROW LEVEL SECURITY', tbl);
+        END IF;
+    END LOOP;
+END $$;
+
+-- 2. authenticated 역할(실제 앱 접속자 롤)로 RLS 침투 테스트 수행
 DO $$
 DECLARE
     v_glife_tenant_id UUID := '9df4f04d-b4be-4256-bfa5-aa48c4fd5d13';
@@ -15,8 +39,12 @@ DECLARE
     v_passed INT := 0;
     v_failed INT := 0;
 BEGIN
+    -- 중요: postgres 슈퍼유저는 RLS를 자동 bypass하므로, 실제 웹/모바일 앱 역할인 'authenticated'로 전환
+    SET LOCAL ROLE authenticated;
+
     RAISE NOTICE '====================================================================';
     RAISE NOTICE '🛡️ MULTI-TENANT RLS PENETRATION & ISOLATION SECURITY AUDIT';
+    RAISE NOTICE '   Role: authenticated (Simulating real application traffic)';
     RAISE NOTICE '====================================================================';
 
     -- --------------------------------------------------------------------------
