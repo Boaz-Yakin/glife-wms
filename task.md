@@ -882,3 +882,25 @@
   - 주문 수량(`qty`) 및 피킹 수량(`pickedQty`) 통합 합산 및 피킹 수량 일괄 분배 지원
   - 하단 세부 내역에 맛/품목명별 수량(`Soon(2), Chapagetti(3), Carbonara(5)` 등) 선명하게 자동 추출 표시
   - Next.js 16 프로덕션 빌드 통과 및 GitHub 푸시 배포 완료 (`240635f`)
+
+---
+
+## 🎨 Phase 70: B2B SaaS 멀티테넌트 고도화 - Phase 2 Week 1 (2D 비주얼 창고 스튜디오 & 로케이션 DDL 확장)
+- [x] 70.1 DB 스키마 마이그레이션 (`20261103200000_phase2_week1_warehouse_studio.sql`):
+  - `locations` 테이블에 `pos_x`, `pos_y`, `rotation`, `temperature_zone` 컬럼 신설
+  - `warehouse_layouts` (테넌트별 도면 및 캔버스 직렬화 데이터) 테이블 신설 및 RLS 격리 정책 부여
+  - 기존 Glife 물류센터 기본 레이아웃 시드 자동 삽입
+- [x] 70.2 TypeScript 타입 및 스키마 인터페이스 확장:
+  - `web-app/src/types/warehouse-studio.ts` (스튜디오 노드, 요소 타입, 좌표, 랙 속성, 그리드 설정)
+  - `web-app/src/types/database.ts` 및 `supabase.ts`에 `warehouse_layouts` 및 `locations` 신규 컬럼 반영
+- [x] 70.3 창고 스튜디오 서비스 및 Server Action 구축:
+  - `web-app/src/services/warehouse-studio.service.ts` (도면 저장/로드, 랙 기반 로케이션 일괄 생성 및 DB upsert)
+  - `web-app/src/app/(dashboard)/master/warehouse-studio/actions.ts`
+- [x] 70.4 2D 인터랙티브 드래그 앤 드롭 캔버스 UI 구축 (`/master/warehouse-studio`):
+  - `StudioToolbox.tsx`: 랙(Rack), 스테이징(Staging), 저온구역(Cold Zone), 출고패킹(Dock), 벽체(Wall) 드래그 팔레트
+  - `WarehouseStudioCanvas.tsx`: SVG/Canvas 기반 인터랙티브 그리드, 줌/팬, 노드 스냅 및 회전
+  - `StudioPropertyPanel.tsx`: 단수(1~5단), 칸수(1~4칸), 구역명, 온도대 실시간 속성 편집기
+  - `BuildLocationsDialog.tsx`: 캔버스 배치 랙 기반 원클릭 로케이션 바코드 생성 및 라벨 인쇄 연계
+- [x] 70.5 사이드바 메뉴 연동 (`AppSidebar.tsx`): Master Data 하위 `Warehouse Studio` 추가
+- [x] 70.6 Next.js 16 프로덕션 빌드 검증 및 무결성 확인 완료 (전체 18개 라우트 100% 통과)
+

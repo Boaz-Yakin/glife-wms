@@ -303,6 +303,11 @@ export type Database = {
           code: string
           created_at: string | null
           id: string
+          pos_x?: number | null
+          pos_y?: number | null
+          rotation?: number | null
+          temperature_zone?: string | null
+          tenant_id?: string | null
           updated_at: string | null
           zone_type: Database["public"]["Enums"]["zone_type"]
         }
@@ -310,6 +315,11 @@ export type Database = {
           code: string
           created_at?: string | null
           id?: string
+          pos_x?: number | null
+          pos_y?: number | null
+          rotation?: number | null
+          temperature_zone?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
           zone_type: Database["public"]["Enums"]["zone_type"]
         }
@@ -317,8 +327,49 @@ export type Database = {
           code?: string
           created_at?: string | null
           id?: string
+          pos_x?: number | null
+          pos_y?: number | null
+          rotation?: number | null
+          temperature_zone?: string | null
+          tenant_id?: string | null
           updated_at?: string | null
           zone_type?: Database["public"]["Enums"]["zone_type"]
+        }
+        Relationships: []
+      }
+      warehouse_layouts: {
+        Row: {
+          created_at: string
+          grid_height: number
+          grid_width: number
+          id: string
+          is_active: boolean
+          layout_data: any
+          tenant_id: string
+          updated_at: string
+          warehouse_name: string
+        }
+        Insert: {
+          created_at?: string
+          grid_height?: number
+          grid_width?: number
+          id?: string
+          is_active?: boolean
+          layout_data: any
+          tenant_id?: string
+          updated_at?: string
+          warehouse_name?: string
+        }
+        Update: {
+          created_at?: string
+          grid_height?: number
+          grid_width?: number
+          id?: string
+          is_active?: boolean
+          layout_data?: any
+          tenant_id?: string
+          updated_at?: string
+          warehouse_name?: string
         }
         Relationships: []
       }

@@ -145,9 +145,31 @@ export type Database = {
           id: string;
           code: string;
           zone_type: 'A' | 'F';
+          tenant_id?: string;
+          pos_x?: number;
+          pos_y?: number;
+          rotation?: number;
+          temperature_zone?: 'ROOM' | 'CHILLED' | 'FROZEN';
           created_at: string;
           updated_at: string;
         };
+        Insert: any;
+        Update: any;
+      };
+      warehouse_layouts: {
+        Row: {
+          id: string;
+          tenant_id: string;
+          warehouse_name: string;
+          grid_width: number;
+          grid_height: number;
+          layout_data: any;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: any;
+        Update: any;
       };
       inventory_adjustments: {
         Row: {

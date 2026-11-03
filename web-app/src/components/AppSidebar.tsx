@@ -89,6 +89,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
         { title: "Clients (3PL)", url: "/master/clients" },
         { title: "Items (SKU)", url: "/master/items" },
         { title: "Conversions (De-kit)", url: "/master/conversions" },
+        { title: "Warehouse Studio", url: "/master/warehouse-studio" },
         { title: "Stores", url: "/master/stores" },
         { title: "Locations", url: "/master/locations" },
         { title: "Labels", url: "/master/labels" },
