@@ -1,5 +1,6 @@
 "use client";
 
+
 import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -9,6 +10,7 @@ import {
 import type { PickingItem } from "@/services/picking.service";
 import { feedback as audioFeedback } from "@/lib/feedback";
 import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
+import { OfflineActionExecutor } from "@/offline/offline-action-executor";
 
 // ──────────────────────────────────────────────
 // Command barcode constants
@@ -89,10 +91,9 @@ function PickingRunInner() {
     setIsDone(true);
     if (orderId) {
       try {
-        await fetch("/api/picking/complete", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ orderId, targetStatus: "PACKED" }),
+        await OfflineActionExecutor.execute("PICK", "/api/picking/complete", {
+          orderId,
+          targetStatus: "PACKED",
         });
       } catch (err) {
         console.error("Failed to mark order picking as complete:", err);
@@ -137,13 +138,9 @@ function PickingRunInner() {
       // ── CMD-SKIP ──
       if (trimmed === CMD_SKIP) {
         currentItems[idx] = { ...target, status: "SKIPPED" };
-        fetch("/api/picking/skip", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            locationId: target.locations?.id || target.item_id,
-            itemId: target.item_id
-          })
+        OfflineActionExecutor.execute("PICK", "/api/picking/skip", {
+          locationId: target.locations?.id || target.item_id,
+          itemId: target.item_id
         }).catch(console.error);
 
         const next = idx + 1;
@@ -475,17 +472,6 @@ function PickingRunInner() {
   );
 }
 
-export default function PickingRunPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col h-full bg-black text-white items-center justify-center">
-          <Loader2 className="w-12 h-12 animate-spin text-emerald-500 mb-4" />
-          <h2 className="text-xl font-bold">Loading...</h2>
-        </div>
-      }
-    >
-      <PickingRunInner />
-    </Suspense>
-  );
+export default function PickingRunClient() {
+  return <PickingRunInner />;
 }

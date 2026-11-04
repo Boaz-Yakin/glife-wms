@@ -1,6 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE_OPTIONS } from './server';
+import { SESSION_COOKIE_OPTIONS } from './cookie-options';
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -31,9 +31,9 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname;
 
-  // Do not require auth for static assets or api auth callbacks
+  // Do not require auth for static assets, Next.js internal routes, or api auth callbacks
   if (
-    pathname.startsWith('/_next') ||
+    pathname.startsWith('/_') ||
     pathname.startsWith('/api/auth') ||
     pathname.includes('.') ||
     pathname === '/favicon.ico'

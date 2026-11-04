@@ -1,13 +1,8 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { SESSION_COOKIE_OPTIONS } from './cookie-options';
 
-/** TRD-002 Q2: personal phones keep the session for 30 days. */
-export const SESSION_COOKIE_OPTIONS: CookieOptions = {
-  maxAge: 60 * 60 * 24 * 30,
-  sameSite: 'lax',
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-};
+export { SESSION_COOKIE_OPTIONS };
 
 /**
  * Cookie-bound Supabase client for Route Handlers / Server Components.

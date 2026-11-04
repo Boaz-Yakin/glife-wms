@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr';
-import { SESSION_COOKIE_OPTIONS } from './server';
+import { SESSION_COOKIE_OPTIONS } from './cookie-options';
 
 export function createClient() {
   return createBrowserClient(

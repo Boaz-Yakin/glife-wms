@@ -904,3 +904,21 @@
 - [x] 70.5 사이드바 메뉴 연동 (`AppSidebar.tsx`): Master Data 하위 `Warehouse Studio` 추가
 - [x] 70.6 Next.js 16 프로덕션 빌드 검증 및 무결성 확인 완료 (전체 18개 라우트 100% 통과)
 
+---
+
+## 📱 Phase 71: SaaS Phase 2 - Week 3 (Mobile-App 오프라인 우선 IndexedDB 동기화 아키텍처)
+- [x] 71.1 Dexie.js 기반 모바일 IndexedDB 로컬 스토리지 구축 (`mobile-app/src/offline/db.ts`):
+  - `pendingActions` (미전송 트랜잭션 큐: PICK, PUTAWAY, TRANSFER, COUNT)
+  - `cachedItems`, `cachedLocations`, `cachedInventory` 마스터 및 로컬 재고 캐시 테이블
+- [x] 71.2 로컬 데이터 프리패칭 및 캐시 매니저 (`mobile-app/src/offline/cache-manager.ts`):
+  - 작업 시작 전 품목/로케이션/할당 작업 사전 캐싱 및 오프라인 바코드 검색 엔진 (UPC/Box/SKU/Location)
+- [x] 71.3 백그라운드 재연결 자동 동기화 워커 (`mobile-app/src/offline/sync-worker.ts`):
+  - `online` 이벤트 감지 및 미동기화 큐 순차(FIFO) 서버 전송 및 상태 리스너 시스템
+- [x] 71.4 현장 작업(피킹, 적치, 로케이션 이동) 오프라인 우선 액션 연동:
+  - 온라인 우선 시도 후 네트워크 단절 시 IndexedDB 큐잉 및 낙관적 로컬 재고 반영 (0-latency)
+  - Put-away, Transfer, Picking Run에 오프라인 캐시 조회 및 액션 fallback 통합
+- [x] 71.5 네트워크 상태 인디케이터 UI (`mobile-app/src/components/NetworkStatusIndicator.tsx`):
+  - 실시간 오프라인/온라인 상태 감지, 미동기화 건수 뱃지 및 수동 [지금 동기화] 지원 (RootLayout 마운트)
+- [x] 71.6 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 통과 (전체 24개 라우트 100% 빌드 완료)
+
+

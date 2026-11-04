@@ -7,6 +7,8 @@ import { InlineNumberPad } from "@/components/features/inventory/inline-number-p
 import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 import { useBarcodeScanner } from "@/hooks/useBarcodeScanner";
 import { feedback } from "@/lib/feedback";
+import { OfflineActionExecutor } from "@/offline/offline-action-executor";
+import { CacheManager } from "@/offline/cache-manager";
 import { ArrowRight, CheckCircle2, MapPin, Package, RefreshCw, AlertCircle, Camera, Loader2 } from "lucide-react";
 
 interface StoredItem {
@@ -84,6 +86,19 @@ export default function TransferPage() {
       const data = await res.json();
 
       if (!res.ok || !data.success || data.type !== "LOCATION") {
+        const cached = await CacheManager.findCachedLocation(code);
+        if (cached) {
+          if (sourceLoc && cached.code === sourceLoc.code) {
+            feedback.error();
+            setError("Destination location cannot be the same as source location.");
+            return;
+          }
+          feedback.normal();
+          setDestLoc({ id: cached.code, code: cached.code });
+          setStep(4);
+          return;
+        }
+
         feedback.error();
         setError(`Destination location "${code}" not found.`);
         return;
@@ -99,10 +114,21 @@ export default function TransferPage() {
       feedback.normal();
       setDestLoc({ id: loc.id, code: loc.code });
       setStep(4);
-    } catch (e) {
-      console.error(e);
-      feedback.error();
-      setError("Failed to verify destination location.");
+    } catch {
+      const cached = await CacheManager.findCachedLocation(code);
+      if (cached) {
+        if (sourceLoc && cached.code === sourceLoc.code) {
+          feedback.error();
+          setError("Destination location cannot be the same as source location.");
+          return;
+        }
+        feedback.normal();
+        setDestLoc({ id: cached.code, code: cached.code });
+        setStep(4);
+      } else {
+        feedback.error();
+        setError("Failed to verify destination location.");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -134,22 +160,24 @@ export default function TransferPage() {
     setError(null);
 
     try {
-      const res = await fetch("/api/inventory/transfer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          fromLocationId: sourceLoc.id,
-          toLocationId: destLoc.id,
+      const payload = {
+        fromLocationId: sourceLoc.id,
+        toLocationId: destLoc.id,
+        itemId: selectedItem.itemId,
+        qty: transferQty,
+      };
+
+      const result = await OfflineActionExecutor.execute("TRANSFER", "/api/inventory/transfer", payload, {
+        optimisticInventoryUpdate: {
+          locationCode: destLoc.code,
           itemId: selectedItem.itemId,
-          qty: transferQty,
-        }),
+          deltaQty: transferQty,
+        },
       });
 
-      const data = await res.json();
-
-      if (!res.ok || !data.success) {
+      if (!result.success) {
         feedback.error();
-        setError(data.error || "Transfer failed in database.");
+        setError(result.error || "Transfer failed in database.");
         return;
       }
 

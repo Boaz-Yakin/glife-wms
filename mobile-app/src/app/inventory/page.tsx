@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getInventorySummary } from "@/services/inventory.service";
+
+export const dynamic = "force-dynamic";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UrgentQueueBanner } from "@/components/features/inventory/urgent-queue-banner";
 import { MapPin, Package, CheckCircle2, Clock, ShieldAlert, PlusCircle, ArrowRight } from "lucide-react";
