@@ -961,11 +961,29 @@
 ---
 
 ## 🌊 Phase 74: SaaS Phase 2 - Week 6 (동적 파동 출고 Wave Picking & 다중 카트 피킹 Pick-to-Tote)
-- [ ] 74.1 파동 출고(Wave Picking) 스키마 DDL 및 웨이브 플래너 (`picking_waves`, `wave_orders`)
-- [ ] 74.2 배송 권역 / 보관 온도대(Cold/Ambient) / 단일 품목 대량 발주 기반 자동 군집화 엔진
-- [ ] 74.3 다중 오더 카트 분배 피킹 (Pick-to-Tote) 모바일 UI 및 토트 검증 스캔 바인딩
-- [ ] 74.4 웹 관리자 웨이브 출고 현황 모니터링 대시보드
-- [ ] 74.5 TypeScript 및 프로덕션 빌드 무결성 검증
+- [x] 74.1 파동 출고(Wave Picking) 스키마 DDL 및 웨이브 플래너 (`supabase/migrations/20261103220000_phase2_week6_wave_picking_and_pick_to_tote.sql`):
+  - `picking_waves` 테이블 (웨이브 번호, 상태, 보관 구역, 주문/품목/수량 집계)
+  - `wave_orders` 테이블 (웨이브-주문-카트 토트 바구니 1~8 매핑 및 토트 바코드 부여)
+  - PostgreSQL RPC 함수 `create_picking_wave`, `complete_picking_wave` 구현 및 테넌트 격리 RLS 적용
+- [x] 74.2 다중 오더 품목 통합 집계 및 2D TSP 최적 동선 엔진 (`web-app/src/services/wave.service.ts` & `mobile-app/src/services/wave.service.ts`):
+  - 동일 로케이션/품목 수량 일괄 피킹(Consolidation) 후 토트별 분배 리스트 생성
+  - Cold Chain 우선순위(상온 ➔ 냉장 ➔ 냉동) 및 2D TSP 최단 동선 정렬
+- [x] 74.3 다중 오더 카트 분배 피킹 (Pick-to-Tote) 모바일 UI 및 토트 검증 스캔 바인딩:
+  - `mobile-app/src/app/picking/wave/run/WaveRunClient.tsx`: 4~8분할 카트 토트 그래픽 HUD, 랙 위치/품목 바코드 확인 후 토트 번호(`TOTE-01`~`TOTE-08`) 투입 스캔 검증
+  - `mobile-app/src/app/picking/page.tsx`: WAVE PICK 탭 및 SINGLE ORDERS 탭 듀얼 모드 연동
+  - 모바일 API 엔드포인트: `/api/picking/waves`, `/api/picking/wave`, `/api/picking/wave/complete`
+- [x] 74.4 웹 관리자 웨이브 출고 현황 콘솔 및 대시보드 (`web-app/src/app/(dashboard)/orders/waves/page.tsx`):
+  - `WaveConsoleTable.tsx` & `CreateWaveDialog.tsx`: 미출고 주문 선택 후 원클릭 웨이브 생성 및 출고 완료 일괄 처리
+  - 사이드바 메뉴 연동 (`AppSidebar.tsx`): Orders 하위 `Wave Picking` 메뉴 추가
+- [x] 74.5 TypeScript 및 프로덕션 빌드 무결성 검증 (web-app 18개 라우트, mobile-app 28개 라우트 100% 빌드 완료)
+
+---
+
+## 🚀 Phase 3: AI Logistics Operations & Enterprise Integration (Phase 3 안내)
+- [ ] 80.1 AI 수요 예측 및 발주 권고 (Demand Forecasting & Auto-Reordering)
+- [ ] 80.2 ERP / 외부 회계 솔루션(QuickBooks, SAP) 연동 API 및 EDI 게이트웨이
+- [ ] 80.3 실시간 IoT 온습도 센서 모니터링 및 저온 창고 임계치 알람
+- [ ] 80.4 운송장 자동 발행 및 택배사/라스트마일 배송 트래킹 시스템 연동
 
 
 

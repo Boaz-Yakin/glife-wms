@@ -80,6 +80,10 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       title: "Orders",
       url: "/orders",
       icon: ClipboardList,
+      items: [
+        { title: "Order List", url: "/orders" },
+        { title: "Wave Picking", url: "/orders/waves" },
+      ]
     },
     {
       title: "Master Data",
