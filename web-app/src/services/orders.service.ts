@@ -32,7 +32,13 @@ export interface OrderData {
   created_at: string
   
   // joined fields
-  store?: { name: string } | null
+  store?: {
+    id?: string
+    name: string
+    price_tier?: string
+    credit_limit?: number
+    outstanding_balance?: number
+  } | null
   client?: { id: string; name: string; code: string } | null
   order_items?: Array<{
     qty: number
@@ -97,7 +103,7 @@ export async function getOrders({
   const supabase = await getClient()
   let query = supabase.from('orders').select(`
     *,
-    store:stores(name),
+    store:stores(id, name, price_tier, credit_limit, outstanding_balance),
     client:clients(id, name, code),
     order_items(
       qty,

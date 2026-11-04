@@ -28,6 +28,9 @@ export async function createStoreAction(formData: FormData) {
   const contactPerson = formData.get("contact_person")?.toString()?.trim() || null
   const note = formData.get("note")?.toString()?.trim() || null
   const isActive = formData.get("is_active") === "true" || formData.get("is_active") === "on"
+  const priceTier = formData.get("price_tier")?.toString()?.trim() || "STANDARD"
+  const creditLimit = Math.max(0, parseFloat(formData.get("credit_limit")?.toString() || "0") || 0)
+  const outstandingBalance = Math.max(0, parseFloat(formData.get("outstanding_balance")?.toString() || "0") || 0)
 
   if (!clientId) {
     return { error: "Client is required." }
@@ -49,6 +52,9 @@ export async function createStoreAction(formData: FormData) {
       contact_person: contactPerson,
       note,
       is_active: isActive,
+      price_tier: priceTier,
+      credit_limit: creditLimit,
+      outstanding_balance: outstandingBalance,
     },
   ]).select().single()
 
@@ -82,6 +88,9 @@ export async function updateStoreAction(formData: FormData) {
   const contactPerson = formData.get("contact_person")?.toString()?.trim() || null
   const note = formData.get("note")?.toString()?.trim() || null
   const isActive = formData.get("is_active") === "true" || formData.get("is_active") === "on"
+  const priceTier = formData.get("price_tier")?.toString()?.trim() || "STANDARD"
+  const creditLimit = Math.max(0, parseFloat(formData.get("credit_limit")?.toString() || "0") || 0)
+  const outstandingBalance = Math.max(0, parseFloat(formData.get("outstanding_balance")?.toString() || "0") || 0)
 
   if (!id) {
     return { error: "Store ID is missing." }
@@ -107,6 +116,9 @@ export async function updateStoreAction(formData: FormData) {
       contact_person: contactPerson,
       note,
       is_active: isActive,
+      price_tier: priceTier,
+      credit_limit: creditLimit,
+      outstanding_balance: outstandingBalance,
       updated_at: new Date().toISOString(),
     })
     .eq("id", id)

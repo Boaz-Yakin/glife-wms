@@ -48,6 +48,9 @@ export function StoreFormDialog({
   const [phone, setPhone] = useState("")
   const [selectedClientId, setSelectedClientId] = useState<string>("")
   const [isActive, setIsActive] = useState<boolean>(true)
+  const [priceTier, setPriceTier] = useState<string>("STANDARD")
+  const [creditLimit, setCreditLimit] = useState<string>("0")
+  const [outstandingBalance, setOutstandingBalance] = useState<string>("0")
 
   useEffect(() => {
     if (open) {
@@ -55,11 +58,17 @@ export function StoreFormDialog({
         setPhone(store.phone || "")
         setSelectedClientId(store.client_id)
         setIsActive(store.is_active)
+        setPriceTier(store.price_tier || "STANDARD")
+        setCreditLimit(store.credit_limit !== undefined ? String(store.credit_limit) : "0")
+        setOutstandingBalance(store.outstanding_balance !== undefined ? String(store.outstanding_balance) : "0")
       } else {
         setPhone("")
         // Default to activeClientId if exists, else first client
         setSelectedClientId(activeClientId || clients[0]?.id || "")
         setIsActive(true)
+        setPriceTier("STANDARD")
+        setCreditLimit("0")
+        setOutstandingBalance("0")
       }
     }
   }, [open, store, activeClientId, clients])
@@ -189,6 +198,66 @@ export function StoreFormDialog({
                 placeholder="Full delivery / store address"
                 defaultValue={store?.address || ""}
               />
+            </div>
+
+            {/* B2B Tier & Credit Limit Engine */}
+            <div className="border border-border/80 bg-muted/30 rounded-lg p-3.5 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  B2B Pricing & Credit Engine
+                </span>
+                <span className="text-[11px] font-mono text-muted-foreground">
+                  OrderAPP Policy
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label htmlFor="price_tier">Price Tier</Label>
+                  <input type="hidden" name="price_tier" value={priceTier} />
+                  <Select value={priceTier} onValueChange={(val) => setPriceTier(val || "STANDARD")}>
+                    <SelectTrigger id="price_tier" className="h-9">
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="VIP">VIP (최우수)</SelectItem>
+                      <SelectItem value="WHOLESALE">WHOLESALE (도매)</SelectItem>
+                      <SelectItem value="STANDARD">STANDARD (표준)</SelectItem>
+                      <SelectItem value="RETAIL">RETAIL (소매)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="credit_limit">Credit Limit (₩/$)</Label>
+                  <Input
+                    id="credit_limit"
+                    name="credit_limit"
+                    type="number"
+                    step="1"
+                    min="0"
+                    placeholder="0 = Prepay"
+                    value={creditLimit}
+                    onChange={(e) => setCreditLimit(e.target.value)}
+                    className="h-9 font-mono"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="outstanding_balance">Current Balance (₩/$)</Label>
+                  <Input
+                    id="outstanding_balance"
+                    name="outstanding_balance"
+                    type="number"
+                    step="1"
+                    min="0"
+                    placeholder="0"
+                    value={outstandingBalance}
+                    onChange={(e) => setOutstandingBalance(e.target.value)}
+                    className="h-9 font-mono"
+                  />
+                </div>
+              </div>
             </div>
 
             {/* Note */}

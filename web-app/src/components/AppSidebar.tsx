@@ -91,6 +91,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
         { title: "Conversions (De-kit)", url: "/master/conversions" },
         { title: "Warehouse Studio", url: "/master/warehouse-studio" },
         { title: "Stores", url: "/master/stores" },
+        { title: "Pricing & Tiers", url: "/master/pricing" },
         { title: "Locations", url: "/master/locations" },
         { title: "Labels", url: "/master/labels" },
         { title: "Partners", url: "/master/partners" },

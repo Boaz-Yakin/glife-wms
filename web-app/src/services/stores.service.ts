@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server"
 import { getActiveClientAction } from "@/app/actions/client.actions"
 
+export type PriceTier = "VIP" | "WHOLESALE" | "STANDARD" | "RETAIL"
+
 export interface StoreData {
   id: string
   store_no: string
@@ -11,6 +13,9 @@ export interface StoreData {
   note: string | null
   is_active: boolean
   client_id: string
+  price_tier?: PriceTier
+  credit_limit?: number
+  outstanding_balance?: number
   created_at: string
   updated_at: string
   client?: {

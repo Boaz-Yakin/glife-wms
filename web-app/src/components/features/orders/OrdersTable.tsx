@@ -284,8 +284,41 @@ export function OrdersTable({
     },
     {
       id: "store_name",
-      header: "Store",
-      cell: ({ row }) => <div className="font-medium text-sm">{row.original.store?.name || '-'}</div>,
+      header: "Store / Credit",
+      cell: ({ row }) => {
+        const store = row.original.store
+        if (!store) return <div className="text-muted-foreground text-sm">-</div>
+        const tier = store.price_tier || "STANDARD"
+        const limit = Number(store.credit_limit || 0)
+        const balance = Number(store.outstanding_balance || 0)
+        const isOverLimit = limit > 0 && balance > limit
+
+        return (
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="font-medium text-sm text-foreground">{store.name}</span>
+              <Badge variant="outline" className="text-[9px] font-bold px-1 py-0 h-4 bg-muted/50">
+                {tier}
+              </Badge>
+            </div>
+            {limit > 0 ? (
+              <div className="flex items-center gap-1">
+                {isOverLimit ? (
+                  <Badge variant="destructive" className="text-[9px] font-mono px-1 py-0 h-4">
+                    여신초과: ₩{balance.toLocaleString()}
+                  </Badge>
+                ) : (
+                  <span className="text-[10px] font-mono text-muted-foreground">
+                    미수 ₩{balance.toLocaleString()} / 한도 ₩{limit.toLocaleString()}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <span className="text-[10px] font-mono text-muted-foreground">선입금/무여신</span>
+            )}
+          </div>
+        )
+      },
     },
     {
       id: "client_name",

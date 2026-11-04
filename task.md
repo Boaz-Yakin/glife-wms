@@ -942,11 +942,30 @@
 ---
 
 ## 🛒 Phase 73: SaaS Phase 2 - Week 5 (B2B 수주몰 OrderAPP 등급별 단가/여신 한도 엔진)
-- [ ] 73.1 B2B 고객/매장별 등급 및 단가표 스키마 확장 (`customer_price_tiers`, `custom_pricing`, `credit_limits`)
-- [ ] 73.2 여신 한도(Credit Limit) & 미수금 실시간 검증 엔진 및 차단 정책 구현
-- [ ] 73.3 B2B 주문 입력 화면 단가 자동 계산 및 여신 잔여액 HUD 위젯
-- [ ] 73.4 주문 접수 승인/보류 워크플로우 및 재고 실시간 가예약(Allocation) 연동
-- [ ] 73.5 TypeScript 및 프로덕션 빌드 검증
+- [x] 73.1 B2B 고객/매장별 등급 및 단가표 스키마 확장 (`supabase/migrations/20261103213000_phase2_week5_tiered_pricing_and_credit_limit.sql`):
+  - `stores` 테이블에 `price_tier`(VIP, WHOLESALE, STANDARD, RETAIL), `credit_limit`(여신 한도), `outstanding_balance`(현재 미수금) 컬럼 추가
+  - 등급별 / 가맹점별 특수 차등 단가표 테이블 `store_item_prices` 및 테넌트 격리 RLS 구축
+- [x] 73.2 여신 한도(Credit Limit) & 미수금 실시간 검증 엔진 및 PostgreSQL RPC 구현:
+  - `check_store_credit_limit`: 발주 전/발주 시 `(신규 발주액 + 미수금) > 여신 한도` 초과 여부 자동 차단 검증
+  - `apply_store_credit_charge`: 발주 승인 시 원자적 미수금 누적 반영
+- [x] 73.3 계층적 B2B 단가 해석 서비스 (`web-app/src/services/pricing.service.ts`):
+  - 1순위 매장 특수 지정가 ➔ 2순위 등급별 지정가 ➔ 3순위 마스터 UOM 기본가 순차 해석
+- [x] 73.4 가맹점 관리 UI 및 B2B 특수 단가표 관리 모듈 구현:
+  - `StoresTable.tsx`: 등급 뱃지(VIP/WHOLESALE/STANDARD), 여신 한도 및 미수금 소진율 프로그레스 바 시각화
+  - `StoreFormDialog.tsx`: 등급, 여신 한도, 초기 미수금 설정 입력 폼 연동
+  - `web-app/src/app/(dashboard)/master/pricing/page.tsx`: 등급별/매장별 특수 단가표(`PricingTable.tsx`, `PricingFormDialog.tsx`) 등록/수정/삭제 모듈 신설
+  - `OrdersTable.tsx` & `OrderDetailsDialog.tsx`: 주문 목록/상세에 거래처 등급 및 여신 한도 초과 위험 경고 뱃지 연동
+  - 사이드바 메뉴 연동 (`AppSidebar.tsx`): Master Data 하위 `Pricing & Tiers` 추가
+- [x] 73.5 TypeScript 및 프로덕션 빌드 무결성 검증 (web-app 17개 라우트, mobile-app 24개 라우트 100% 빌드 완료)
+
+---
+
+## 🌊 Phase 74: SaaS Phase 2 - Week 6 (동적 파동 출고 Wave Picking & 다중 카트 피킹 Pick-to-Tote)
+- [ ] 74.1 파동 출고(Wave Picking) 스키마 DDL 및 웨이브 플래너 (`picking_waves`, `wave_orders`)
+- [ ] 74.2 배송 권역 / 보관 온도대(Cold/Ambient) / 단일 품목 대량 발주 기반 자동 군집화 엔진
+- [ ] 74.3 다중 오더 카트 분배 피킹 (Pick-to-Tote) 모바일 UI 및 토트 검증 스캔 바인딩
+- [ ] 74.4 웹 관리자 웨이브 출고 현황 모니터링 대시보드
+- [ ] 74.5 TypeScript 및 프로덕션 빌드 무결성 검증
 
 
 

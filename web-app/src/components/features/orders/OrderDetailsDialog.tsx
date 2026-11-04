@@ -519,13 +519,25 @@ export function OrderDetailsDialog({
         {/* Summary Info Cards (Editable Header) */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
           <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-              <Store className="size-3.5" />
-              <span>Store</span>
+            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <div className="flex items-center gap-1.5">
+                <Store className="size-3.5" />
+                <span>Store</span>
+              </div>
+              {order.store?.price_tier && (
+                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-bold bg-primary/10 text-primary">
+                  {order.store.price_tier}
+                </Badge>
+              )}
             </div>
             <p className="font-semibold text-sm truncate" title={order.store?.name || "-"}>
               {order.store?.name || "-"}
             </p>
+            {order.store?.credit_limit !== undefined && order.store.credit_limit > 0 && (
+              <span className="text-[10px] font-mono text-muted-foreground block truncate">
+                한도: ₩{order.store.credit_limit.toLocaleString()}
+              </span>
+            )}
           </div>
 
           {/* Client (화주사) Card - Editable */}

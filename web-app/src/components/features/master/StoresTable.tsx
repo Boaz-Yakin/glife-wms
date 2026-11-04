@@ -195,6 +195,64 @@ export function StoresTable({ data, clients, activeClientId }: StoresTableProps)
       },
     },
     {
+      accessorKey: "price_tier",
+      header: "Tier & Credit",
+      cell: ({ row }) => {
+        const store = row.original
+        const tier = store.price_tier || "STANDARD"
+        const limit = Number(store.credit_limit || 0)
+        const balance = Number(store.outstanding_balance || 0)
+        const usageRatio = limit > 0 ? Math.min(100, Math.round((balance / limit) * 100)) : 0
+        const isOverLimit = limit > 0 && balance > limit
+
+        const tierBadgeVariant =
+          tier === "VIP"
+            ? "bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30"
+            : tier === "WHOLESALE"
+            ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30"
+            : "bg-zinc-500/15 text-zinc-700 dark:text-zinc-300 border-zinc-500/30"
+
+        return (
+          <div className="flex flex-col gap-1 min-w-[130px]">
+            <div className="flex items-center gap-1.5">
+              <Badge variant="outline" className={`text-[10px] font-bold px-1.5 py-0 ${tierBadgeVariant}`}>
+                {tier}
+              </Badge>
+              {limit > 0 && (
+                <span
+                  className={`text-[10px] font-mono font-semibold ${
+                    isOverLimit ? "text-destructive font-bold" : "text-muted-foreground"
+                  }`}
+                >
+                  {usageRatio}%
+                </span>
+              )}
+            </div>
+
+            <div className="flex flex-col text-[11px] font-mono leading-tight">
+              <span className="text-muted-foreground">
+                한도: {limit > 0 ? `₩${limit.toLocaleString()}` : "무제한/선결제"}
+              </span>
+              <span className={isOverLimit ? "text-destructive font-bold" : "text-foreground"}>
+                미수: ₩{balance.toLocaleString()}
+              </span>
+            </div>
+
+            {limit > 0 && (
+              <div className="w-full bg-muted rounded-full h-1 overflow-hidden mt-0.5">
+                <div
+                  className={`h-full transition-all ${
+                    isOverLimit ? "bg-destructive" : usageRatio > 80 ? "bg-amber-500" : "bg-emerald-500"
+                  }`}
+                  style={{ width: `${Math.min(100, usageRatio)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )
+      },
+    },
+    {
       accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {
