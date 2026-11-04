@@ -921,4 +921,32 @@
   - 실시간 오프라인/온라인 상태 감지, 미동기화 건수 뱃지 및 수동 [지금 동기화] 지원 (RootLayout 마운트)
 - [x] 71.6 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 통과 (전체 24개 라우트 100% 빌드 완료)
 
+---
+
+## ⚡ Phase 72: SaaS Phase 2 - Week 4 (산업용 스캐너 SDK & 2D TSP 최단 피킹 경로 엔진)
+- [x] 72.1 Zebra DataWedge & 산업용 PDA 하드웨어 스캐너 SDK (`mobile-app/src/lib/hardware-scanner/`):
+  - Zebra DataWedge Broadcast Intent 리스너 (`com.symbol.datawedge.data_string`)
+  - Honeywell / PointMobile / Android WebView JavascriptInterface 브릿지 연동
+  - 통합 하드웨어 스캐너 훅 (`useHardwareScanner.ts`) 구축 및 50ms 즉시 응답성 보장
+- [x] 72.2 2D 공간 좌표 기반 TSP 최단 피킹 경로 계산 엔진 (`mobile-app/src/lib/routing/tsp-picker.ts`):
+  - 로케이션 실측 좌표(`pos_x`, `pos_y`) 및 온도대(`temperature_zone`) 데이터 연동
+  - Cold Chain Gate(상온 -> 냉장 -> 냉동) 선행 후 구역별 Nearest Neighbor + 2-Opt TSP 알고리즘 적용
+  - 이전 작업 위치 기반 실시간 상대 거리(m) 및 네비게이션 방위각(전방/좌측/우측/후방) 연산
+- [x] 72.3 모바일 피킹 러너 UI 고도화 (`mobile-app/src/app/picking/run/PickingRunClient.tsx`):
+  - 실시간 네비게이션 가이드 배너 (목표 랙, 화살표, 전방 이동 거리 미터, 온도대 인디케이터)
+  - 산업용 스캐너 연결 상태 뱃지 (Zebra DataWedge / HID Scanner) 및 소프트 레이저 트리거 연동
+- [x] 72.4 현장 스캔 뷰어/적치/이동 화면(`lookup`, `put-away`, `transfer`) 하드웨어 스캐너 SDK 전면 적용
+  - `useBarcodeScanner` 래퍼를 통한 하위 호환성 유지 및 DataWedge + 50ms HID 통합
+- [x] 72.5 TypeScript 컴파일 및 Next.js 16 프로덕션 빌드 무결성 검증 (mobile-app 24/24 라우트, web-app 16/16 라우트 100% 빌드 완료)
+
+---
+
+## 🛒 Phase 73: SaaS Phase 2 - Week 5 (B2B 수주몰 OrderAPP 등급별 단가/여신 한도 엔진)
+- [ ] 73.1 B2B 고객/매장별 등급 및 단가표 스키마 확장 (`customer_price_tiers`, `custom_pricing`, `credit_limits`)
+- [ ] 73.2 여신 한도(Credit Limit) & 미수금 실시간 검증 엔진 및 차단 정책 구현
+- [ ] 73.3 B2B 주문 입력 화면 단가 자동 계산 및 여신 잔여액 HUD 위젯
+- [ ] 73.4 주문 접수 승인/보류 워크플로우 및 재고 실시간 가예약(Allocation) 연동
+- [ ] 73.5 TypeScript 및 프로덕션 빌드 검증
+
+
 

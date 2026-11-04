@@ -5,12 +5,15 @@ import { useEffect, useState, useCallback, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowLeft, MapPin, Snowflake, Lock, PackageCheck,
-  Loader2, CheckCircle2, XCircle, SkipForward, Undo2, Flag, Camera
+  Loader2, CheckCircle2, XCircle, SkipForward, Undo2, Flag, Camera,
+  Navigation, Compass, Zap, ScanLine
 } from "lucide-react";
 import type { PickingItem } from "@/services/picking.service";
 import { feedback as audioFeedback } from "@/lib/feedback";
 import { CameraBarcodeScanner } from "@/components/features/camera-scanner";
 import { OfflineActionExecutor } from "@/offline/offline-action-executor";
+import { useHardwareScanner } from "@/hooks/useHardwareScanner";
+import { calculateNavGuide } from "@/lib/routing/tsp-picker";
 
 // ──────────────────────────────────────────────
 // Command barcode constants
@@ -39,6 +42,19 @@ function PickingRunInner() {
   // Barcode buffer refs (no re-render)
   const inputRef = useRef<HTMLInputElement>(null);
   const lastKeyTimeRef = useRef(0);
+
+  // ──────────────────────────────────────────────
+  // Hardware scanner integration (Zebra DataWedge + HID)
+  // ──────────────────────────────────────────────
+  const { scannerType, triggerSoftScan } = useHardwareScanner({
+    onScan: (parsed) => {
+      processBarcode(parsed.raw);
+    },
+    onCommand: (cmd) => {
+      processBarcode(cmd);
+    },
+    disabled: isDone || isCameraOpen,
+  });
 
   // ──────────────────────────────────────────────
   // Always keep the hidden input focused
@@ -203,9 +219,30 @@ function PickingRunInner() {
   // Derived state
   // ──────────────────────────────────────────────
   const currentTarget = items[currentIndex];
-  const isTargetCold = currentTarget?.locations?.zone === "F";
+  const prevTarget = currentIndex > 0 ? items[currentIndex - 1] : null;
+
+  const navGuide = calculateNavGuide(
+    prevTarget?.locations
+      ? { x: prevTarget.locations.pos_x ?? 0, y: prevTarget.locations.pos_y ?? 0 }
+      : { x: 0, y: 0 },
+    currentTarget?.locations
+      ? {
+          x: currentTarget.locations.pos_x ?? 0,
+          y: currentTarget.locations.pos_y ?? 0,
+          code: currentTarget.locations.code,
+        }
+      : null
+  );
+
+  const isTargetCold =
+    currentTarget?.locations?.zone === "F" ||
+    currentTarget?.locations?.temperature_zone === "FROZEN";
   const ambientPending = items.some(
-    (item, idx) => item.locations?.zone === "A" && item.status !== "PICKED" && item.status !== "SKIPPED" && idx !== currentIndex
+    (item, idx) =>
+      (item.locations?.zone === "A" || item.locations?.temperature_zone === "ROOM") &&
+      item.status !== "PICKED" &&
+      item.status !== "SKIPPED" &&
+      idx !== currentIndex
   );
   const isColdChainLocked = isTargetCold && ambientPending;
 
@@ -320,14 +357,26 @@ function PickingRunInner() {
           </div>
         </div>
 
+        {/* Hardware Laser Soft Trigger */}
+        <button
+          onClick={() => triggerSoftScan()}
+          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full bg-zinc-900 hover:bg-zinc-800 text-amber-400 border border-zinc-700 font-bold text-xs shadow-sm transition-transform active:scale-95"
+          title={`Laser Trigger (${scannerType})`}
+        >
+          <Zap className="w-3.5 h-3.5 fill-amber-400" />
+          <span className="text-[11px]">
+            {scannerType === "ZEBRA_DATAWEDGE" ? "Zebra" : scannerType === "POINTMOBILE" ? "PM" : "Laser"}
+          </span>
+        </button>
+
         {/* Camera Scan Button */}
         <button
           onClick={() => setIsCameraOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-transform active:scale-95"
+          className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-sm transition-transform active:scale-95"
           title="Open Phone Camera Scanner"
         >
-          <Camera className="w-4 h-4" />
-          <span>Camera</span>
+          <Camera className="w-3.5 h-3.5" />
+          <span className="text-[11px]">Camera</span>
         </button>
 
         {/* Scan state badge */}
@@ -368,6 +417,44 @@ function PickingRunInner() {
           </div>
         ) : (
           <div className="flex-1 flex flex-col animate-in slide-in-from-right-4 duration-300">
+            {/* Turn-by-Turn Navigation HUD Banner */}
+            <div className="flex items-center justify-between bg-zinc-900/90 border border-zinc-800 rounded-xl px-3.5 py-2.5 mb-3 shadow-inner">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-emerald-950/80 border border-emerald-500/40 flex items-center justify-center font-black text-emerald-400 text-base">
+                  {navGuide.arrowIcon}
+                </div>
+                <div className="flex flex-col">
+                  <div className="flex items-center gap-1.5">
+                    <Navigation className="w-3 h-3 text-emerald-400" />
+                    <span className="text-xs font-bold text-white tracking-wide">
+                      {navGuide.label}
+                    </span>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 font-mono">
+                    2D TSP Cold Chain Route
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {currentTarget?.locations?.temperature_zone && (
+                  <span
+                    className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                      currentTarget.locations.temperature_zone === "FROZEN"
+                        ? "bg-blue-950/60 border-blue-600 text-blue-300"
+                        : currentTarget.locations.temperature_zone === "CHILLED"
+                        ? "bg-cyan-950/60 border-cyan-600 text-cyan-300"
+                        : "bg-emerald-950/60 border-emerald-600 text-emerald-300"
+                    }`}
+                  >
+                    {currentTarget.locations.temperature_zone}
+                  </span>
+                )}
+                <span className="text-[11px] font-mono font-bold text-zinc-300 bg-black/60 px-2 py-0.5 rounded border border-zinc-800">
+                  {navGuide.distanceMeters}m
+                </span>
+              </div>
+            </div>
+
             {/* Location card */}
             <div className={`p-6 rounded-2xl mb-4 border-2 flex flex-col items-center justify-center transition-colors ${
               scanState === "WAITING_ITEM"

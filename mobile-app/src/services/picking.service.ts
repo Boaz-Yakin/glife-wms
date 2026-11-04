@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { optimizePickingTour } from '@/lib/routing/tsp-picker';
 import { formatItemNameWithDesc } from './inventory.service';
 
 export interface Order {
@@ -65,6 +66,10 @@ export interface PickingItem {
     bay: number;
     level: string;
     bin: number;
+    pos_x?: number | null;
+    pos_y?: number | null;
+    rotation?: number | null;
+    temperature_zone?: string | null;
   };
   items?: {
     sku: string;
@@ -75,9 +80,9 @@ export interface PickingItem {
 }
 
 /**
- * 표준 로케이션 바코드(LOC-A0105B01)를 파싱하여 좌표 객체로 반환
+ * 표준 로케이션 바코드(LOC-A0105B01)를 파싱하여 좌표 및 2D 공간 정보 객체로 반환
  */
-function parseLocationCoordinates(locId: string, code: string, zoneType?: string) {
+function parseLocationCoordinates(locId: string, code: string, zoneType?: string, extra?: { pos_x?: number | null; pos_y?: number | null; rotation?: number | null; temperature_zone?: string | null }) {
   // Pattern: LOC-Zone(1)Aisle(2)Bay(2)Level(1)Bin(2) e.g. LOC-A0105B01
   const match = code.match(/^LOC-([A-Z])(\d{2})(\d{2})([A-Z])(\d{2})$/i);
   if (match) {
@@ -89,6 +94,10 @@ function parseLocationCoordinates(locId: string, code: string, zoneType?: string
       bay: parseInt(match[3], 10),
       level: match[4].toUpperCase(),
       bin: parseInt(match[5], 10),
+      pos_x: extra?.pos_x ?? 0,
+      pos_y: extra?.pos_y ?? 0,
+      rotation: extra?.rotation ?? 0,
+      temperature_zone: extra?.temperature_zone || (match[1].toUpperCase() === 'F' ? 'FROZEN' : match[1].toUpperCase() === 'C' ? 'CHILLED' : 'ROOM'),
     };
   }
   return {
@@ -99,6 +108,10 @@ function parseLocationCoordinates(locId: string, code: string, zoneType?: string
     bay: 1,
     level: 'A',
     bin: 1,
+    pos_x: extra?.pos_x ?? 0,
+    pos_y: extra?.pos_y ?? 0,
+    rotation: extra?.rotation ?? 0,
+    temperature_zone: extra?.temperature_zone || (zoneType === 'F' ? 'FROZEN' : zoneType === 'C' ? 'CHILLED' : 'ROOM'),
   };
 }
 
@@ -132,7 +145,7 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
       item_id,
       location_id,
       on_hand_qty,
-      locations:location_id ( id, code, zone_type )
+      locations:location_id ( id, code, zone_type, pos_x, pos_y, rotation, temperature_zone )
     `)
     .in('item_id', itemIds);
 
@@ -159,7 +172,12 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
       picked_qty: row.picked_qty || 0,
       status: row.picked_qty && row.picked_qty >= row.qty ? 'PICKED' : 'PENDING',
       locations: locData
-        ? parseLocationCoordinates(locData.id, locData.code, locData.zone_type)
+        ? parseLocationCoordinates(locData.id, locData.code, locData.zone_type, {
+            pos_x: locData.pos_x,
+            pos_y: locData.pos_y,
+            rotation: locData.rotation,
+            temperature_zone: locData.temperature_zone,
+          })
         : {
             id: 'unassigned',
             code: 'LOC-A0101A01',
@@ -168,6 +186,10 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
             bay: 1,
             level: 'A',
             bin: 1,
+            pos_x: 0,
+            pos_y: 0,
+            rotation: 0,
+            temperature_zone: 'ROOM',
           },
       items: itemData
         ? {
@@ -180,40 +202,9 @@ export async function getOrderPickingItems(supabase: SupabaseClient, orderId: st
     };
   });
 
-  // 4. S-Shape & Cold Chain 정렬 알고리즘
-  items.sort((a, b) => {
-    const locA = a.locations;
-    const locB = b.locations;
-
-    if (!locA) return 1;
-    if (!locB) return -1;
-
-    // 1. Cold Chain Gate: Zone A(상온) 우선, Zone F(냉동) 나중
-    if (locA.zone !== locB.zone) {
-      return locA.zone.localeCompare(locB.zone);
-    }
-
-    // 2. Aisle (통로): 오름차순
-    if (locA.aisle !== locB.aisle) {
-      return locA.aisle - locB.aisle;
-    }
-
-    // 3. S-Shape (Bay): 통로가 홀수면 오름차순, 짝수면 내림차순
-    if (locA.bay !== locB.bay) {
-      const isOddAisle = locA.aisle % 2 !== 0;
-      return isOddAisle ? locA.bay - locB.bay : locB.bay - locA.bay;
-    }
-
-    // 4. Level (단): 오름차순
-    if (locA.level !== locB.level) {
-      return locA.level.localeCompare(locB.level);
-    }
-
-    // 5. Bin (칸): 오름차순
-    return locA.bin - locB.bin;
-  });
-
-  return items;
+  // 4. 2D 좌표 기반 TSP 최단 피킹 경로 최적화 (Cold Chain 선행 후 구역별 2-Opt)
+  const { sortedItems } = optimizePickingTour(items, { x: 0, y: 0 });
+  return sortedItems;
 }
 
 /**
