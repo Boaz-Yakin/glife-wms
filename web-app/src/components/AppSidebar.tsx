@@ -106,6 +106,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       url: "/settings",
       icon: Settings,
       items: [
+        { title: "Billing & Plans", url: "/settings/billing" },
         { title: "Operating Policies", url: "/settings/policy" },
         { title: "Account Information", url: "/settings/profile" },
         { title: "Security & Google OTP", url: "/settings/security" },

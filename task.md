@@ -979,11 +979,35 @@
 
 ---
 
-## 🚀 Phase 3: AI Logistics Operations & Enterprise Integration (Phase 3 안내)
-- [ ] 80.1 AI 수요 예측 및 발주 권고 (Demand Forecasting & Auto-Reordering)
-- [ ] 80.2 ERP / 외부 회계 솔루션(QuickBooks, SAP) 연동 API 및 EDI 게이트웨이
-- [ ] 80.3 실시간 IoT 온습도 센서 모니터링 및 저온 창고 임계치 알람
-- [ ] 80.4 운송장 자동 발행 및 택배사/라스트마일 배송 트래킹 시스템 연동
+## 💳 Phase 80: SaaS Phase 3 - Week 1 (정기 구독 결제 & 테넌트 플랜 게이트키퍼 엔진)
+- [x] 80.1 정기 구독 및 청구 인보이스 스키마 DDL (`supabase/migrations/20261103230000_phase3_week1_subscriptions_and_gatekeeper.sql`):
+  - `tenant_subscriptions` 테이블 (플랜 등급: STARTER/PRO/ENTERPRISE, 결제 주기: MONTHLY/ANNUAL, 빌링키, 카드사 정보)
+  - `billing_invoices` 테이블 (월별 청구 인보이스, 기본료, 사용량 합산, 결제 상태)
+  - 테넌트 격리 RLS 정책 및 기존 테넌트(glife/acme) 기본 구독 레코드 시딩
+- [x] 80.2 플랜별 기능 제한 매트릭스 & 게이트키퍼 모듈 (`web-app/src/lib/billing/plans.ts`):
+  - 플랜 정의: STARTER (19만/월), PRO (49만/월 - 15% 연간할인), ENTERPRISE (120만/월)
+  - `canAccessFeature(currentPlan, featureKey)`: 2D스튜디오/오프라인싱크/Zebra스캐너/차등단가/웨이브피킹/감사로그 계층적 권한 제어
+- [x] 80.3 기능 제한 알림 모달 컴포넌트 (`web-app/src/components/features/billing/FeatureGateModal.tsx`):
+  - 상위 플랜 전용 기능 클릭 시 플랜별 혜택 비교 및 원클릭 [플랜 업그레이드] 다이얼로그
+- [x] 80.4 구독 및 인보이스 관리 콘솔 (`web-app/src/app/(dashboard)/settings/billing/page.tsx`):
+  - `BillingDashboardClient.tsx`: 현재 이용 플랜, 결제 수단, 다음 결제일, 월간/연간 스위처, 플랜 즉시 변경 및 영수증 내역 표출
+  - 사이드바 메뉴 연동 (`AppSidebar.tsx`): Settings 하위 `Billing & Plans` 추가
+- [x] 80.5 결제 웹훅 API (`/api/billing/webhook/route.ts`):
+  - 정기 결제 승인/갱신 이벤트 수신, 인보이스 자동 발행 및 구독 기간 연장 처리
+- [x] 80.6 TypeScript 무결성 검증 및 Next.js 16 빌드 완료 (web-app 19개 라우트, mobile-app 28개 라우트 100% 통과)
+
+---
+
+## 🧙 Phase 81: SaaS Phase 3 - Week 2 (30분 셀프 온보딩 마법사 & 엑셀 일괄 업로드 검증 엔진)
+- [ ] 81.1 5단계 셀프 온보딩 마법사 GUI (`web-app/src/app/onboarding/page.tsx`):
+  - Step 1: 테넌트 브랜딩 (회사명, 로고 파일 업로드, 브랜드 컬러 테마)
+  - Step 2: 엑셀 마스터 품목 업로드 & 실시간 검증
+  - Step 3: 간이 창고 구획 마스터 생성 (기본 로케이션 자동 빌드)
+  - Step 4: 매장/거래처 등록
+  - Step 5: 온보딩 완료 및 시험 발주/피킹 튜토리얼
+- [ ] 81.2 대용량 엑셀 일괄 임포터 & 실시간 에러 하이라이터 (`ExcelBulkImporter.ts`)
+- [ ] 81.3 테넌트 최초 로그인 시 온보딩 미완료 리다이렉트 미들웨어 바인딩
+- [ ] 81.4 TypeScript 및 프로덕션 빌드 검증
 
 
 
