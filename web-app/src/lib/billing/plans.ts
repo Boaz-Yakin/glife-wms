@@ -27,8 +27,8 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   STARTER: {
     tier: "STARTER",
     name: "Starter",
-    priceMonthly: 190000,
-    priceAnnualMonthly: 161500,
+    priceMonthly: 149,
+    priceAnnualMonthly: 125,
     description: "소규모 창고 및 초기 B2B 유통사를 위한 기본 물류 솔루션",
     maxSeats: 3,
     features: [
@@ -42,8 +42,8 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   PRO: {
     tier: "PRO",
     name: "Professional",
-    priceMonthly: 490000,
-    priceAnnualMonthly: 416500,
+    priceMonthly: 389,
+    priceAnnualMonthly: 329,
     description: "중대형 물류센터 및 성장하는 프랜차이즈 유통사를 위한 고성능 패키지",
     maxSeats: 10,
     highlight: true,
@@ -60,8 +60,8 @@ export const PLANS: Record<PlanTier, PlanConfig> = {
   ENTERPRISE: {
     tier: "ENTERPRISE",
     name: "Enterprise",
-    priceMonthly: 1200000,
-    priceAnnualMonthly: 1020000,
+    priceMonthly: 950,
+    priceAnnualMonthly: 799,
     description: "대형 3PL 물류 전문 기업 및 프랜차이즈 본사를 위한 엔터프라이즈 솔루션",
     maxSeats: -1, // Unlimited
     features: [

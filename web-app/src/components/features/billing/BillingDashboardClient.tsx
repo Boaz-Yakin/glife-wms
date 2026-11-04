@@ -217,7 +217,7 @@ export function BillingDashboardClient({
 
                   <div className="mb-6 flex items-baseline gap-1">
                     <span className="text-3xl font-black font-mono text-foreground">
-                      ₩{price.toLocaleString()}
+                      ${price.toLocaleString()}
                     </span>
                     <span className="text-xs text-muted-foreground font-mono">
                       / 월 {billingCycle === "ANNUAL" && "(연간 청구)"}
@@ -303,13 +303,13 @@ export function BillingDashboardClient({
                       {new Date(inv.created_at).toLocaleDateString()}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      ₩{Number(inv.base_amount || 0).toLocaleString()}
+                      ${Number(inv.base_amount || 0).toLocaleString()}
                     </TableCell>
                     <TableCell className="font-mono text-xs text-muted-foreground">
-                      ₩{Number(inv.usage_amount || 0).toLocaleString()}
+                      ${Number(inv.usage_amount || 0).toLocaleString()}
                     </TableCell>
                     <TableCell className="font-mono text-xs font-bold text-foreground">
-                      ₩{Number(inv.total_amount || 0).toLocaleString()}
+                      ${Number(inv.total_amount || 0).toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 text-[10px]">

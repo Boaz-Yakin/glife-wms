@@ -74,7 +74,7 @@ export function FeatureGateModal({
             </div>
             <div className="text-right">
               <span className="font-mono font-bold text-base text-foreground">
-                ₩{planConfig.priceMonthly.toLocaleString()}
+                ${planConfig.priceMonthly.toLocaleString()}
               </span>
               <span className="text-[10px] text-muted-foreground">/월</span>
             </div>

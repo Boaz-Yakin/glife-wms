@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.tenant_subscriptions (
 );
 
 COMMENT ON TABLE public.tenant_subscriptions IS 'B2B SaaS 테넌트 정기 구독 플랜 및 결제 원장';
-COMMENT ON COLUMN public.tenant_subscriptions.plan_tier IS '구독 등급: STARTER(19만), PRO(49만), ENTERPRISE(120만)';
+COMMENT ON COLUMN public.tenant_subscriptions.plan_tier IS '구독 등급: STARTER($149), PRO($389), ENTERPRISE($950)';
 COMMENT ON COLUMN public.tenant_subscriptions.status IS '구독 상태: ACTIVE, TRIALING, PAST_DUE, CANCELED';
 
 -- 2. 월별 정기 청구 인보이스 및 영수증 테이블
@@ -121,10 +121,10 @@ SELECT
     t.id,
     format('INV-%s-%s', to_char(NOW(), 'YYYYMM'), upper(substr(md5(random()::text), 1, 6))),
     CASE WHEN t.code = 'glife' THEN 'ENTERPRISE' ELSE 'PRO' END,
-    CASE WHEN t.code = 'glife' THEN 1200000 ELSE 490000 END,
+    CASE WHEN t.code = 'glife' THEN 950 ELSE 389 END,
     0,
     0,
-    CASE WHEN t.code = 'glife' THEN 1200000 ELSE 490000 END,
+    CASE WHEN t.code = 'glife' THEN 950 ELSE 389 END,
     'PAID',
     NOW()
 FROM public.tenants t
