@@ -474,15 +474,17 @@ export function OrderDetailsDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-4xl w-full p-6 gap-6 max-h-[90vh] flex flex-col">
         {/* Header */}
-        <DialogHeader className="space-y-1 shrink-0">
-          <div className="flex items-center gap-2.5">
-            <DialogTitle className="text-xl font-bold tracking-tight">
-              Order Details & Item Management
-            </DialogTitle>
-            <span className="font-mono text-sm px-2.5 py-0.5 rounded-md bg-muted font-semibold text-foreground">
-              {order.order_no || order.id}
-            </span>
-            <div className="ml-auto flex items-center gap-2">
+        <DialogHeader className="space-y-1.5 shrink-0 pr-12">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <DialogTitle className="text-xl font-bold tracking-tight">
+                Order Details & Item Management
+              </DialogTitle>
+              <span className="font-mono text-sm px-2.5 py-0.5 rounded-md bg-muted font-semibold text-foreground">
+                {order.order_no || order.id}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
               <span className="text-xs text-muted-foreground font-medium">Status:</span>
               {isStatusChanged && (
                 <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/30">
