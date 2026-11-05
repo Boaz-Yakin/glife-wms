@@ -1009,5 +1009,14 @@
 - [ ] 81.3 테넌트 최초 로그인 시 온보딩 미완료 리다이렉트 미들웨어 바인딩
 - [ ] 81.4 TypeScript 및 프로덕션 빌드 검증
 
+---
+
+## 🛠️ Phase 82: web-app OrderDetailsDialog 닫기(X) 버튼 및 Status 드롭다운 겹침 해결
+- [x] 82.1 [`OrderDetailsDialog.tsx`](file:///c:/Users/boazn/Projects/WMS/web-app/src/components/features/orders/OrderDetailsDialog.tsx):
+  - `DialogHeader`에 우측 여백(`pr-12`) 안전 구역을 확보하여 닫기(`✕`) 버튼과의 물리적 충돌 차단
+  - 타이틀 영역과 상태(Status) 드롭다운을 `flex-col sm:flex-row justify-between` 구조로 재배치하여 클릭 오작동 방지 및 시인성 향상
+- [x] 82.2 Next.js 16 프로덕션 빌드 검증 통과 및 Git 커밋 완료
+
+
 
 
