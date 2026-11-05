@@ -109,7 +109,8 @@ export async function updateUserRoleAction(userId: string, newRole: string) {
 
   // 2. Update auth.users metadata
   const { error: authError } = await adminClient.auth.admin.updateUserById(userId, {
-    user_metadata: { role: newRole }
+    user_metadata: { role: newRole, user_role: newRole },
+    app_metadata: { role: newRole, user_role: newRole }
   })
 
   if (authError) {

@@ -120,6 +120,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
               <SelectValue placeholder="Select Role" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="SUPER_ADMIN">SUPER_ADMIN</SelectItem>
               <SelectItem value="ADMIN">ADMIN</SelectItem>
               <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
               <SelectItem value="PICKER">PICKER</SelectItem>
@@ -287,6 +288,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="SUPER_ADMIN">SUPER_ADMIN</SelectItem>
                       <SelectItem value="ADMIN">ADMIN</SelectItem>
                       <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
                       <SelectItem value="PICKER">PICKER</SelectItem>
@@ -373,6 +375,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="SUPER_ADMIN">SUPER_ADMIN</SelectItem>
                       <SelectItem value="ADMIN">ADMIN</SelectItem>
                       <SelectItem value="SUPERVISOR">SUPERVISOR</SelectItem>
                       <SelectItem value="PICKER">PICKER</SelectItem>
