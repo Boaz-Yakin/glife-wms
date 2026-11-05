@@ -606,7 +606,7 @@ export type Database = {
         | "DISPATCHED"
         | "CANCELED"
       partner_type: "MANUFACTURER" | "SUPPLIER" | "BOTH"
-      user_role: "ADMIN" | "INSPECTOR" | "PICKER" | "STORE"
+      user_role: "ADMIN" | "INSPECTOR" | "PICKER" | "STORE" | "SUPERVISOR" | "SUPER_ADMIN"
       zone_type: "A" | "F"
     }
     CompositeTypes: {
@@ -745,7 +745,7 @@ export const Constants = {
         "CANCELED",
       ],
       partner_type: ["MANUFACTURER", "SUPPLIER", "BOTH"],
-      user_role: ["ADMIN", "INSPECTOR", "PICKER", "STORE"],
+      user_role: ["ADMIN", "INSPECTOR", "PICKER", "STORE", "SUPERVISOR", "SUPER_ADMIN"],
       zone_type: ["A", "F"],
     },
   },
