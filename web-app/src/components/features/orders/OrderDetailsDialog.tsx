@@ -763,16 +763,24 @@ export function OrderDetailsDialog({
                   </span>
                 </div>
                 <div className="flex items-baseline justify-between text-[11px] text-destructive font-semibold">
-                  <span className="flex items-center gap-1 truncate max-w-[120px]" title={Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([c, v]) => `${c}: -$${v}`).join(", ")}>
-                    <span>Credit:</span>
-                    <span className="text-[9px] font-normal text-destructive/80 truncate">
-                      ({Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([c, v]) => `${c.slice(0, 3)} -$${v}`).join(", ")})
-                    </span>
-                  </span>
+                  <span>Total Credit:</span>
                   <span className="font-bold tabular-nums shrink-0">
                     -${totalCreditAmount.toFixed(2)}
                   </span>
                 </div>
+                {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).length > 0 && (
+                  <div className="flex flex-wrap gap-1 py-0.5">
+                    {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([cat, val]) => (
+                      <span
+                        key={cat}
+                        className="inline-flex items-center gap-1 text-[9.5px] font-mono px-1 py-0.2 rounded border border-destructive/30 bg-destructive/10 text-destructive font-semibold shadow-2xs"
+                      >
+                        <span className="font-bold">{cat}:</span>
+                        <span>-${Number(val).toFixed(2)}</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-baseline justify-between border-t border-primary/25 pt-1 mt-0.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Net Total:</span>
                   <p className="text-base font-extrabold text-primary tabular-nums">
