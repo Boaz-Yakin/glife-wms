@@ -402,7 +402,7 @@ export function OrdersTable({
     {
       id: "actions",
       cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(row.original)}>
             <Eye className="size-4 mr-1.5" />
             Details
@@ -537,7 +537,11 @@ export function OrdersTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  onDoubleClick={() => setSelectedOrder(row.original)}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
