@@ -338,6 +338,19 @@ export function OrderDetailsDialog({
   )
   const totalUnits = items.reduce((acc, cur) => acc + Number(cur.qty || 0), 0)
 
+  // Credit calculation from order.category_credits
+  const categoryCredits = React.useMemo(() => {
+    return (order.category_credits && typeof order.category_credits === "object")
+      ? (order.category_credits as Record<string, number>)
+      : {}
+  }, [order.category_credits])
+
+  const totalCreditAmount = React.useMemo(() => {
+    return Object.values(categoryCredits).reduce((sum, val) => sum + (Number(val) || 0), 0)
+  }, [categoryCredits])
+
+  const netTotalCalculated = Math.max(0, totalCalculated - totalCreditAmount)
+
   // Header change tracking
   const isOrderDateChanged =
     orderDateInput !== formatForDateTimeInput(order.order_date || order.created_at)
@@ -730,13 +743,48 @@ export function OrderDetailsDialog({
           </div>
 
           <div className="rounded-lg border bg-primary/10 border-primary/30 p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs text-primary font-bold">
-              <DollarSign className="size-3.5" />
-              <span>Total Amount</span>
+            <div className="flex items-center justify-between text-xs text-primary font-bold">
+              <div className="flex items-center gap-1.5">
+                <DollarSign className="size-3.5" />
+                <span>Total Amount</span>
+              </div>
+              {totalCreditAmount > 0 && (
+                <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 font-mono font-bold">
+                  Credit Applied
+                </Badge>
+              )}
             </div>
-            <p className="text-base font-extrabold text-primary tabular-nums">
-              ${totalCalculated.toFixed(2)}
-            </p>
+            {totalCreditAmount > 0 ? (
+              <div className="space-y-0.5 pt-0.5">
+                <div className="flex items-baseline justify-between text-[11px]">
+                  <span className="text-muted-foreground">Subtotal:</span>
+                  <span className="font-semibold tabular-nums text-foreground/80 line-through decoration-muted-foreground/60">
+                    ${totalCalculated.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between text-[11px] text-destructive font-semibold">
+                  <span className="flex items-center gap-1 truncate max-w-[120px]" title={Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([c, v]) => `${c}: -$${v}`).join(", ")}>
+                    <span>Credit:</span>
+                    <span className="text-[9px] font-normal text-destructive/80 truncate">
+                      ({Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([c, v]) => `${c.slice(0, 3)} -$${v}`).join(", ")})
+                    </span>
+                  </span>
+                  <span className="font-bold tabular-nums shrink-0">
+                    -${totalCreditAmount.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between border-t border-primary/25 pt-1 mt-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Net Total:</span>
+                  <p className="text-base font-extrabold text-primary tabular-nums">
+                    ${netTotalCalculated.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-base font-extrabold text-primary tabular-nums">
+                ${totalCalculated.toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
 

@@ -364,11 +364,40 @@ export function OrdersTable({
     {
       accessorKey: "invoice_amount",
       header: () => <div className="text-right font-medium">Total Amount</div>,
-      cell: ({ row }) => (
-        <div className="text-right tabular-nums font-semibold text-foreground">
-          ${Number(row.original.invoice_amount || 0).toFixed(2)}
-        </div>
-      ),
+      cell: ({ row }) => {
+        const rawAmount = Number(row.original.invoice_amount || 0)
+        const catCredits = row.original.category_credits as Record<string, number> | null | undefined
+        const totalCredit = Object.values(catCredits || {}).reduce((sum, v) => sum + (Number(v) || 0), 0)
+        const netAmount = Math.max(0, rawAmount - totalCredit)
+
+        if (totalCredit > 0) {
+          const breakdown = Object.entries(catCredits || {})
+            .filter(([_, v]) => Number(v) > 0)
+            .map(([c, v]) => `${c}: -$${Number(v).toFixed(2)}`)
+            .join(", ")
+
+          return (
+            <div className="flex flex-col items-end gap-0.5 text-right font-mono">
+              <span className="font-semibold text-foreground text-xs tabular-nums">
+                ${netAmount.toFixed(2)}
+              </span>
+              <span 
+                className="text-[10px] text-destructive font-medium flex items-center gap-1 cursor-help" 
+                title={`Subtotal: $${rawAmount.toFixed(2)} | Credit: -$${totalCredit.toFixed(2)} (${breakdown})`}
+              >
+                <span className="line-through text-muted-foreground/60 tabular-nums">${rawAmount.toFixed(2)}</span>
+                <span className="tabular-nums font-bold">(-${totalCredit.toFixed(2)})</span>
+              </span>
+            </div>
+          )
+        }
+
+        return (
+          <div className="text-right tabular-nums font-semibold text-foreground text-xs font-mono">
+            ${rawAmount.toFixed(2)}
+          </div>
+        )
+      },
     },
     {
       id: "actions",

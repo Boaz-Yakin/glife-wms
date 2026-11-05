@@ -22,6 +22,7 @@ export interface OrderData {
   order_no?: string | null
   invoice_number: string | null
   category_invoices?: Record<string, string> | null
+  category_credits?: Record<string, number> | null
   store_id: number | null
   client_id: string | null
   order_date: string
