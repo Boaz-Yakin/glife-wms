@@ -999,15 +999,19 @@
 ---
 
 ## 🧙 Phase 81: SaaS Phase 3 - Week 2 (30분 셀프 온보딩 마법사 & 엑셀 일괄 업로드 검증 엔진)
-- [ ] 81.1 5단계 셀프 온보딩 마법사 GUI (`web-app/src/app/onboarding/page.tsx`):
+- [x] 81.1 5단계 셀프 온보딩 마법사 GUI (`web-app/src/app/onboarding/page.tsx`):
   - Step 1: 테넌트 브랜딩 (회사명, 로고 파일 업로드, 브랜드 컬러 테마)
   - Step 2: 엑셀 마스터 품목 업로드 & 실시간 검증
   - Step 3: 간이 창고 구획 마스터 생성 (기본 로케이션 자동 빌드)
   - Step 4: 매장/거래처 등록
   - Step 5: 온보딩 완료 및 시험 발주/피킹 튜토리얼
-- [ ] 81.2 대용량 엑셀 일괄 임포터 & 실시간 에러 하이라이터 (`ExcelBulkImporter.ts`)
-- [ ] 81.3 테넌트 최초 로그인 시 온보딩 미완료 리다이렉트 미들웨어 바인딩
-- [ ] 81.4 TypeScript 및 프로덕션 빌드 검증
+- [x] 81.2 대용량 엑셀 일괄 임포터 & 실시간 에러 하이라이터 (`excel-bulk-importer.ts`):
+  - SheetJS(`xlsx`) 기반 초고속 파서 및 누락/중복/타입 실시간 에러 그리드 하이라이터
+  - 표준 엑셀 템플릿 다운로드 생성기 (`generateItemTemplateExcel`)
+- [x] 81.3 테넌트 최초 로그인 시 온보딩 미완료 리다이렉트 미들웨어 바인딩 (`middleware.ts`):
+  - `tenant.settings.onboarding_completed === false`인 관리자 로그인 시 `/onboarding`으로 안전하게 유도
+  - 사이드바 Settings 메뉴에 `Setup Wizard (Onboarding)` 빠른 링크 제공
+- [x] 81.4 TypeScript 및 프로덕션 빌드 검증 (36개 라우트 100% 컴파일 완료)
 
 ---
 

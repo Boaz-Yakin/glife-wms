@@ -30,6 +30,8 @@ const GLIFE_FALLBACK: TenantContext = {
     perishable_mode: true,
     auto_dekit_enabled: true,
     default_dekit_location_id: '31b632f2-e408-4d5a-bf11-47b52b8db673',
+    onboarding_completed: true,
+    onboarding_step: 5,
     updated_at: new Date().toISOString(),
   },
 }

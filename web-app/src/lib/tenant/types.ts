@@ -10,6 +10,8 @@ export interface TenantSettings {
   perishable_mode: boolean;
   auto_dekit_enabled: boolean;
   default_dekit_location_id: string | null;
+  onboarding_completed?: boolean;
+  onboarding_step?: number;
   updated_at: string;
 }
 

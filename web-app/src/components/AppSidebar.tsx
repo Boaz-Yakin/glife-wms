@@ -106,6 +106,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       url: "/settings",
       icon: Settings,
       items: [
+        { title: "Setup Wizard (Onboarding)", url: "/onboarding" },
         { title: "Billing & Plans", url: "/settings/billing" },
         { title: "Operating Policies", url: "/settings/policy" },
         { title: "Account Information", url: "/settings/profile" },

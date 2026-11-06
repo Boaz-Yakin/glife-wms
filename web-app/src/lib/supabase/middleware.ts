@@ -107,6 +107,18 @@ export async function updateSession(request: NextRequest) {
       }
     }
 
+    // 온보딩 미완료 테넌트의 관리자 접근 시 온보딩 마법사로 자동 유도
+    if (
+      tenant.settings.onboarding_completed === false &&
+      (role === 'ADMIN' || role === 'SUPER_ADMIN') &&
+      !request.nextUrl.pathname.startsWith('/onboarding') &&
+      !request.nextUrl.pathname.startsWith('/settings') &&
+      !request.nextUrl.pathname.startsWith('/api')
+    ) {
+      url.pathname = '/onboarding'
+      return NextResponse.redirect(url)
+    }
+
     if (request.nextUrl.pathname === '/') {
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
