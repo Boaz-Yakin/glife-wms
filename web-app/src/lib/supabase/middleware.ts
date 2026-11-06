@@ -74,7 +74,12 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/dashboard'
       return NextResponse.redirect(url)
     }
-    const role = user.user_metadata?.role as string | undefined
+    const role = (
+      user.app_metadata?.role ||
+      user.app_metadata?.user_role ||
+      user.user_metadata?.role ||
+      user.user_metadata?.user_role
+    ) as string | undefined
 
     if (role === 'PICKER' || role === 'INSPECTOR') {
       // Not allowed in web-app

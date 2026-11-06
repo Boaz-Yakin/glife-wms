@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { type User } from "@supabase/supabase-js"
 
-export type UserRole = "ADMIN" | "SUPERVISOR" | "PICKER" | "INSPECTOR" | "STORE"
+export type UserRole = "SUPER_ADMIN" | "ADMIN" | "SUPERVISOR" | "PICKER" | "INSPECTOR" | "STORE" | "VENDOR"
 
 export interface AuthenticatedUser extends User {
   role?: UserRole
@@ -31,7 +31,12 @@ export async function requireAuth(): Promise<AuthenticatedUser> {
     throw new AuthError("Authentication required: Please sign in.", 401)
   }
 
-  const role = (user.user_metadata?.role as UserRole) || undefined
+  const role = (
+    user.app_metadata?.role ||
+    user.app_metadata?.user_role ||
+    user.user_metadata?.role ||
+    user.user_metadata?.user_role
+  ) as UserRole || undefined
   return { ...user, role }
 }
 
@@ -52,16 +57,17 @@ export async function requireRole(allowedRoles: UserRole[]): Promise<Authenticat
 
 /**
  * Requires ADMIN role for privileged system/master actions.
+ * Platform SUPER_ADMIN also satisfies this requirement.
  */
 export async function requireAdmin(): Promise<AuthenticatedUser> {
-  return await requireRole(["ADMIN"])
+  return await requireRole(["SUPER_ADMIN", "ADMIN"])
 }
 
 /**
- * Requires Manager roles (ADMIN or SUPERVISOR) for operational actions.
+ * Requires Manager roles (SUPER_ADMIN, ADMIN or SUPERVISOR) for operational actions.
  */
 export async function requireManager(): Promise<AuthenticatedUser> {
-  return await requireRole(["ADMIN", "SUPERVISOR"])
+  return await requireRole(["SUPER_ADMIN", "ADMIN", "SUPERVISOR"])
 }
 
 /**

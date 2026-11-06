@@ -175,7 +175,8 @@ export async function updateUserAction(formData: FormData) {
     email_confirm: true
   }
   if (role) {
-    authUpdatePayload.user_metadata = { role }
+    authUpdatePayload.user_metadata = { role, user_role: role }
+    authUpdatePayload.app_metadata = { role, user_role: role }
   }
 
   const { error: authError } = await adminClient.auth.admin.updateUserById(userId, authUpdatePayload)
