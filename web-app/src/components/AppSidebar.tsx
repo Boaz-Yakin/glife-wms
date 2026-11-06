@@ -35,7 +35,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
   // State for collapsible menus
   const [openGroups, setOpenGroups] = React.useState<Record<string, boolean>>(() => ({
     "Inventory": pathname.startsWith("/inventory"),
-    "Master Data": pathname.startsWith("/master"),
+    "Master Data": pathname.startsWith("/master") || pathname.startsWith("/vendor"),
     "Settings": pathname.startsWith("/settings"),
   }))
 
@@ -44,7 +44,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
   React.useEffect(() => {
     setOpenGroups({
       "Inventory": pathname.startsWith("/inventory"),
-      "Master Data": pathname.startsWith("/master"),
+      "Master Data": pathname.startsWith("/master") || pathname.startsWith("/vendor"),
       "Settings": pathname.startsWith("/settings"),
     })
   }, [pathname])
@@ -100,6 +100,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
         { title: "Locations", url: "/master/locations" },
         { title: "Labels", url: "/master/labels" },
         { title: "Partners", url: "/master/partners" },
+        { title: "Vendor VMI Portal", url: "/vendor/vmi" },
       ]
     },
     {

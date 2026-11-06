@@ -1095,6 +1095,28 @@
   - `ClientsTable` 상단 툴바에 `3PL 물류비 정산 콘솔` 바로가기 버튼 탑재
 - [x] 86.4 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (33개 전체 라우트 100% 컴파일 통과)
 
+---
+
+## 🏭 Phase 87: SaaS Phase 4 - Week 4 (공급사 위탁 재고 협업 포털 Vendor Managed Inventory, VMI)
+- [x] 87.1 공급사 권한 분기 및 사전 입고 예정(ASN) 스키마 DDL (`supabase/migrations/20261105250000_phase4_week4_vendor_vmi_portal.sql`):
+  - `user_role` enum에 `'VENDOR'` 공급사 전용 권한 추가
+  - `users.partner_id` FK 매핑 (공급사 담당자와 파트너 원장 연결)
+  - `inbound_shipment_notices` (ASN 헤더 원장: 입고예정일, 운송사, 송장, 상태)
+  - `inbound_shipment_notice_items` (ASN 품목 상세: 예정수량, 검수수량, LOT, 유통기한)
+  - 테넌트 및 공급사 격리 RLS 정책 적용 및 데모 ASN 시드
+- [x] 87.2 VMI 재고 소진율 분석 & ASN 처리 서비스 (`vendor-vmi.service.ts`):
+  - 자사 납품 SKU 실시간 가용 재고 및 안전재고 대비 소진율(%) 계산기
+  - 30일 일평균 출고량 추이 기반 품절 예상일자(Runout Date, D-Day) 실시간 예측
+  - 사전 입고 예정 통지(ASN) 신규 제출 및 감사 로그 연동
+- [x] 87.3 공급사 VMI 대시보드 콘솔 (`/vendor/vmi`, `VendorVmiClient.tsx`):
+  - 4대 KPI 카드 (위탁 품목수, 가용 재고 총합, 보충 권고/위험 품목수, 입고 진행중 ASN)
+  - 공급사 셀렉터 (파트너별 위탁 재고 즉시 전환)
+  - [실시간 재고 & 소진율 분석] 탭: 소진/충족 프로그레스 바 및 품절 D-Day 경보
+  - [사전 입고 예정(ASN) 관리] 탭: ASN 목록, [신규 ASN 등록] 모달 다이얼로그
+  - 사이드바 Master Data 하위 `Vendor VMI Portal` 메뉴 연동
+- [x] 87.4 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (34개 전체 라우트 100% 컴파일 통과)
+
+
 
 
 
