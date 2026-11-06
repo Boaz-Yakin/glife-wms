@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import {
   ColumnDef,
   flexRender,
@@ -21,6 +22,7 @@ import {
   MoreHorizontal,
   Loader2,
   Radio,
+  Coins,
 } from "lucide-react"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
@@ -250,10 +252,18 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
           </Badge>
         </div>
 
-        <Button onClick={handleOpenCreate} className="gap-2 shadow-xs">
-          <Plus className="h-4 w-4" />
-          Add Client
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/master/clients/billing">
+            <Button variant="outline" className="gap-2 shadow-xs text-xs font-semibold border-emerald-500/30 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10">
+              <Coins className="h-4 w-4 text-emerald-600" />
+              3PL 물류비 정산 콘솔
+            </Button>
+          </Link>
+          <Button onClick={handleOpenCreate} className="gap-2 shadow-xs">
+            <Plus className="h-4 w-4" />
+            Add Client
+          </Button>
+        </div>
       </div>
 
       {/* Table Container */}

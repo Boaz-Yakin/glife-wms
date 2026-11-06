@@ -1076,6 +1076,26 @@
   - 사이드바 Settings 하위 `Developer & Open API` 메뉴 연동
 - [x] 85.5 TypeScript 무결성 검증 및 Next.js 프로덕션 빌드 (32개 전체 라우트 100% 컴파일 통과)
 
+---
+
+## 🏬 Phase 86: SaaS Phase 4 - Week 3 (3PL 물류 정산 엔진: 일일 파렛트/CBM 보관료 & 입출고 작업비 청구)
+- [x] 86.1 3PL 요율 계약 및 일일 정산 원장 스키마 DDL (`supabase/migrations/20261105240000_phase4_week3_3pl_billing_engine.sql`):
+  - `client_billing_contracts` 테이블 (상온/냉장 파렛트 일일 보관료, CBM 보관료, 입고 하역비, 출고 피킹/포장비 계약 요율표)
+  - `third_party_logistics_ledger` 테이블 (일별 상온/냉장 파렛트 점유수, 입출고 작업량, 일일 합산 수수료 스냅샷)
+  - `calculate_daily_3pl_settlement` PostgreSQL RPC 정산 집계 함수 (자정 크론 실행 지원)
+  - 초기 Food Depot 및 Cosmetics Co 계약 및 최근 3일 정산 시드
+- [x] 86.2 3PL 정산 서비스 및 계산기 (`three-pl-billing.service.ts`):
+  - 화주사별 계약 요율 조회/저장, 월간 합산 지표 집계
+  - 수동 일일 정산 트리거 및 화주사 월간 정산 명세서 CSV 생성기
+- [x] 86.3 3PL 다중 화주 물류비 정산 콘솔 (`/master/clients/billing`, `ThreePlBillingClient.tsx`):
+  - 4대 KPI 요약 카드 (총 위탁 화주사, 당월 보관료, 입출고 하역/피킹비, 총 정산 청구액)
+  - 화주사별 평균 점유 파렛트, 보관료, 출고량, 작업비 테이블 표출
+  - [일별 상세] 모달: 날짜별 파렛트/작업량 명세 및 CSV 다운로드
+  - [요율 계약 설정] 모달: 6대 보관/하역 단가 인라인 수정 및 실시간 반영
+  - `ClientsTable` 상단 툴바에 `3PL 물류비 정산 콘솔` 바로가기 버튼 탑재
+- [x] 86.4 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (33개 전체 라우트 100% 컴파일 통과)
+
+
 
 
 
