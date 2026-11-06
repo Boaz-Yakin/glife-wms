@@ -1021,6 +1021,22 @@
   - 타이틀 영역과 상태(Status) 드롭다운을 `flex-col sm:flex-row justify-between` 구조로 재배치하여 클릭 오작동 방지 및 시인성 향상
 - [x] 82.2 Next.js 16 프로덕션 빌드 검증 통과 및 Git 커밋 완료
 
+---
+
+## 📊 Phase 83: SaaS Phase 3 - Week 3 (WMS 자원 종량제 미터링 & 부가 사용량 정산 엔진)
+> **설계 원칙**: 카카오 비즈메시지/알림톡을 완전히 배제하고, WMS 핵심 자원(추가 PDA 작업자 계정 및 월 처리 주문 초과량)에 집중한 순수 B2B 미터링 구축.
+- [ ] 83.1 테넌트 자원 사용량 미터링 스키마 DDL (`tenant_usage_meters`):
+  - `metric_type`: `ADDITIONAL_SEAT`(추가 현장 PDA 계정), `ORDER_OVERAGE`(월 주문량 초과분)
+  - 월별/테넌트별 복합 유니크 제약 및 원자적 카운팅
+- [ ] 83.2 종량제 집계 서비스 (`usage-meter.service.ts`):
+  - 플랜별 기본 제공 한도(Starter: 작업자 3명 / 월 주문 1,000건, Pro: 작업자 10명 / 월 주문 10,000건) 대비 초과 사용량 산출
+  - 당월 예상 추가 청구액 실시간 계산기
+- [ ] 83.3 빌링 콘솔 자원 사용량 모니터링 UI (`BillingDashboardClient.tsx`):
+  - 플랜 한도 대비 작업자 계정 및 주문 처리량 진행도(Progress Bar) 게이지
+  - 초과 예상 금액 및 다음 결제 청구 예정 내역 실시간 표시
+- [ ] 83.4 TypeScript 무결성 검증 및 Next.js 프로덕션 빌드
+
+
 
 
 

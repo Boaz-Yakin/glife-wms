@@ -15,7 +15,7 @@ Phase 3의 핵심 목표는 **"고객사가 홈페이지에서 요금제를 결�
 ### 🎯 3대 핵심 목표
 1. **구독 결제 및 라이선스 엔진 구축**: 토스페이먼츠(국내) 및 Stripe(글로벌) 정기 결제, 플랜별 기능 제한(Gatekeeper) 및 자동 청구.
 2. **30분 셀프 온보딩 위저드 (Self-Onboarding Wizard)**: 로고 등록, 엑셀 마스터 업로드, 바코드 라벨 인쇄까지 원스톱 가이드.
-3. **종량제 과금(Usage Metering) & 보안 감사 로그**: 카카오 알림톡/SMS 사용량 트래킹, 작업자 계정 수 추가 과금 및 전수 감사 로그.
+3. **WMS 운영 자원 종량제 과금(Usage Metering) & 보안 감사 로그**: 현장 PDA/작업자 추가 계정(Seat), 월 주문 처리량 초과분 트래킹 및 전수 보안 감사 로그.
 
 ---
 
@@ -27,7 +27,7 @@ Phase 3의 핵심 목표는 **"고객사가 홈페이지에서 요금제를 결�
 ├────────────────────────────────────────────────────────────────────────┤
 │ Week 2: 30분 셀프 온보딩 마법사 & 엑셀 마스터 일괄 유효성 검증 엔진    │
 ├────────────────────────────────────────────────────────────────────────┤
-│ Week 3: 종량제 사용량 미터링(알림톡/PDA계정) & 세금계산서 자동 발행     │
+│ Week 3: WMS 자원 종량제 미터링(PDA 추가 계정/주문 처리량) & 통합 청구   │
 ├────────────────────────────────────────────────────────────────────────┤
 │ Week 4: 전사 보안 감사 로그(Audit Logs) & 테넌트 헬프센터 티켓팅       │
 └────────────────────────────────────────────────────────────────────────┘
@@ -103,27 +103,30 @@ CREATE TABLE IF NOT EXISTS public.billing_invoices (
 
 ---
 
-### 📅 Week 3: 종량제 사용량 미터링 (Metering) & 알림톡/SMS 정산
+### 📅 Week 3: WMS 자원 종량제 미터링 (Metering) & 통합 인보이스 정산
+> **설계 원칙**: 카카오 비즈메시지/알림톡 등 불필요한 서드파티 종속을 완전히 배제하고, WMS 핵심 자원인 **"현장 PDA/작업자 추가 계정"**과 **"월 처리 주문량 초과분"**을 정량화하여 과금합니다.
 
 #### [Task 3.1] 종량제 사용량 집계 엔진 (`UsageMeterService.ts`)
 ```sql
 CREATE TABLE IF NOT EXISTS public.tenant_usage_meters (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id UUID REFERENCES public.tenants(id),
-    metric_type VARCHAR(50) NOT NULL, -- 'KAKAO_ALIMTALK', 'SMS', 'ADDITIONAL_SEAT'
+    tenant_id UUID REFERENCES public.tenants(id) ON DELETE CASCADE,
+    metric_type VARCHAR(50) NOT NULL, -- 'ADDITIONAL_SEAT', 'ORDER_OVERAGE'
     usage_count INT DEFAULT 0,
     period_month VARCHAR(7) NOT NULL, -- '2026-11'
-    unit_price NUMERIC(8,2) DEFAULT 15, -- 알림톡 건당 15원
+    unit_price NUMERIC(10,2) NOT NULL, -- 추가 계정당 월 15,000원, 주문 초과건당 50원
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE (tenant_id, metric_type, period_month)
 );
 ```
-* 카카오톡 알림 발송 시마다 원자적으로 `usage_count` 1씩 증가.
+* **미터링 대상**:
+  1. `ADDITIONAL_SEAT`: 플랜별 기본 제공 작업자 계정(Starter: 3명, Pro: 10명, Enterprise: 무제한)을 초과한 활성 사용자 수.
+  2. `ORDER_OVERAGE`: 플랜별 월간 기본 주문 처리량(Starter: 월 1,000건, Pro: 월 10,000건) 초과 건수.
 * 매월 말 정기 결제 시 `기본 구독료 + (초과 사용량 × 단가)`를 합산하여 단일 인보이스로 자동 청구.
 
-#### [Task 3.2] 전자세금계산서 자동 발행 (팝빌/바로빌 연동)
-* 결제 완료된 인보이스에 대해 고객사의 사업자등록번호로 국세청 승인 전자세금계산서를 즉시 자동 발행하고 PDF를 고객 이메일로 전송.
+#### [Task 3.2] 인앱 사용량 관제 위젯 (`/settings/billing`)
+* 관리자 콘솔에서 이번 달 활성 PDA 계정 수, 당월 누적 주문량, 플랜 한도 대비 사용률(Progress Bar) 실시간 모니터링.
 
 ---
 
@@ -147,5 +150,5 @@ CREATE TABLE IF NOT EXISTS public.tenant_usage_meters (
 - [ ] 플랜별 기능 제한 가드 미들웨어 (`canAccessFeature`)
 - [ ] 5단계 셀프 온보딩 마법사 GUI (`/onboarding`)
 - [ ] 웹워커 기반 고성능 엑셀 대량 업로드 및 에러 검증 모듈
-- [ ] 종량제 미터링 및 전자세금계산서 자동 연동 모듈
+- [ ] WMS 자원 종량제 미터링(PDA 추가 계정/주문 초과량) 및 청구 연동 모듈
 - [ ] 보안 감사 로그 열람 페이지 (`/settings/audit-logs`)
