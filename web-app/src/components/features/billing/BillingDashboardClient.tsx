@@ -15,6 +15,10 @@ import {
   AlertCircle,
   Loader2,
   ShieldCheck,
+  Users,
+  Package,
+  Gauge,
+  TrendingUp,
 } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -31,17 +35,20 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 import { TenantSubscription, BillingInvoice } from "@/services/billing.service"
+import { UsageMeteringSummary } from "@/services/usage-meter.service"
 import { PLANS, PlanTier } from "@/lib/billing/plans"
 import { changePlanServerAction } from "@/app/(dashboard)/settings/billing/actions"
 
 interface BillingDashboardClientProps {
   subscription: TenantSubscription
   invoices: BillingInvoice[]
+  usage?: UsageMeteringSummary | null
 }
 
 export function BillingDashboardClient({
   subscription,
   invoices,
+  usage,
 }: BillingDashboardClientProps) {
   const router = useRouter()
   const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "ANNUAL">(
@@ -136,7 +143,157 @@ export function BillingDashboardClient({
         </CardContent>
       </Card>
 
-      {/* ── 2. Pricing Tier Comparison ── */}
+      {/* ── 2. WMS Resource Metering & Overage Widget ── */}
+      {usage && (
+        <Card className="border-border bg-card shadow-xs">
+          <CardHeader className="pb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <Gauge className="w-4 h-4 text-emerald-600" />
+                  WMS 핵심 자원 실시간 미터링 (Resource Metering & Overage)
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground mt-0.5">
+                  플랜 기본 제공 한도를 초과하여 사용한 물류 자원은 익월 인보이스에 종량제로 합산 청구됩니다. (카카오 등 외부 부가비용 0원)
+                </CardDescription>
+              </div>
+              <Badge variant="outline" className="text-[11px] self-start sm:self-auto font-mono">
+                당월 정산 기준: {usage.periodMonth}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Metric 1: Worker Seats */}
+              <div className="bg-muted/40 border border-border/80 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center font-bold">
+                      <Users className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">현장 작업자 / PDA 계정 (Seats)</h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        기본 초과 시 1인당 월 ${usage.seatUnitPrice}
+                      </p>
+                    </div>
+                  </div>
+                  {usage.seatOverage > 0 ? (
+                    <Badge variant="destructive" className="text-[11px] font-bold">
+                      +{usage.seatOverage}명 초과 (+${usage.seatOverageCharge}/월)
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium">
+                      한도 내 정상 이용 중
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-mono">
+                    <span className="text-muted-foreground">현재 활성 계정:</span>
+                    <span className="font-bold text-foreground">
+                      {usage.activeSeats}명 / {usage.maxSeats === -1 ? "무제한" : `${usage.maxSeats}명`}
+                    </span>
+                  </div>
+                  {usage.maxSeats !== -1 && (
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          usage.seatOverage > 0
+                            ? "bg-rose-500"
+                            : (usage.activeSeats / usage.maxSeats) >= 0.8
+                            ? "bg-amber-500"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.round((usage.activeSeats / usage.maxSeats) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Metric 2: Monthly Orders */}
+              <div className="bg-muted/40 border border-border/80 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold">
+                      <Package className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-bold text-foreground">당월 주문 처리량 (Monthly Orders)</h4>
+                      <p className="text-[11px] text-muted-foreground">
+                        기본 초과 시 건당 ${usage.orderUnitPrice}
+                      </p>
+                    </div>
+                  </div>
+                  {usage.orderOverage > 0 ? (
+                    <Badge variant="destructive" className="text-[11px] font-bold">
+                      +{usage.orderOverage}건 초과 (+${usage.orderOverageCharge})
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/30 text-[11px] font-medium">
+                      한도 내 정상 이용 중
+                    </Badge>
+                  )}
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs font-mono">
+                    <span className="text-muted-foreground">당월 처리 건수:</span>
+                    <span className="font-bold text-foreground">
+                      {usage.monthlyOrders.toLocaleString()}건 / {usage.maxOrders === -1 ? "무제한" : `${usage.maxOrders.toLocaleString()}건`}
+                    </span>
+                  </div>
+                  {usage.maxOrders !== -1 && (
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full transition-all duration-500 ${
+                          usage.orderOverage > 0
+                            ? "bg-rose-500"
+                            : (usage.monthlyOrders / usage.maxOrders) >= 0.8
+                            ? "bg-amber-500"
+                            : "bg-emerald-500"
+                        }`}
+                        style={{
+                          width: `${Math.min(100, Math.round((usage.monthlyOrders / usage.maxOrders) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Next Invoice Estimated Summary Bar */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-slate-900 text-white shadow-xs">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                  <TrendingUp className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-100">다음 결제 주기 예상 청구 금액 (Estimated Invoice)</h4>
+                  <p className="text-[11px] text-slate-400">
+                    기본 플랜료(${usage.basePrice}) + 계정 초과(${usage.seatOverageCharge}) + 주문 초과(${usage.orderOverageCharge})
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-1.5 self-end sm:self-auto font-mono">
+                <span className="text-xs text-slate-400">합산 예상:</span>
+                <span className="text-xl font-black text-emerald-400">
+                  ${usage.totalEstimatedBill}
+                </span>
+                <span className="text-[11px] text-slate-400">/월</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── 3. Pricing Tier Comparison ── */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>

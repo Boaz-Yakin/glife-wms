@@ -1,13 +1,19 @@
 import * as React from "react"
 import { getTenantSubscription, getBillingInvoices } from "@/services/billing.service"
+import { getTenantUsageMetering } from "@/services/usage-meter.service"
 import { BillingDashboardClient } from "@/components/features/billing/BillingDashboardClient"
 
 export const dynamic = "force-dynamic"
 
 export default async function BillingSettingsPage() {
-  const [{ subscription, error: subErr }, { invoices, error: invErr }] = await Promise.all([
+  const [
+    { subscription, error: subErr },
+    { invoices, error: invErr },
+    { usage, error: usageErr },
+  ] = await Promise.all([
     getTenantSubscription(),
     getBillingInvoices(),
+    getTenantUsageMetering(),
   ])
 
   if (subErr || !subscription) {
@@ -23,13 +29,14 @@ export default async function BillingSettingsPage() {
       <div>
         <h2 className="text-2xl font-bold tracking-tight">Billing & Subscription</h2>
         <p className="text-muted-foreground mt-1">
-          B2B SaaS 테넌트 요금제 플랜을 관리하고 결제 주기 및 인보이스 영수증을 확인합니다.
+          B2B SaaS 테넌트 요금제 플랜을 관리하고 WMS 자원 종량제 미터링 현황 및 인보이스 영수증을 확인합니다.
         </p>
       </div>
 
       <BillingDashboardClient
         subscription={subscription}
         invoices={invoices}
+        usage={usage}
       />
     </div>
   )
