@@ -110,6 +110,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
         { title: "Setup Wizard (Onboarding)", url: "/onboarding" },
         { title: "Billing & Plans", url: "/settings/billing" },
         { title: "Audit Logs (Enterprise)", url: "/settings/audit-logs" },
+        { title: "Developer & Open API", url: "/settings/developer" },
         { title: "Operating Policies", url: "/settings/policy" },
         { title: "Account Information", url: "/settings/profile" },
         { title: "Security & Google OTP", url: "/settings/security" },

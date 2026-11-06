@@ -1054,6 +1054,29 @@
   - 3분 완성 실무 동영상/문서 가이드, 1:1 티켓 접수 폼, 내 문의 내역 실시간 확인 탭
 - [x] 84.5 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (28개 전 라우트 컴파일 100% 완료)
 
+---
+
+## 🔌 Phase 85: SaaS Phase 4 - Week 1~2 (Headless WMS: Open REST API Gateway & Webhook 엔진)
+- [x] 85.1 테넌트 API 키 및 웹훅 엔드포인트 스키마 DDL (`supabase/migrations/20261105230000_phase4_week1_open_api_and_webhooks.sql`):
+  - `tenant_api_keys` 테이블 (SHA-256 해시 비밀키, 권한 스코프, 분당 호출 한도, RLS 적용)
+  - `tenant_webhooks` 테이블 (HMAC 서명 시크릿, 구독 이벤트, 발송 상태 코드 추적)
+  - Glife 초기 데모 API 키 시딩
+- [x] 85.2 API Key 인증 미들웨어 & HMAC Webhook 발송 엔진 (`api-auth.ts`, `webhook-dispatcher.ts`):
+  - Bearer `wms_live_...` 키 추출, SHA-256 해시 검증 및 권한 스코프 확인
+  - `order.created`, `order.fulfilled`, `inventory.adjusted`, `stock.low` 이벤트 발생 시 HMAC-SHA256(`X-WMS-Signature`) 서명 첨부 비동기 Webhook 푸시
+- [x] 85.3 Headless WMS Open REST API 엔드포인트 (`/api/v1/...`):
+  - `GET /api/v1/inventory`: SKU/로케이션별 실시간 가용 재고 및 유통기한 조회 API
+  - `GET /api/v1/orders`: 테넌트 최근 주문 목록 조회 API
+  - `POST /api/v1/orders`: 외부 ERP/쇼핑몰에서 WMS로 신규 발주 직접 인입 API (주문/주문상세 생성, 감사 로그 기록, `order.created` 웹훅 즉시 발행)
+  - `GET /api/v1/orders/[orderNo]`: 주문 피킹 및 출고 진행 현황 실시간 추적 API
+- [x] 85.4 개발자 콘솔 및 빠른 연동 가이드 (`/settings/developer`, `DeveloperSettingsClient.tsx`):
+  - API 키 신규 발급 (1회성 원본 비밀키 노출 및 복사), 폐기 기능
+  - 웹훅 엔드포인트 등록 및 실시간 Ping 테스트 발송 기능
+  - 엔드포인트별 cURL 코드 스니펫 및 파라미터 퀵 레퍼런스
+  - 사이드바 Settings 하위 `Developer & Open API` 메뉴 연동
+- [x] 85.5 TypeScript 무결성 검증 및 Next.js 프로덕션 빌드 (32개 전체 라우트 100% 컴파일 통과)
+
+
 
 
 

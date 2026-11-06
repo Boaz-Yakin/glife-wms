@@ -11,6 +11,7 @@ export type FeatureKey =
   | "PICK_TO_TOTE"
   | "AUDIT_LOGS"
   | "CUSTOM_DE_KITTING"
+  | "OPEN_API_AND_WEBHOOKS"
 
 export interface PlanConfig {
   tier: PlanTier
@@ -104,6 +105,7 @@ const FEATURE_MINIMUM_TIERS: Record<FeatureKey, PlanTier> = {
   "WAVE_PICKING": "ENTERPRISE",
   "PICK_TO_TOTE": "ENTERPRISE",
   "AUDIT_LOGS": "ENTERPRISE",
+  "OPEN_API_AND_WEBHOOKS": "ENTERPRISE",
 }
 
 const TIER_HIERARCHY: Record<PlanTier, number> = {
