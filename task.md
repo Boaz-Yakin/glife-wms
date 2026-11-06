@@ -1036,6 +1036,25 @@
   - 초과 예상 금액 및 다음 결제 청구 예정 내역 실시간 표시
 - [x] 83.4 TypeScript 무결성 검증 및 Next.js 프로덕션 빌드 (27개 전 라우트 컴파일 통과)
 
+---
+
+## 🛡️ Phase 84: SaaS Phase 3 - Week 4 (전사 보안 감사 로그 Audit Logs & 인앱 헬프센터/지원 위젯)
+- [x] 84.1 불변 보안 감사 로그 및 고객지원 티켓 스키마 DDL (`supabase/migrations/20261105220000_phase3_week4_audit_logs_and_support.sql`):
+  - `audit_logs` 테이블 (작업자, 행위 유형, 엔티티, JSON Diff 스냅샷, Append-Only 불변 원장, RLS 적용)
+  - `support_tickets` 테이블 (1:1 기술 지원 및 장애 문의 티켓팅)
+  - 초기 Glife 및 Acme 보안 감사 로그 시드
+- [x] 84.2 감사 로그 및 고객지원 서비스 (`audit-log.service.ts`, `support-ticket.service.ts`):
+  - 실시간 감사 로그 필터링 조회 및 ISO-27001 규정 준수용 CSV 보고서 내보내기 엔진
+  - 1:1 지원 티켓 접수 액션 및 4대 3분 퀵 튜토리얼 가이드 제공
+- [x] 84.3 전사 보안 감사 로그 관리 콘솔 (`/settings/audit-logs`, `AuditLogsClient.tsx`):
+  - 작업 유형/엔티티/검색어 필터, 작업자 뱃지, JSON Diff 모달 다이얼로그
+  - Enterprise 플랜 게이트키퍼 연동 (Starter/Pro 플랜 업그레이드 안내 배너 및 데모 프리뷰)
+- [x] 84.4 인앱 헬프센터 위젯 (`HelpCenterDialog.tsx` & `AppSidebar.tsx`):
+  - 사이드바 푸터에 1-클릭 `Help & Support` 모달 연동
+  - 3분 완성 실무 동영상/문서 가이드, 1:1 티켓 접수 폼, 내 문의 내역 실시간 확인 탭
+- [x] 84.5 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (28개 전 라우트 컴파일 100% 완료)
+
+
 
 
 

@@ -3,10 +3,11 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog, ChevronDown } from "lucide-react"
+import { LayoutDashboard, PackageSearch, ClipboardList, Database, Settings, LogOut, Package2, UserCog, ChevronDown, LifeBuoy } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { TenantContext } from "@/lib/tenant/types"
 import { cn } from "cn"
+import { HelpCenterDialog } from "@/components/features/support/HelpCenterDialog"
 
 import {
   Sidebar,
@@ -108,6 +109,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       items: [
         { title: "Setup Wizard (Onboarding)", url: "/onboarding" },
         { title: "Billing & Plans", url: "/settings/billing" },
+        { title: "Audit Logs (Enterprise)", url: "/settings/audit-logs" },
         { title: "Operating Policies", url: "/settings/policy" },
         { title: "Account Information", url: "/settings/profile" },
         { title: "Security & Google OTP", url: "/settings/security" },
@@ -213,6 +215,16 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
 
       <SidebarFooter className="border-t border-sidebar-border/60 pt-2">
         <SidebarMenu>
+          <SidebarMenuItem>
+            <HelpCenterDialog
+              trigger={
+                <SidebarMenuButton className="text-sidebar-foreground/80 hover:text-emerald-400 hover:bg-sidebar-accent transition-colors w-full cursor-pointer">
+                  <LifeBuoy className="size-4 text-emerald-500" />
+                  <span>Help & Support</span>
+                </SidebarMenuButton>
+              }
+            />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton 
               render={<Link href="/settings/profile" />}
