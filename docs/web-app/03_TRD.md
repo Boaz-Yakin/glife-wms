@@ -111,6 +111,31 @@ src/
   1. `OrdersTable`: 테이블 행 액션 영역에 직관적인 삭제(Trash2) 버튼 및 전용 확인 다이얼로그 제공.
   2. `OrderDetailsDialog`: 주문 상세 모달 하단(Footer)에 삭제 버튼 배치로 상세 검토 후 즉시 삭제 지원.
 
+### 6.7 Order Soft Delete, Trash & Restore (주문 논리 삭제, 휴지통 및 복원 기능)
+<!-- 작성일: 2026-11-13 -->
+- **배경 및 목적**:
+  - 기존의 물리적 삭제(Hard Delete)는 관리자의 실수나 오조작으로 주문 데이터 및 품목 내역이 영구 유실될 위험이 존재함.
+  - 실수로 삭제된 주문을 손쉽게 복원(Restore)하고, 의도적인 완전 삭제(Permanent Delete)만 별도의 권한과 절차를 통해 수행하도록 안전장치를 마련함.
+- **데이터 모델**:
+  - `orders.deleted_at TIMESTAMPTZ NULL`: 논리 삭제 일시 저장 (NULL이면 정상 주문, 타임스탬프가 있으면 휴지통 상태).
+  - 인덱스: `CREATE INDEX idx_orders_deleted_at ON public.orders(deleted_at);`
+- **시스템 간 무결성 보장**:
+  - `web-app`: 기본 조회 시 `deleted_at IS NULL`인 활성 주문만 표시하며, `view=trash` 상태에서만 휴지통 목록 조회.
+  - `G-manager`: `getSupabaseOrders` 쿼리에 `.is("deleted_at", null)` 필터를 적용하여, 휴지통에 있는 주문이 현장 피킹 티켓 및 인보이스에 오출력되는 것을 원천 차단.
+- **서비스 및 API 계층 (`orders.service.ts` & `actions.ts`)**:
+  - `softDeleteOrder(orderId: string)`: `orders.deleted_at = NOW()`로 갱신하여 휴지통으로 이동.
+  - `restoreOrder(orderId: string)`: `orders.deleted_at = NULL`로 원복하여 활성 주문 목록으로 복원.
+  - `permanentlyDeleteOrder(orderId: string)`: `ADMIN` 권한 전용. `order_items` 및 `orders` 테이블에서 실제 Hard Delete 수행.
+  - `getOrders({ view?: 'active' | 'trash', ... })`: 뷰 모드에 따라 `deleted_at` 필터링 분기.
+- **UI/UX 디자인 및 정책 (`OrdersTable.tsx`)**:
+  - 상단 탭: `[Active Orders (활성 주문)]` / `[Trash (휴지통)]` 전환 지원 (URL Search Params `view`와 동기화).
+  - 활성 모드: 기존 삭제 버튼 클릭 시 "주문을 휴지통으로 이동하시겠습니까? 언제든지 복원할 수 있습니다." 다이얼로그 노출.
+  - 휴지통 모드:
+    - 휴지통 전용 배너 표시.
+    - 각 행에 **`복원 (Restore, RotateCcw)`** 버튼과 **`영구 삭제 (Permanent Delete, Trash2)`** 버튼 제공.
+    - 복원 클릭 시 즉시 복원 토스트 안내 및 목록 갱신.
+    - 영구 삭제 클릭 시 "해당 주문과 품목 내역이 영구적으로 제거되며 복구할 수 없습니다." 2차 경고 다이얼로그 강제.
+
 ### 6.5 Order Client Reassignment (특정 주문 화주사/클라이언트 변경 기능)
 - **목적**: 오배정되었거나 화주사가 변경된 특정 주문의 `client_id`를 관리자가 UI 상에서 직접 안전하게 수정/재배정할 수 있도록 지원.
 - **서비스 및 액션 계층**:

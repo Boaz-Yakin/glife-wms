@@ -5,11 +5,13 @@ import {
   updateOrder, 
   updateOrderStatus,
   deleteOrder,
+  restoreOrder,
+  permanentlyDeleteOrder,
   searchMasterItemsForOrder, 
   UpdateOrderPayload, 
   MasterItemSearchResult 
 } from "@/services/orders.service"
-import { requireManager, requireAuth } from "@/lib/auth/guard"
+import { requireManager, requireAdmin, requireAuth } from "@/lib/auth/guard"
 
 export async function updateOrderStatusAction(orderId: string, status: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -71,6 +73,42 @@ export async function deleteOrderAction(orderId: string): Promise<{ success: boo
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Internal server error"
     console.error("deleteOrderAction error:", err)
+    return { success: false, error: errorMsg }
+  }
+}
+
+export async function restoreOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireManager()
+    const result = await restoreOrder(orderId)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to restore order" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("restoreOrderAction error:", err)
+    return { success: false, error: errorMsg }
+  }
+}
+
+export async function permanentlyDeleteOrderAction(orderId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireAdmin()
+    const result = await permanentlyDeleteOrder(orderId)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to permanently delete order" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("permanentlyDeleteOrderAction error:", err)
     return { success: false, error: errorMsg }
   }
 }

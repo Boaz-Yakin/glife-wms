@@ -28,6 +28,7 @@ export interface OrderData {
   order_date: string
   invoice_date?: string | null
   status: string
+  deleted_at?: string | null
   invoice_amount: number
   note: string | null
   created_at: string
@@ -91,6 +92,7 @@ export interface GetOrdersParams {
   status?: string
   searchType?: 'order' | 'item' | 'all'
   itemSearch?: string
+  view?: 'active' | 'trash'
 }
 
 export async function getOrders({
@@ -100,6 +102,7 @@ export async function getOrders({
   status = '',
   searchType = 'order',
   itemSearch = '',
+  view = 'active',
 }: GetOrdersParams = {}) {
   const supabase = await getClient()
   let query = supabase.from('orders').select(`
@@ -220,8 +223,14 @@ export async function getOrders({
     }
   }
   
-  if (status) {
-    query = query.eq('status', status)
+  if (view === 'trash') {
+    query = query.eq('status', 'CANCELED')
+  } else {
+    if (status) {
+      query = query.eq('status', status)
+    } else {
+      query = query.neq('status', 'CANCELED')
+    }
   }
   
   const from = (page - 1) * limit
@@ -502,21 +511,25 @@ export async function searchMasterItemsForOrder(search: string): Promise<MasterI
 }
 
 export async function deleteOrder(orderId: string): Promise<{ success: boolean; error: string | null }> {
+  return await softDeleteOrder(orderId)
+}
+
+export async function softDeleteOrder(orderId: string): Promise<{ success: boolean; error: string | null }> {
   if (!orderId) {
     return { success: false, error: "Order ID is required." }
   }
 
   const supabase = await getClient()
 
-  // 1. 주문 존재 여부 확인
+  // 1. 주문 존재 여부 및 현재 상태 확인
   const { data: existingOrder, error: findError } = await (supabase as any)
     .from("orders")
-    .select("id, order_no, status")
+    .select("id, order_no, status, note")
     .eq("id", orderId)
     .maybeSingle()
 
   if (findError) {
-    console.error("deleteOrder find error:", findError)
+    console.error("softDeleteOrder find error:", findError)
     return { success: false, error: findError.message }
   }
 
@@ -524,25 +537,128 @@ export async function deleteOrder(orderId: string): Promise<{ success: boolean; 
     return { success: false, error: "Order not found." }
   }
 
-  // 2. 연계된 order_items 명시적 삭제 (DB ON DELETE CASCADE가 있더라도 안전성 보장)
+  // 2. Soft Delete: status = 'CANCELED', note에 이전 상태 보관
+  const prevStatus = existingOrder.status
+  let noteText = existingOrder.note || ""
+  if (!noteText.includes("[PREV_STATUS:")) {
+    noteText = `[PREV_STATUS:${prevStatus}] ${noteText}`.trim()
+  }
+
+  const updatePayload: Record<string, any> = {
+    status: 'CANCELED',
+    note: noteText,
+    updated_at: new Date().toISOString()
+  }
+
+  try {
+    const { error: softErr } = await (supabase as any)
+      .from("orders")
+      .update({ ...updatePayload, deleted_at: new Date().toISOString() })
+      .eq("id", orderId)
+    if (!softErr) {
+      return { success: true, error: null }
+    }
+  } catch {
+    // fallback if deleted_at column is not present
+  }
+
+  const { error: updateError } = await (supabase as any)
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+
+  if (updateError) {
+    console.error("softDeleteOrder update error:", updateError)
+    return { success: false, error: updateError.message }
+  }
+
+  return { success: true, error: null }
+}
+
+export async function restoreOrder(orderId: string): Promise<{ success: boolean; error: string | null }> {
+  if (!orderId) {
+    return { success: false, error: "Order ID is required." }
+  }
+
+  const supabase = await getClient()
+
+  // 1. 주문 정보 확인
+  const { data: existingOrder, error: findError } = await (supabase as any)
+    .from("orders")
+    .select("id, order_no, status, note")
+    .eq("id", orderId)
+    .maybeSingle()
+
+  if (findError || !existingOrder) {
+    return { success: false, error: findError?.message || "Order not found." }
+  }
+
+  // 2. 이전 상태 복원 또는 PENDING으로 설정
+  let restoredStatus = 'PENDING'
+  let cleanedNote = existingOrder.note || ""
+  const match = cleanedNote.match(/\[PREV_STATUS:([A-Z_]+)\]/)
+  if (match && match[1] && match[1] !== 'CANCELED') {
+    restoredStatus = match[1]
+    cleanedNote = cleanedNote.replace(/\[PREV_STATUS:[A-Z_]+\]\s*/, "").trim()
+  }
+
+  const updatePayload: Record<string, any> = {
+    status: restoredStatus,
+    note: cleanedNote || null,
+    updated_at: new Date().toISOString()
+  }
+
+  try {
+    const { error: restoreErr } = await (supabase as any)
+      .from("orders")
+      .update({ ...updatePayload, deleted_at: null })
+      .eq("id", orderId)
+    if (!restoreErr) {
+      return { success: true, error: null }
+    }
+  } catch {
+    // fallback
+  }
+
+  const { error: updateError } = await (supabase as any)
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", orderId)
+
+  if (updateError) {
+    console.error("restoreOrder error:", updateError)
+    return { success: false, error: updateError.message }
+  }
+
+  return { success: true, error: null }
+}
+
+export async function permanentlyDeleteOrder(orderId: string): Promise<{ success: boolean; error: string | null }> {
+  if (!orderId) {
+    return { success: false, error: "Order ID is required." }
+  }
+
+  const supabase = await getClient()
+
+  // 1. 연계된 order_items 영구 삭제
   const { error: itemsDeleteError } = await (supabase as any)
     .from("order_items")
     .delete()
     .eq("order_id", orderId)
 
   if (itemsDeleteError) {
-    console.error("deleteOrder items delete error:", itemsDeleteError)
+    console.error("permanentlyDeleteOrder items delete error:", itemsDeleteError)
     return { success: false, error: itemsDeleteError.message }
   }
 
-  // 3. orders 레코드 삭제
+  // 2. orders 레코드 영구 삭제
   const { error: orderDeleteError } = await (supabase as any)
     .from("orders")
     .delete()
     .eq("id", orderId)
 
   if (orderDeleteError) {
-    console.error("deleteOrder order delete error:", orderDeleteError)
+    console.error("permanentlyDeleteOrder order delete error:", orderDeleteError)
     return { success: false, error: orderDeleteError.message }
   }
 

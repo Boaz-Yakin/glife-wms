@@ -141,7 +141,7 @@ export function OrderDetailsDialog({
     try {
       const res = await deleteOrderAction(order.id)
       if (res.success) {
-        toast.success(`Order ${order.order_no || order.id} has been deleted.`)
+        toast.success(`Order ${order.order_no || order.id} has been moved to Trash.`)
         setShowDeleteConfirm(false)
         onOpenChange(false)
       } else {
@@ -1105,10 +1105,10 @@ export function OrderDetailsDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="size-5" />
-              Delete Order
+              Move Order to Trash
             </DialogTitle>
             <DialogDescription className="pt-2 text-sm leading-relaxed">
-              Are you sure you want to delete order{" "}
+              Are you sure you want to move order{" "}
               <span className="font-semibold text-foreground font-mono">
                 {order.order_no || order.id}
               </span>
@@ -1117,10 +1117,10 @@ export function OrderDetailsDialog({
                   {" "}for <span className="font-semibold text-foreground">{order.store.name}</span>
                 </>
               )}
-              ?
+              {" "}to the Trash?
               <br />
-              <span className="text-destructive font-medium block mt-2 text-xs">
-                Warning: All line items ({items.length} items) and records associated with this order will be permanently deleted. This action cannot be undone.
+              <span className="text-muted-foreground font-medium block mt-2 text-xs">
+                ℹ️ The order ({items.length} line items) will be hidden from active lists and warehouse picking. You can restore it anytime from the Trash tab.
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -1141,12 +1141,12 @@ export function OrderDetailsDialog({
               {isDeletingOrder ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Deleting...
+                  Moving to Trash...
                 </>
               ) : (
                 <>
                   <Trash2 className="size-4" />
-                  Delete Order
+                  Move to Trash
                 </>
               )}
             </Button>

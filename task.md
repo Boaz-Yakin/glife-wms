@@ -1135,6 +1135,25 @@
   - B2B 콜드 아웃바운드 이메일 템플릿 및 성공 사례(Case Study) 인터뷰 설문지
 - [x] 88.4 TypeScript 무결성 검증 및 Next.js 16 프로덕션 빌드 (35개 전체 라우트 100% 컴파일 통과)
 
+---
+
+## 🗑️ Phase 89: 주문 논리 삭제(Soft Delete) & 휴지통(Trash) 및 복원(Restore) 시스템
+- [x] 89.1 [설계] TRD-003 업데이트 (`docs/web-app/03_TRD.md` Section 6.7):
+  - Soft Delete & Trash / Restore 데이터 모델, API 시그니처 및 UI/UX 정책 명세
+- [x] 89.2 [DB] Supabase 마이그레이션 DDL 스크립트 작성 (`supabase/migrations/20261113223000_add_orders_deleted_at_soft_delete.sql`):
+  - `orders.deleted_at` 컬럼 및 `idx_orders_deleted_at` 인덱스 정의
+- [x] 89.3 [서비스/액션] 안전한 삭제 및 복원 계층 구현 (`orders.service.ts`, `orders/actions.ts`):
+  - `softDeleteOrder`: 주문 논리 삭제 (status='CANCELED', deleted_at 갱신 및 이전 상태 보관)
+  - `restoreOrder`: 휴지통에서 활성 주문으로 1-Click 복원 (이전 상태 복구, deleted_at=null)
+  - `permanentlyDeleteOrder`: ADMIN 전용 완전 영구 삭제 처리
+  - `getOrders`: `view='active' | 'trash'` 필터링 지원
+- [x] 89.4 [UI] 주문 테이블 휴지통 탭 및 복원/영구삭제 액션 (`OrdersTable.tsx`, `OrderDetailsDialog.tsx`):
+  - 상단 `Active Orders` / `Trash (휴지통)` 전환 탭 지원
+  - 휴지통 모드 전용 안내 배너 및 `복원(Restore)` / `영구 삭제(Permanent Delete)` 2단 액션
+  - 상세 모달 및 테이블 행 삭제 안내 문구를 휴지통 안전 보관 안내로 개편
+- [x] 89.5 아키텍처 및 TypeScript 무결성 검증 (`validate-arch.ps1`, `tsc --noEmit` 통과)
+
+
 
 
 

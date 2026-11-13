@@ -434,6 +434,7 @@ export type Database = {
           store_id: string
           updated_at: string | null
           user_id: string | null
+          deleted_at?: string | null
         }
         Insert: {
           client_id?: string | null
@@ -447,6 +448,7 @@ export type Database = {
           store_id: string
           updated_at?: string | null
           user_id?: string | null
+          deleted_at?: string | null
         }
         Update: {
           client_id?: string | null
@@ -460,6 +462,7 @@ export type Database = {
           store_id?: string
           updated_at?: string | null
           user_id?: string | null
+          deleted_at?: string | null
         }
         Relationships: [
           {

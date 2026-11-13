@@ -8,7 +8,7 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { Eye, Download, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react"
+import { Eye, Download, Trash2, Loader2, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, RotateCcw, Package } from "lucide-react"
 
 import {
   Table,
@@ -39,7 +39,7 @@ import {
 import { toast } from "sonner"
 import { exportToExcel } from "@/lib/export"
 import { OrderData } from "@/services/orders.service"
-import { deleteOrderAction } from "@/app/(dashboard)/orders/actions"
+import { deleteOrderAction, restoreOrderAction, permanentlyDeleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
 import { OrderStatusBadge, ORDER_STATUS_CONFIG } from "./OrderStatusBadge"
 
@@ -56,6 +56,7 @@ interface OrdersTableProps {
   currentPage?: number
   pageSize?: number
   clients?: ClientOption[]
+  view?: 'active' | 'trash'
 }
 
 export function OrdersTable({ 
@@ -64,6 +65,7 @@ export function OrdersTable({
   currentPage = 1,
   pageSize = 50,
   clients = [],
+  view = 'active',
 }: OrdersTableProps) {
   const router = useRouter()
   const pathname = usePathname()
@@ -77,7 +79,9 @@ export function OrdersTable({
   const [searchType, setSearchType] = React.useState(defaultSearchType)
   const [selectedOrder, setSelectedOrder] = React.useState<OrderData | null>(null)
   const [orderToDelete, setOrderToDelete] = React.useState<OrderData | null>(null)
+  const [orderToPermanentlyDelete, setOrderToPermanentlyDelete] = React.useState<OrderData | null>(null)
   const [isDeleting, setIsDeleting] = React.useState(false)
+  const [isRestoring, setIsRestoring] = React.useState<string | null>(null)
 
   // Pagination calculations
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
@@ -96,6 +100,17 @@ export function OrdersTable({
     const params = new URLSearchParams(searchParams.toString())
     params.set("limit", newSize)
     params.set("page", "1")
+    router.replace(`${pathname}?${params.toString()}`)
+  }
+
+  const handleViewChange = (newView: 'active' | 'trash') => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (newView === 'trash') {
+      params.set("view", "trash")
+    } else {
+      params.delete("view")
+    }
+    params.delete("page")
     router.replace(`${pathname}?${params.toString()}`)
   }
 
@@ -121,13 +136,55 @@ export function OrdersTable({
     try {
       const res = await deleteOrderAction(orderToDelete.id)
       if (res.success) {
-        toast.success(`Order ${orderToDelete.order_no || orderToDelete.id} has been deleted.`)
+        toast.success(`Order ${orderToDelete.order_no || orderToDelete.id} has been moved to Trash.`)
         setOrderToDelete(null)
         if (selectedOrder?.id === orderToDelete.id) {
           setSelectedOrder(null)
         }
       } else {
         toast.error(res.error || "Failed to delete order.")
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unexpected error occurred"
+      toast.error(msg)
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleRestore = async (order: OrderData) => {
+    setIsRestoring(order.id)
+    try {
+      const res = await restoreOrderAction(order.id)
+      if (res.success) {
+        toast.success(`Order ${order.order_no || order.id} has been restored to Active Orders.`)
+        if (selectedOrder?.id === order.id) {
+          setSelectedOrder(null)
+        }
+      } else {
+        toast.error(res.error || "Failed to restore order.")
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unexpected error occurred"
+      toast.error(msg)
+    } finally {
+      setIsRestoring(null)
+    }
+  }
+
+  const handleConfirmPermanentDelete = async () => {
+    if (!orderToPermanentlyDelete) return
+    setIsDeleting(true)
+    try {
+      const res = await permanentlyDeleteOrderAction(orderToPermanentlyDelete.id)
+      if (res.success) {
+        toast.success(`Order ${orderToPermanentlyDelete.order_no || orderToPermanentlyDelete.id} permanently deleted.`)
+        setOrderToPermanentlyDelete(null)
+        if (selectedOrder?.id === orderToPermanentlyDelete.id) {
+          setSelectedOrder(null)
+        }
+      } else {
+        toast.error(res.error || "Failed to permanently delete order.")
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Unexpected error occurred"
@@ -401,23 +458,57 @@ export function OrdersTable({
     },
     {
       id: "actions",
-      cell: ({ row }) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(row.original)}>
-            <Eye className="size-4 mr-1.5" />
-            Details
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2.5"
-            onClick={() => setOrderToDelete(row.original)}
-            title="Delete Order"
-          >
-            <Trash2 className="size-4 text-destructive/80 hover:text-destructive" />
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const order = row.original
+        const isTrash = view === "trash"
+
+        return (
+          <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" onClick={() => setSelectedOrder(order)}>
+              <Eye className="size-4 mr-1.5" />
+              Details
+            </Button>
+            {isTrash ? (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 border-emerald-300 dark:border-emerald-800 h-8 px-2.5 text-xs font-semibold gap-1"
+                  onClick={() => handleRestore(order)}
+                  disabled={isRestoring === order.id}
+                  title="Restore Order to Active"
+                >
+                  {isRestoring === order.id ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <RotateCcw className="size-3.5" />
+                  )}
+                  Restore
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2 h-8"
+                  onClick={() => setOrderToPermanentlyDelete(order)}
+                  title="Permanently Delete Order"
+                >
+                  <Trash2 className="size-3.5 text-destructive/80 hover:text-destructive" />
+                </Button>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 px-2.5"
+                onClick={() => setOrderToDelete(order)}
+                title="Move to Trash"
+              >
+                <Trash2 className="size-4 text-destructive/80 hover:text-destructive" />
+              </Button>
+            )}
+          </div>
+        )
+      },
     },
   ]
 
@@ -429,6 +520,42 @@ export function OrdersTable({
 
   return (
     <div className="space-y-4">
+      {/* View Switcher Tabs: Active vs Trash */}
+      <div className="flex items-center justify-between border-b pb-2">
+        <div className="flex items-center gap-1.5 bg-muted/60 p-1 rounded-lg">
+          <Button
+            variant={view !== "trash" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => handleViewChange("active")}
+            className="h-8 text-xs font-bold gap-1.5"
+          >
+            <Package className="size-3.5" />
+            Active Orders
+          </Button>
+          <Button
+            variant={view === "trash" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => handleViewChange("trash")}
+            className={`h-8 text-xs font-bold gap-1.5 ${view === "trash" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : "text-muted-foreground hover:text-destructive"}`}
+          >
+            <Trash2 className="size-3.5" />
+            Trash (휴지통)
+          </Button>
+        </div>
+      </div>
+
+      {/* Trash View Info Banner */}
+      {view === "trash" && (
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-2.5 rounded-lg flex items-center justify-between text-xs">
+          <div className="flex items-center gap-2">
+            <Trash2 className="size-4 shrink-0" />
+            <span>
+              <strong>휴지통 (Trash):</strong> 삭제 처리된 주문 목록입니다. 언제든지 다시 <strong>복원(Restore)</strong>하거나 완전히 <strong>영구 삭제(Permanent Delete)</strong>할 수 있습니다.
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex flex-1 flex-wrap items-center gap-2">
           <Select value={searchType} onValueChange={handleSearchTypeChange}>
@@ -661,7 +788,7 @@ export function OrdersTable({
         />
       )}
 
-      {/* Delete Order Confirmation Dialog */}
+      {/* Move to Trash Confirmation Dialog */}
       <Dialog 
         open={!!orderToDelete} 
         onOpenChange={(open) => !open && !isDeleting && setOrderToDelete(null)}
@@ -670,10 +797,10 @@ export function OrdersTable({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-destructive">
               <Trash2 className="size-5" />
-              Delete Order
+              Move Order to Trash
             </DialogTitle>
             <DialogDescription className="pt-2 text-sm leading-relaxed">
-              Are you sure you want to delete order{" "}
+              Are you sure you want to move order{" "}
               <span className="font-semibold text-foreground font-mono">
                 {orderToDelete?.order_no || orderToDelete?.id}
               </span>
@@ -682,10 +809,10 @@ export function OrdersTable({
                   {" "}for <span className="font-semibold text-foreground">{orderToDelete.store.name}</span>
                 </>
               )}
-              ?
+              {" "}to the Trash?
               <br />
-              <span className="text-destructive font-medium block mt-2 text-xs">
-                Warning: All line items and records associated with this order will be permanently deleted. This action cannot be undone.
+              <span className="text-muted-foreground font-medium block mt-2 text-xs">
+                ℹ️ The order will be hidden from active lists and picking operations. You can restore it anytime from the Trash tab.
               </span>
             </DialogDescription>
           </DialogHeader>
@@ -706,12 +833,70 @@ export function OrdersTable({
               {isDeleting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Deleting...
+                  Moving to Trash...
                 </>
               ) : (
                 <>
                   <Trash2 className="size-4" />
-                  Delete Order
+                  Move to Trash
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Permanent Delete Confirmation Dialog */}
+      <Dialog 
+        open={!!orderToPermanentlyDelete} 
+        onOpenChange={(open) => !open && !isDeleting && setOrderToPermanentlyDelete(null)}
+      >
+        <DialogContent className="sm:max-w-md border-destructive/40">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="size-5" />
+              Permanently Delete Order
+            </DialogTitle>
+            <DialogDescription className="pt-2 text-sm leading-relaxed">
+              Are you sure you want to permanently delete order{" "}
+              <span className="font-semibold text-foreground font-mono">
+                {orderToPermanentlyDelete?.order_no || orderToPermanentlyDelete?.id}
+              </span>
+              {orderToPermanentlyDelete?.store?.name && (
+                <>
+                  {" "}for <span className="font-semibold text-foreground">{orderToPermanentlyDelete.store.name}</span>
+                </>
+              )}
+              ?
+              <br />
+              <span className="text-destructive font-bold block mt-2 text-xs bg-destructive/10 p-2 rounded border border-destructive/20">
+                ⚠️ Warning: All line items and records associated with this order will be permanently erased from the database. This action CANNOT be undone.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setOrderToPermanentlyDelete(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmPermanentDelete}
+              disabled={isDeleting}
+              className="gap-1.5"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" />
+                  Deleting Permanently...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="size-4" />
+                  Permanently Delete
                 </>
               )}
             </Button>

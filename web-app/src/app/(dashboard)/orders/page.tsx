@@ -19,6 +19,7 @@ export default async function OrdersPage({
     ? (params.searchType as 'order' | 'item' | 'all') 
     : 'order'
   const status = typeof params.status === 'string' && params.status !== 'ALL' ? params.status : ''
+  const view = params.view === 'trash' ? 'trash' : 'active'
   
   const [{ data, count, error }, { data: clients }] = await Promise.all([
     getOrders({
@@ -26,7 +27,8 @@ export default async function OrdersPage({
       limit,
       search,
       searchType,
-      status
+      status,
+      view,
     }),
     getClients(),
   ])
@@ -51,6 +53,7 @@ export default async function OrdersPage({
           currentPage={page}
           pageSize={limit}
           clients={clients || []}
+          view={view}
         />
       )}
     </div>
