@@ -29,6 +29,7 @@ export interface OrderData {
   invoice_date?: string | null
   status: string
   deleted_at?: string | null
+  cancelled_categories?: string[] | null
   invoice_amount: number
   note: string | null
   created_at: string
@@ -52,6 +53,7 @@ export interface OrderData {
       sku: string
       name_en: string
       desc_en?: string | null
+      category?: string | null
       uom?: string | null
       unit_price?: number | null
       box_price?: number | null
@@ -77,6 +79,7 @@ export interface OrderItemData {
   item?: {
     name_en: string
     desc_en?: string | null
+    category?: string | null
     sku: string
     uom?: string | null
     unit_price?: number | null
@@ -115,7 +118,7 @@ export async function getOrders({
       price,
       uom,
       custom_item_name,
-      item:items(sku, name_en, desc_en, uom, unit_price, box_price, pack_price)
+      item:items(sku, name_en, desc_en, category, uom, unit_price, box_price, pack_price)
     )
   `, { count: 'exact' })
   
@@ -268,7 +271,7 @@ export async function getOrderDetails(orderId: string) {
   const supabase = await getClient()
   const { data, error } = await supabase.from('order_items').select(`
     *,
-    item:items(name_en, desc_en, sku, uom, unit_price, box_price, pack_price)
+    item:items(name_en, desc_en, sku, category, uom, unit_price, box_price, pack_price)
   `).eq('order_id', orderId).order('created_at', { ascending: true })
   
   if (error) {
@@ -314,6 +317,8 @@ export interface UpdateOrderPayload {
   clientId?: string | null
   /** undefined: 변경 없음 / string: 새 상태값 (TRD 6.6) */
   status?: string
+  /** undefined: 변경 없음 / string[]: 취소된 카테고리 목록 (TRD 6.8) */
+  cancelledCategories?: string[]
   itemsToUpdate?: UpdateOrderItemInput[]
   itemsToAdd?: NewOrderItemInput[]
   itemIdsToDelete?: string[]
@@ -662,6 +667,172 @@ export async function permanentlyDeleteOrder(orderId: string): Promise<{ success
     return { success: false, error: orderDeleteError.message }
   }
 
+  return { success: true, error: null }
+}
+
+/**
+ * Orders의 cancelled_categories 및 note에서 취소된 카테고리 목록을 안전하게 파싱합니다.
+ */
+export function parseCancelledCategories(rawNote?: string | null, directCancelled?: string[] | null): string[] {
+  const result = new Set<string>()
+  if (Array.isArray(directCancelled)) {
+    directCancelled.forEach((c) => {
+      if (c && typeof c === 'string') result.add(c.toUpperCase().trim())
+    })
+  }
+  if (rawNote) {
+    const match = String(rawNote).match(/\[Cancelled(?:\s*Categories)?:\s*([^\]]+)\]/i)
+    if (match && match[1]) {
+      match[1].split(',').forEach((c) => {
+        const trimmed = c.trim().toUpperCase()
+        if (trimmed) result.add(trimmed)
+      })
+    }
+  }
+  return Array.from(result)
+}
+
+/**
+ * 특정 카테고리를 부분 취소(Cancel) 처리합니다. (TRD 6.8)
+ * 인보이스 번호는 결번(VOID)으로 보존되며, 모든 카테고리가 취소되면 주문 전체 status가 CANCELED로 전환됩니다.
+ */
+export async function cancelOrderCategory(orderId: string, category: string): Promise<{ success: boolean; error: string | null }> {
+  if (!orderId || !category) {
+    return { success: false, error: 'Order ID and category are required.' }
+  }
+  const normCat = category.toUpperCase().trim()
+  const supabase = await getClient()
+
+  const { data: order, error: orderErr } = await (supabase as any)
+    .from('orders')
+    .select(`
+      id, order_no, status, note, cancelled_categories, category_invoices,
+      order_items(
+        id, qty, picked_qty,
+        item:items(category)
+      )
+    `)
+    .eq('id', orderId)
+    .maybeSingle()
+
+  if (orderErr || !order) {
+    return { success: false, error: orderErr?.message || 'Order not found' }
+  }
+
+  const currentCancelled = parseCancelledCategories(order.note, order.cancelled_categories)
+  if (!currentCancelled.includes(normCat)) {
+    currentCancelled.push(normCat)
+  }
+
+  // 주문 내 모든 카테고리 파악
+  const allOrderCategories = new Set<string>()
+  for (const oi of (order.order_items || [])) {
+    const rawCat = oi.item?.category ? String(oi.item.category).toUpperCase().trim() : 'GROCERY'
+    const norm = rawCat.includes('FROZEN') ? 'FROZEN' : (rawCat.includes('GENERAL') ? 'GENERAL' : 'GROCERY')
+    allOrderCategories.add(norm)
+  }
+  const isAllCancelled = allOrderCategories.size > 0 && Array.from(allOrderCategories).every((c) => currentCancelled.includes(c))
+
+  let updatedNote = (order.note || '').replace(/\[Cancelled(?:\s*Categories)?:\s*[^\]]+\]/gi, '').trim()
+  if (currentCancelled.length > 0) {
+    const cancelTag = `[Cancelled: ${currentCancelled.join(', ')}]`
+    updatedNote = updatedNote ? `${cancelTag} ${updatedNote}` : cancelTag
+  }
+
+  const updatePayload: Record<string, any> = {
+    note: updatedNote || null,
+    updated_at: new Date().toISOString(),
+  }
+  if (isAllCancelled) {
+    updatePayload.status = 'CANCELED'
+  }
+
+  try {
+    const { error: colErr } = await (supabase as any)
+      .from('orders')
+      .update({ ...updatePayload, cancelled_categories: currentCancelled })
+      .eq('id', orderId)
+    if (!colErr) {
+      return { success: true, error: null }
+    }
+  } catch {
+    // fallback if cancelled_categories column not yet present
+  }
+
+  const { error: updateErr } = await (supabase as any)
+    .from('orders')
+    .update(updatePayload)
+    .eq('id', orderId)
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message }
+  }
+  return { success: true, error: null }
+}
+
+/**
+ * 취소되었던 카테고리를 다시 복원(Uncancel) 처리합니다. (TRD 6.8)
+ */
+export async function uncancelOrderCategory(orderId: string, category: string): Promise<{ success: boolean; error: string | null }> {
+  if (!orderId || !category) {
+    return { success: false, error: 'Order ID and category are required.' }
+  }
+  const normCat = category.toUpperCase().trim()
+  const supabase = await getClient()
+
+  const { data: order, error: orderErr } = await (supabase as any)
+    .from('orders')
+    .select(`
+      id, order_no, status, note, cancelled_categories, category_invoices,
+      order_items(
+        id, qty, picked_qty,
+        item:items(category)
+      )
+    `)
+    .eq('id', orderId)
+    .maybeSingle()
+
+  if (orderErr || !order) {
+    return { success: false, error: orderErr?.message || 'Order not found' }
+  }
+
+  const currentCancelled = parseCancelledCategories(order.note, order.cancelled_categories)
+    .filter((c) => c !== normCat)
+
+  let updatedNote = (order.note || '').replace(/\[Cancelled(?:\s*Categories)?:\s*[^\]]+\]/gi, '').trim()
+  if (currentCancelled.length > 0) {
+    const cancelTag = `[Cancelled: ${currentCancelled.join(', ')}]`
+    updatedNote = updatedNote ? `${cancelTag} ${updatedNote}` : cancelTag
+  }
+
+  const updatePayload: Record<string, any> = {
+    note: updatedNote || null,
+    updated_at: new Date().toISOString(),
+  }
+  if (order.status === 'CANCELED' && currentCancelled.length === 0) {
+    updatePayload.status = 'PENDING'
+  }
+
+  try {
+    const { error: colErr } = await (supabase as any)
+      .from('orders')
+      .update({ ...updatePayload, cancelled_categories: currentCancelled })
+      .eq('id', orderId)
+    if (!colErr) {
+      return { success: true, error: null }
+    }
+  } catch {
+    // fallback
+  }
+
+  const { error: updateErr } = await (supabase as any)
+    .from('orders')
+    .update(updatePayload)
+    .eq('id', orderId)
+
+  if (updateErr) {
+    return { success: false, error: updateErr.message }
+  }
   return { success: true, error: null }
 }
 

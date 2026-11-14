@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog"
 import { toast } from "sonner"
 import { exportToExcel } from "@/lib/export"
-import { OrderData } from "@/services/orders.service"
+import { OrderData, parseCancelledCategories } from "@/services/orders.service"
 import { deleteOrderAction, restoreOrderAction, permanentlyDeleteOrderAction } from "@/app/(dashboard)/orders/actions"
 import { OrderDetailsDialog } from "./OrderDetailsDialog"
 import { OrderStatusBadge, ORDER_STATUS_CONFIG } from "./OrderStatusBadge"
@@ -286,6 +286,7 @@ export function OrdersTable({
       cell: ({ row }) => {
         const primary = row.original.invoice_number
         const catInvoices = row.original.category_invoices as Record<string, string> | null | undefined
+        const cancelledCategories = parseCancelledCategories(row.original.note, row.original.cancelled_categories)
         const entries = Object.entries(catInvoices || {}).filter(([_, num]) => Boolean(num))
 
         if (!primary && entries.length === 0) {
@@ -295,9 +296,17 @@ export function OrdersTable({
         const extraCount = entries.length > 1 ? entries.length - 1 : 0
 
         if (entries.length <= 1) {
+          const isVoid = entries.length === 1 && cancelledCategories.includes(entries[0][0].toUpperCase())
           return (
-            <div className="font-mono tabular-nums text-xs text-foreground font-medium">
-              {primary || entries[0]?.[1] || '-'}
+            <div className="flex items-center gap-1">
+              <span className={`font-mono tabular-nums text-xs font-medium ${isVoid ? "text-destructive line-through" : "text-foreground"}`}>
+                {primary || entries[0]?.[1] || '-'}
+              </span>
+              {isVoid && (
+                <Badge variant="destructive" className="text-[8.5px] px-1 py-0 h-3.5 font-bold uppercase">
+                  VOID
+                </Badge>
+              )}
             </div>
           )
         }
@@ -315,6 +324,11 @@ export function OrdersTable({
                 >
                   +{extraCount}
                 </Badge>
+                {cancelledCategories.length > 0 && (
+                  <Badge variant="destructive" className="text-[8.5px] px-1 py-0 h-3.5 font-bold uppercase">
+                    VOID
+                  </Badge>
+                )}
               </TooltipTrigger>
               <TooltipContent
                 side="top"
@@ -324,14 +338,19 @@ export function OrdersTable({
                   Invoices by Category ({entries.length})
                 </p>
                 <div className="space-y-1 font-mono">
-                  {entries.map(([cat, num]) => (
-                    <div key={cat} className="flex items-center justify-between gap-3 text-xs">
-                      <span className="text-muted-foreground font-sans font-medium text-[11px] uppercase tracking-wide">
-                        {cat}:
-                      </span>
-                      <span className="font-semibold text-foreground">{num}</span>
-                    </div>
-                  ))}
+                  {entries.map(([cat, num]) => {
+                    const isVoid = cancelledCategories.includes(cat.toUpperCase())
+                    return (
+                      <div key={cat} className="flex items-center justify-between gap-3 text-xs">
+                        <span className="text-muted-foreground font-sans font-medium text-[11px] uppercase tracking-wide">
+                          {cat}:
+                        </span>
+                        <span className={`font-semibold ${isVoid ? "text-destructive line-through" : "text-foreground"}`}>
+                          {num} {isVoid && "(VOID)"}
+                        </span>
+                      </div>
+                    )
+                  })}
                 </div>
               </TooltipContent>
             </Tooltip>

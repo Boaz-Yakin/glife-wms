@@ -136,6 +136,34 @@ src/
     - 복원 클릭 시 즉시 복원 토스트 안내 및 목록 갱신.
     - 영구 삭제 클릭 시 "해당 주문과 품목 내역이 영구적으로 제거되며 복구할 수 없습니다." 2차 경고 다이얼로그 강제.
 
+### 6.8 Order Category Partial Cancel & Void Retention (카테고리별 부분 취소 및 인보이스 결번 보존 기능)
+<!-- 작성일: 2026-11-14 -->
+- **배경 및 비즈니스 요구사항**:
+  - 한 매장의 1회 주문 내에 최대 3개 부문(`GROCERY`, `GENERAL`, `FROZEN`)의 품목이 혼합되어 인보이스 및 피킹이 분리 처리됨.
+  - 매장의 요청이나 결품 상황으로 인해 특정 카테고리(예: Frozen만 취소)만 부분 취소해야 하는 업무 시나리오 발생.
+  - 기존의 전체 주문 취소(`status = CANCELED`)나 개별 품목 수동 삭제 대신, 카테고리 단위의 일괄 취소 및 복원 기능을 제공함.
+  - **인보이스 결번(Void) 보존 정책**: 이미 채번된 카테고리 인보이스 번호는 회계/감사상 결번(VOID)으로 영구 보존하며, 번호를 삭제하거나 다른 주문에 재할당하지 않음.
+- **데이터 모델**:
+  - `orders.cancelled_categories JSONB DEFAULT '[]'::jsonb`: 취소된 카테고리 코드 배열 (예: `["FROZEN"]`).
+  - 마이그레이션: `supabase/migrations/20261114080000_add_cancelled_categories_to_orders.sql`
+  - 회복 탄력성(Resilience Fallback): DB 마이그레이션 적용 전후 호환을 위해 `order.note`의 `[Cancelled: ...]` 태그와 양방향 동기화 지원.
+- **비즈니스 계산 및 상태 전이 규칙**:
+  - **금액 재계산**: 활성 Subtotal 및 Net Total 계산 시 `cancelled_categories`에 속한 품목은 즉시 차감/제외.
+  - **전체 취소 연동**: 주문에 포함된 모든 카테고리가 취소되면, 주문의 전체 `status`를 자동으로 `CANCELED`로 전환.
+  - **복원(Uncancel) 지원**: 취소된 카테고리를 복원하면 즉시 활성 품목 및 청구 금액에 재산입되며, 전체 CANCELED 상태였던 경우 `PENDING`으로 복구.
+- **서비스 및 API 계층 (`orders.service.ts` & `actions.ts`)**:
+  - `cancelOrderCategory(orderId: string, category: string)`: 카테고리 부분 취소 실행
+  - `uncancelOrderCategory(orderId: string, category: string)`: 카테고리 취소 복원 실행
+  - `getOrders`, `getOrderDetails`: `item:items(...)` 조인 시 `category` 필드를 필수로 조회하여 클라이언트에 카테고리 정보 제공.
+- **UI/UX 디자인 및 정책 (`OrderDetailsDialog.tsx`, `OrdersTable.tsx`)**:
+  - **Panel 2 (Invoices)**: 취소된 카테고리의 인보이스 번호 옆에 `[VOID]` 결번 뱃지 표시.
+  - **Ordered Items Section**:
+    - 카테고리 탭/뱃지 영역에 각 카테고리별 SKU 수량과 함께 `[Cancel Category]` / `[Restore Category]` 버튼 제공.
+    - 취소 실행 시 확인 다이얼로그 노출: "해당 카테고리의 품목이 청구 및 피킹에서 제외되며, 인보이스 번호는 결번(VOID)으로 보존됩니다."
+    - 취소된 품목은 시각적 취소선(strikethrough) 및 `[CANCELLED]` 뱃지로 명확히 구분 표기.
+- **G-Manager 연동 정책**:
+  - G-Manager `ordersService.ts`에서 `cancelled_categories`를 조회하여 인보이스 모달 및 피킹 티켓에서 결번(VOID) 표시 및 피킹 제외 자동 연동.
+
 ### 6.5 Order Client Reassignment (특정 주문 화주사/클라이언트 변경 기능)
 - **목적**: 오배정되었거나 화주사가 변경된 특정 주문의 `client_id`를 관리자가 UI 상에서 직접 안전하게 수정/재배정할 수 있도록 지원.
 - **서비스 및 액션 계층**:

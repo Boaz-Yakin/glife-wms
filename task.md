@@ -1153,6 +1153,26 @@
   - 상세 모달 및 테이블 행 삭제 안내 문구를 휴지통 안전 보관 안내로 개편
 - [x] 89.5 아키텍처 및 TypeScript 무결성 검증 (`validate-arch.ps1`, `tsc --noEmit` 통과)
 
+## 🚫 Phase 90: 주문 카테고리별 부분 취소(Category Partial Cancel) & 인보이스 결번(Void) 보존 시스템
+- [x] 90.1 [설계] TRD-003 업데이트 (`docs/web-app/03_TRD.md` Section 6.8):
+  - 카테고리별 부분 취소 데이터 모델(`cancelled_categories JSONB`), 인보이스 결번 보존 정책, 청구/피킹 분기 및 복원 정책 명세
+- [x] 90.2 [DB] Supabase 마이그레이션 DDL 스크립트 작성 (`supabase/migrations/20261114080000_add_cancelled_categories_to_orders.sql`):
+  - `orders.cancelled_categories` JSONB 컬럼 정의 및 note 폴백 연동
+- [x] 90.3 [타입] TypeScript DB 인터페이스 갱신 (`database.ts`, `supabase.ts`, `orders.service.ts`):
+  - `cancelled_categories?: string[] | null` 및 `item.category` 추가
+- [x] 90.4 [서비스/액션] 카테고리 부분 취소 및 복원 엔진 구현 (`orders.service.ts`, `orders/actions.ts`):
+  - `cancelOrderCategory`: 카테고리 부분 취소, 모든 카테고리 취소 시 `status = CANCELED` 전환
+  - `uncancelOrderCategory`: 카테고리 복원 및 청구 금액/상태 재산입
+  - `parseCancelledCategories`: DB 컬럼 및 note 태그 하이브리드 파싱
+- [x] 90.5 [UI] 주문 상세 다이얼로그 및 테이블 UI 개편 (`OrderDetailsDialog.tsx`, `OrdersTable.tsx`):
+  - Category Filter & Cancel Bar (`ALL`, `GROCERY`, `GENERAL`, `FROZEN`)
+  - 각 카테고리별 `[Cancel Category]` / `[Restore Category]` 원클릭 버튼 및 확인 다이얼로그
+  - 취소된 카테고리의 인보이스 번호 `[VOID]` 결번 뱃지 보존 표시
+  - 취소된 품목 취소선 및 활성 품목 기준 금액(Subtotal/Net Total) 재계산
+- [x] 90.6 [G-manager] G-manager 주문 서비스 및 인보이스/피킹 티켓 연동 (`ordersService.ts`, `InvoiceModal.tsx`, `PickTicketModal.tsx`, `route.ts`):
+  - `cancelledCategories` 반영: 취소된 카테고리 인보이스 결번(VOID) 표기, 피킹 리스트 취소 마킹 및 API 처리
+- [x] 90.7 아키텍처 및 TypeScript 무결성 검증 (`tsc --noEmit` 통과)
+
 
 
 

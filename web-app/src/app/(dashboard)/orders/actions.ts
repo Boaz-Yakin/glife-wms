@@ -7,6 +7,8 @@ import {
   deleteOrder,
   restoreOrder,
   permanentlyDeleteOrder,
+  cancelOrderCategory,
+  uncancelOrderCategory,
   searchMasterItemsForOrder, 
   UpdateOrderPayload, 
   MasterItemSearchResult 
@@ -109,6 +111,42 @@ export async function permanentlyDeleteOrderAction(orderId: string): Promise<{ s
   } catch (err: unknown) {
     const errorMsg = err instanceof Error ? err.message : "Internal server error"
     console.error("permanentlyDeleteOrderAction error:", err)
+    return { success: false, error: errorMsg }
+  }
+}
+
+export async function cancelOrderCategoryAction(orderId: string, category: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireManager()
+    const result = await cancelOrderCategory(orderId, category)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to cancel order category" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("cancelOrderCategoryAction error:", err)
+    return { success: false, error: errorMsg }
+  }
+}
+
+export async function uncancelOrderCategoryAction(orderId: string, category: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    await requireManager()
+    const result = await uncancelOrderCategory(orderId, category)
+    if (!result.success) {
+      return { success: false, error: result.error || "Failed to restore order category" }
+    }
+
+    revalidatePath("/orders")
+    revalidatePath("/dashboard")
+    return { success: true }
+  } catch (err: unknown) {
+    const errorMsg = err instanceof Error ? err.message : "Internal server error"
+    console.error("uncancelOrderCategoryAction error:", err)
     return { success: false, error: errorMsg }
   }
 }

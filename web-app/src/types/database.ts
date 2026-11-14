@@ -197,6 +197,7 @@ export type Database = {
           status: 'PENDING' | 'PICKING' | 'PACKED' | 'INVOICED' | 'SHIPPED' | 'CANCELED' | 'RECEIVED' | 'ALLOCATED' | 'PICKED' | 'DISPATCHED';
           order_date: string;
           note: string | null;
+          cancelled_categories?: string[] | null;
           deleted_at?: string | null;
           created_at: string;
           updated_at: string;

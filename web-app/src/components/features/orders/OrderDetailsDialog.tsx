@@ -21,7 +21,8 @@ import {
   CalendarCheck,
   ChevronDown,
   ChevronUp,
-  RotateCcw
+  RotateCcw,
+  Ban
 } from "lucide-react"
 
 import {
@@ -45,9 +46,15 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
+import { OrderData, OrderItemData, getOrderDetails, parseCancelledCategories } from "@/services/orders.service"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
-import { updateOrderAction, searchMasterItemsAction, deleteOrderAction } from "@/app/(dashboard)/orders/actions"
+import { 
+  updateOrderAction, 
+  searchMasterItemsAction, 
+  deleteOrderAction,
+  cancelOrderCategoryAction,
+  uncancelOrderCategoryAction 
+} from "@/app/(dashboard)/orders/actions"
 import { toAtlantaDateString, validateInvoiceDate } from "@/lib/date"
 import { toast } from "sonner"
 import { OrderStatusBadge } from "./OrderStatusBadge"
@@ -67,6 +74,7 @@ interface EditableItem {
   sku: string
   name_en: string
   desc_en?: string | null
+  category?: string | null
   uom: string
   price: number
   qty: number
@@ -278,6 +286,7 @@ export function OrderDetailsDialog({
             sku: row.item?.sku || row.item_id || "N/A",
             name_en: row.custom_item_name || row.item?.name_en || "Unknown Item",
             desc_en: row.item?.desc_en || null,
+            category: row.item?.category || null,
             uom: (row.uom || row.item?.uom || "EA").toUpperCase(),
             price: effectivePrice,
             qty: effectiveQty,
@@ -377,6 +386,7 @@ export function OrderDetailsDialog({
       sku: master.sku,
       name_en: master.name_en,
       desc_en: master.desc_en,
+      category: master.category || null,
       uom: defaultUom,
       price: defaultPrice,
       qty: 1,
@@ -391,12 +401,40 @@ export function OrderDetailsDialog({
     setShowAddSearch(false)
   }
 
-  // Calculation
+  // Cancelled Categories parsing (TRD 6.8)
+  const cancelledCategories = React.useMemo(() => {
+    return parseCancelledCategories(order.note, order.cancelled_categories)
+  }, [order.note, order.cancelled_categories])
+
+  const getItemCategory = React.useCallback((item: any): "GROCERY" | "GENERAL" | "FROZEN" => {
+    const raw = (item.item?.category || item.category || "").toUpperCase()
+    if (raw.includes("FROZEN")) return "FROZEN"
+    if (raw.includes("GENERAL")) return "GENERAL"
+    return "GROCERY"
+  }, [])
+
+  // Active items (excluding cancelled categories)
+  const activeItems = React.useMemo(() => {
+    return items.filter((it) => !cancelledCategories.includes(getItemCategory(it)))
+  }, [items, cancelledCategories, getItemCategory])
+
+  // Calculation: All vs Active
   const totalCalculated = items.reduce(
     (acc, cur) => acc + (Number(cur.qty || 0) * Number(cur.price || 0)),
     0
   )
   const totalUnits = items.reduce((acc, cur) => acc + Number(cur.qty || 0), 0)
+
+  const activeTotalCalculated = React.useMemo(() => {
+    return activeItems.reduce(
+      (acc, cur) => acc + (Number(cur.qty || 0) * Number(cur.price || 0)),
+      0
+    )
+  }, [activeItems])
+
+  const activeTotalUnits = React.useMemo(() => {
+    return activeItems.reduce((acc, cur) => acc + Number(cur.qty || 0), 0)
+  }, [activeItems])
 
   // Credit calculation from order.category_credits
   const categoryCredits = React.useMemo(() => {
@@ -409,7 +447,55 @@ export function OrderDetailsDialog({
     return Object.values(categoryCredits).reduce((sum, val) => sum + (Number(val) || 0), 0)
   }, [categoryCredits])
 
-  const netTotalCalculated = Math.max(0, totalCalculated - totalCreditAmount)
+  const netTotalCalculated = Math.max(0, activeTotalCalculated - totalCreditAmount)
+
+  // Category breakdown for tab filtering and cancel actions
+  const categoryBreakdown = React.useMemo(() => {
+    const map: Record<"GROCERY" | "GENERAL" | "FROZEN", { count: number; subtotal: number; isCancelled: boolean }> = {
+      GROCERY: { count: 0, subtotal: 0, isCancelled: cancelledCategories.includes("GROCERY") },
+      GENERAL: { count: 0, subtotal: 0, isCancelled: cancelledCategories.includes("GENERAL") },
+      FROZEN: { count: 0, subtotal: 0, isCancelled: cancelledCategories.includes("FROZEN") },
+    }
+    for (const it of items) {
+      const cat = getItemCategory(it)
+      map[cat].count++
+      map[cat].subtotal += (Number(it.qty) || 0) * (Number(it.price) || 0)
+    }
+    return map
+  }, [items, cancelledCategories, getItemCategory])
+
+  const [selectedCatTab, setSelectedCatTab] = React.useState<"ALL" | "GROCERY" | "GENERAL" | "FROZEN">("ALL")
+  const [categoryToCancel, setCategoryToCancel] = React.useState<string | null>(null)
+  const [isProcessingCategory, setIsProcessingCategory] = React.useState(false)
+
+  const handleCancelCategory = async (cat: string) => {
+    try {
+      setIsProcessingCategory(true)
+      const res = await cancelOrderCategoryAction(order.id, cat)
+      if (res.success) {
+        toast.success(`${cat} category has been cancelled. Invoice is marked as VOID (결번).`)
+        setCategoryToCancel(null)
+      } else {
+        toast.error(res.error || `Failed to cancel ${cat} category`)
+      }
+    } finally {
+      setIsProcessingCategory(false)
+    }
+  }
+
+  const handleUncancelCategory = async (cat: string) => {
+    try {
+      setIsProcessingCategory(true)
+      const res = await uncancelOrderCategoryAction(order.id, cat)
+      if (res.success) {
+        toast.success(`${cat} category has been restored.`)
+      } else {
+        toast.error(res.error || `Failed to restore ${cat} category`)
+      }
+    } finally {
+      setIsProcessingCategory(false)
+    }
+  }
 
   // Parse itemized returns and customer note from order.note
   const parsedReturns = React.useMemo(() => {
@@ -813,16 +899,28 @@ export function OrderDetailsDialog({
               </div>
               {order.category_invoices && Object.keys(order.category_invoices).length > 0 ? (
                 <div className="flex flex-wrap gap-1 pt-0.5">
-                  {Object.entries(order.category_invoices).map(([cat, num]) => (
-                    <span
-                      key={cat}
-                      className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md border bg-muted/40 text-foreground shadow-2xs"
-                      title={`${cat} Invoice`}
-                    >
-                      <span className="text-[9.5px] font-bold text-muted-foreground uppercase">{cat.slice(0, 3)}:</span>
-                      <span className="font-semibold">{num}</span>
-                    </span>
-                  ))}
+                  {Object.entries(order.category_invoices).map(([cat, num]) => {
+                    const isVoid = cancelledCategories.includes(cat.toUpperCase())
+                    return (
+                      <span
+                        key={cat}
+                        className={`inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md border shadow-2xs ${
+                          isVoid
+                            ? "bg-destructive/10 border-destructive/30 text-destructive line-through decoration-destructive/60"
+                            : "bg-muted/40 text-foreground"
+                        }`}
+                        title={isVoid ? `${cat} Invoice (VOID / 결번)` : `${cat} Invoice`}
+                      >
+                        <span className="text-[9.5px] font-bold text-muted-foreground uppercase">{cat.slice(0, 3)}:</span>
+                        <span className="font-semibold">{num}</span>
+                        {isVoid && (
+                          <span className="text-[8px] font-bold bg-destructive text-destructive-foreground px-1 py-0 rounded not-italic no-underline">
+                            VOID
+                          </span>
+                        )}
+                      </span>
+                    )
+                  })}
                 </div>
               ) : (
                 <p className="font-mono font-medium text-xs text-foreground">
@@ -847,35 +945,47 @@ export function OrderDetailsDialog({
                 )}
               </div>
 
-              {hasCreditInfo ? (
+              {hasCreditInfo || cancelledCategories.length > 0 ? (
                 <div className="space-y-1 pt-2">
                   <div className="flex items-baseline justify-between text-xs">
-                    <span className="text-muted-foreground font-medium">Order Subtotal:</span>
+                    <span className="text-muted-foreground font-medium">Active Subtotal:</span>
                     <span className="font-semibold tabular-nums text-foreground/80 line-through decoration-muted-foreground/60">
-                      ${totalCalculated.toFixed(2)}
+                      ${activeTotalCalculated.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex items-baseline justify-between text-xs text-destructive font-semibold">
-                    <span className="flex items-center gap-1">
-                      <RotateCcw className="size-3" />
-                      Total Credit:
-                    </span>
-                    <span className="font-bold tabular-nums">
-                      -${totalCreditAmount.toFixed(2)}
-                    </span>
-                  </div>
-                  {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).length > 0 && (
-                    <div className="flex flex-wrap gap-1 py-0.5">
-                      {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([cat, val]) => (
-                        <span
-                          key={cat}
-                          className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded border border-destructive/30 bg-destructive/10 text-destructive font-semibold shadow-2xs"
-                        >
-                          <span className="font-bold">{cat}:</span>
-                          <span>-${Number(val).toFixed(2)}</span>
-                        </span>
-                      ))}
+                  {cancelledCategories.length > 0 && (
+                    <div className="flex items-baseline justify-between text-xs text-destructive font-medium">
+                      <span>Voided:</span>
+                      <span className="font-semibold font-mono text-[11px]">
+                        {cancelledCategories.join(", ")} (Excluded)
+                      </span>
                     </div>
+                  )}
+                  {hasCreditInfo && (
+                    <>
+                      <div className="flex items-baseline justify-between text-xs text-destructive font-semibold">
+                        <span className="flex items-center gap-1">
+                          <RotateCcw className="size-3" />
+                          Total Credit:
+                        </span>
+                        <span className="font-bold tabular-nums">
+                          -${totalCreditAmount.toFixed(2)}
+                        </span>
+                      </div>
+                      {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).length > 0 && (
+                        <div className="flex flex-wrap gap-1 py-0.5">
+                          {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([cat, val]) => (
+                            <span
+                              key={cat}
+                              className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded border border-destructive/30 bg-destructive/10 text-destructive font-semibold shadow-2xs"
+                            >
+                              <span className="font-bold">{cat}:</span>
+                              <span>-${Number(val).toFixed(2)}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               ) : (
@@ -907,7 +1017,7 @@ export function OrderDetailsDialog({
                 </div>
                 <div className="text-right">
                   <p className="text-xl font-black text-primary tabular-nums tracking-tight">
-                    ${(hasCreditInfo ? netTotalCalculated : totalCalculated).toFixed(2)}
+                    ${(hasCreditInfo ? netTotalCalculated : activeTotalCalculated).toFixed(2)}
                   </p>
                 </div>
               </div>
@@ -1035,10 +1145,12 @@ export function OrderDetailsDialog({
           <div className="flex items-center justify-between text-xs font-semibold px-1 shrink-0">
             <span className="flex items-center gap-1.5 text-foreground">
               <Package className="size-4 text-primary" />
-              Ordered Items ({items.length} SKU{items.length !== 1 ? "s" : ""})
+              Ordered Items ({activeItems.length !== items.length ? `${activeItems.length}/${items.length}` : items.length} SKUs)
             </span>
             <div className="flex items-center gap-3">
-              <span className="text-muted-foreground font-medium">Total Units: {totalUnits}</span>
+              <span className="text-muted-foreground font-medium">
+                Active Units: {activeTotalUnits} {activeTotalUnits !== totalUnits && `(Total: ${totalUnits})`}
+              </span>
               <Button
                 variant="outline"
                 size="sm"
@@ -1048,6 +1160,82 @@ export function OrderDetailsDialog({
                 {showAddSearch ? <X className="size-3.5" /> : <Plus className="size-3.5" />}
                 {showAddSearch ? "Cancel" : "Add Item"}
               </Button>
+            </div>
+          </div>
+
+          {/* Category Filter & Partial Cancellation Bar (TRD 6.8) */}
+          <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-lg bg-muted/30 border border-border/70 text-xs shrink-0">
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[11px] font-semibold text-muted-foreground mr-0.5">Category:</span>
+              {(["ALL", "GROCERY", "GENERAL", "FROZEN"] as const).map((cat) => {
+                const count = cat === "ALL" ? items.length : categoryBreakdown[cat].count
+                if (cat !== "ALL" && count === 0) return null
+                const isCatCancelled = cat !== "ALL" && categoryBreakdown[cat].isCancelled
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCatTab(cat)}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all ${
+                      selectedCatTab === cat
+                        ? "bg-primary text-primary-foreground shadow-2xs"
+                        : "bg-background text-foreground hover:bg-muted border border-border/80"
+                    }`}
+                  >
+                    <span>{cat}</span>
+                    <span className={`text-[10px] px-1 rounded font-mono ${
+                      selectedCatTab === cat ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {count}
+                    </span>
+                    {isCatCancelled && (
+                      <span className="text-[9px] font-bold text-destructive bg-destructive/10 px-1 rounded uppercase">
+                        VOID
+                      </span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Category Partial Cancellation & Restore Actions */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {(["GROCERY", "GENERAL", "FROZEN"] as const).map((cat) => {
+                const info = categoryBreakdown[cat]
+                if (info.count === 0) return null
+                if (info.isCancelled) {
+                  return (
+                    <Button
+                      key={cat}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isProcessingCategory}
+                      onClick={() => handleUncancelCategory(cat)}
+                      className="h-6 text-[10.5px] px-2 border-emerald-500/40 text-emerald-600 hover:bg-emerald-500/10 hover:text-emerald-700 font-semibold gap-1"
+                      title={`Restore ${cat} category items and reactivate invoice`}
+                    >
+                      <RotateCcw className="size-2.5" />
+                      Restore {cat}
+                    </Button>
+                  )
+                }
+                return (
+                  <Button
+                    key={cat}
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isProcessingCategory}
+                    onClick={() => setCategoryToCancel(cat)}
+                    className="h-6 text-[10.5px] px-2 border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive font-semibold gap-1"
+                    title={`Cancel all ${info.count} items in ${cat} and mark invoice as VOID`}
+                  >
+                    <Ban className="size-2.5" />
+                    Cancel {cat}
+                  </Button>
+                )
+              })}
             </div>
           </div>
 
@@ -1125,8 +1313,10 @@ export function OrderDetailsDialog({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {items.length > 0 ? (
-                    items.map((item, idx) => {
+                  {(selectedCatTab === "ALL" ? items : items.filter((it) => getItemCategory(it) === selectedCatTab)).length > 0 ? (
+                    (selectedCatTab === "ALL" ? items : items.filter((it) => getItemCategory(it) === selectedCatTab)).map((item, idx) => {
+                      const itemCat = getItemCategory(item)
+                      const isItemCancelled = cancelledCategories.includes(itemCat)
                       const subtotal = Number(item.qty || 0) * Number(item.price || 0)
                       const orig = originalItems.find((o) => o.id === item.id)
 
@@ -1150,7 +1340,11 @@ export function OrderDetailsDialog({
                       return (
                         <TableRow 
                           key={item.id} 
-                          className={`hover:bg-muted/30 transition-colors ${item.isNew ? 'bg-primary/5' : ''}`}
+                          className={`hover:bg-muted/30 transition-colors ${
+                            isItemCancelled 
+                              ? "opacity-55 bg-destructive/5 line-through decoration-destructive/50" 
+                              : (item.isNew ? "bg-primary/5" : "")
+                          }`}
                         >
                           <TableCell className="text-xs text-muted-foreground font-mono text-center">
                             {idx + 1}
@@ -1162,6 +1356,14 @@ export function OrderDetailsDialog({
                               <span className="font-semibold text-xs text-foreground leading-tight">
                                 {item.name_en}
                               </span>
+                              <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-mono font-bold uppercase">
+                                {itemCat}
+                              </Badge>
+                              {isItemCancelled && (
+                                <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 font-bold no-underline not-italic">
+                                  CANCELLED ({itemCat})
+                                </Badge>
+                              )}
                               {item.isNew && (
                                 <Badge variant="default" className="text-[9px] px-1 py-0 h-4 bg-emerald-600">
                                   NEW
@@ -1179,6 +1381,7 @@ export function OrderDetailsDialog({
                           <TableCell className="text-center">
                             <select
                               value={item.uom}
+                              disabled={isItemCancelled}
                               onChange={(e) => handleUomChange(idx, e.target.value)}
                               title={isUomChanged && orig ? `Original: ${orig.uom}` : undefined}
                               className={`h-8 w-20 text-xs font-mono font-bold rounded px-1.5 focus:outline-none focus:ring-1 text-center cursor-pointer shadow-sm transition-colors ${
@@ -1199,6 +1402,7 @@ export function OrderDetailsDialog({
                               type="number"
                               step="0.01"
                               min="0"
+                              disabled={isItemCancelled}
                               value={item.price}
                               onChange={(e) => handlePriceChange(idx, e.target.value)}
                               title={isPriceChanged && orig ? `Original: $${orig.price.toFixed(2)}` : undefined}
@@ -1216,6 +1420,7 @@ export function OrderDetailsDialog({
                               <Input
                                 type="number"
                                 min="0"
+                                disabled={isItemCancelled}
                                 value={item.qty}
                                 onChange={(e) => handleQtyChange(idx, e.target.value)}
                                 title={isQtyChanged && orig ? `Original: ${orig.qty}` : undefined}
@@ -1225,7 +1430,7 @@ export function OrderDetailsDialog({
                                     : isQtyChanged
                                     ? "border-blue-500 text-blue-600 bg-blue-50/70 dark:text-blue-400 dark:bg-blue-950/30 focus-visible:ring-blue-500"
                                     : "bg-background"
-                                }`}
+                                  }`}
                               />
                               {(isQtyChanged || item.qty === 0 || (item.order_qty !== undefined && item.order_qty !== item.qty)) && (
                                 <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium" title={`Original ordered quantity: ${orig?.qty ?? item.order_qty}`}>
@@ -1237,7 +1442,13 @@ export function OrderDetailsDialog({
 
                           {/* Subtotal */}
                           <TableCell className="text-right tabular-nums text-xs font-bold text-primary">
-                            ${subtotal.toFixed(2)}
+                            {isItemCancelled ? (
+                              <span className="text-muted-foreground line-through decoration-destructive text-[11px]">
+                                ${subtotal.toFixed(2)}
+                              </span>
+                            ) : (
+                              `$${subtotal.toFixed(2)}`
+                            )}
                           </TableCell>
 
                           {/* Delete Action */}
@@ -1398,6 +1609,22 @@ export function OrderDetailsDialog({
           executeSaveChanges()
         }}
         isPending={isSaving}
+      />
+
+      {/* Category Partial Cancellation Confirmation (TRD 6.8) */}
+      <ConfirmDialog
+        open={Boolean(categoryToCancel)}
+        onOpenChange={(open) => !isProcessingCategory && !open && setCategoryToCancel(null)}
+        title={`Cancel ${categoryToCancel} Category`}
+        description={`Are you sure you want to cancel the ${categoryToCancel} category? All items in this category will be excluded from active billing and warehouse picking. The invoice number will be permanently preserved as VOID (결번) for audit compliance.`}
+        confirmText={`Cancel ${categoryToCancel}`}
+        variant="destructive"
+        onConfirm={() => {
+          if (categoryToCancel) {
+            handleCancelCategory(categoryToCancel)
+          }
+        }}
+        isPending={isProcessingCategory}
       />
     </Dialog>
   )
