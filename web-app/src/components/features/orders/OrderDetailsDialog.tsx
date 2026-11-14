@@ -18,7 +18,10 @@ import {
   AlertCircle,
   Save,
   Pencil,
-  CalendarCheck
+  CalendarCheck,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw
 } from "lucide-react"
 
 import {
@@ -98,6 +101,62 @@ const formatDateOnlyForDisplay = (value: string) => {
     month: "short",
     day: "numeric",
   })
+}
+
+export interface ParsedReturnItem {
+  itemName: string
+  qty: number
+  uom: string
+  reason: string
+  creditAmount: number
+}
+
+export function parseOrderReturns(rawNote?: string | null): {
+  returns: ParsedReturnItem[]
+  totalReturnQty: number
+  totalCreditAmount: number
+  rawReturnsText: string
+  customerNote: string
+} {
+  if (!rawNote) {
+    return { returns: [], totalReturnQty: 0, totalCreditAmount: 0, rawReturnsText: "", customerNote: "" }
+  }
+
+  let text = String(rawNote)
+  text = text.replace(/\[\s*백오더(?:\s*발생)?[^\]]*\]/gi, "")
+  text = text.replace(/\[\s*(?:알람|알림|경고|시스템|안내|NOTICE|ALERT|ALARM|SYSTEM|WARNING)[^\]]*\]/gi, "")
+
+  const returnsMatch = text.match(/\[Returns:\s*([\s\S]*?)\]/i)
+  let rawReturnsText = ""
+  const returns: ParsedReturnItem[] = []
+
+  if (returnsMatch) {
+    rawReturnsText = returnsMatch[1].trim()
+    text = text.replace(returnsMatch[0], "").trim()
+
+    const itemRegex = /(?:^|,\s*)(.+?)\s+x(\d+)([A-Za-z]+)?\s*\(([^,)]+),\s*-\$?([0-9.]+)\)/g
+    let m: RegExpExecArray | null
+    while ((m = itemRegex.exec(rawReturnsText)) !== null) {
+      returns.push({
+        itemName: m[1].trim(),
+        qty: parseInt(m[2], 10),
+        uom: m[3] ? m[3].toUpperCase() : "EA",
+        reason: m[4].trim(),
+        creditAmount: parseFloat(m[5]),
+      })
+    }
+  }
+
+  const totalReturnQty = returns.reduce((sum, r) => sum + r.qty, 0)
+  const totalCreditAmount = returns.reduce((sum, r) => sum + r.creditAmount, 0)
+
+  return {
+    returns,
+    totalReturnQty,
+    totalCreditAmount: Math.round(totalCreditAmount * 100) / 100,
+    rawReturnsText,
+    customerNote: text.trim(),
+  }
 }
 
 export function OrderDetailsDialog({ 
@@ -352,6 +411,23 @@ export function OrderDetailsDialog({
 
   const netTotalCalculated = Math.max(0, totalCalculated - totalCreditAmount)
 
+  // Parse itemized returns and customer note from order.note
+  const parsedReturns = React.useMemo(() => {
+    return parseOrderReturns(order.note)
+  }, [order.note])
+
+  const hasCreditInfo =
+    totalCreditAmount > 0 ||
+    parsedReturns.returns.length > 0 ||
+    Boolean(parsedReturns.rawReturnsText)
+
+  const [showCreditDetails, setShowCreditDetails] = React.useState<boolean>(() => {
+    return (
+      Boolean(order.category_credits && Object.keys(order.category_credits).length > 0) ||
+      Boolean(order.note && order.note.includes("[Returns:"))
+    )
+  })
+
   // Header change tracking
   const isOrderDateChanged =
     orderDateInput !== formatForDateTimeInput(order.order_date || order.created_at)
@@ -473,7 +549,7 @@ export function OrderDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl w-full p-6 gap-6 max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-5xl w-full p-6 gap-5 max-h-[90vh] flex flex-col">
         {/* Header */}
         <DialogHeader className="space-y-1.5 shrink-0 pr-12">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -532,272 +608,427 @@ export function OrderDetailsDialog({
           </div>
         )}
 
-        {/* Summary Info Cards (Editable Header) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 shrink-0">
-          <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-              <div className="flex items-center gap-1.5">
-                <Store className="size-3.5" />
-                <span>Store</span>
-              </div>
-              {order.store?.price_tier && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 font-bold bg-primary/10 text-primary">
-                  {order.store.price_tier}
-                </Badge>
-              )}
-            </div>
-            <p className="font-semibold text-sm truncate" title={order.store?.name || "-"}>
-              {order.store?.name || "-"}
-            </p>
-            {order.store?.credit_limit !== undefined && order.store.credit_limit > 0 && (
-              <span className="text-[10px] font-mono text-muted-foreground block truncate">
-                한도: ₩{order.store.credit_limit.toLocaleString()}
-              </span>
-            )}
-          </div>
-
-          {/* Client (화주사) Card - Editable */}
-          <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-              <div className="flex items-center gap-1.5">
-                <Building2 className="size-3.5" />
-                <span>Client</span>
-              </div>
-              {isClientChanged && (
-                <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/30">
-                  Modified
-                </Badge>
-              )}
-            </div>
-            {clients && clients.length > 0 ? (
-              <Select value={selectedClientId} onValueChange={(val) => setSelectedClientId(val || "")}>
-                <SelectTrigger className="h-7 text-xs bg-background font-medium px-2 py-0 border-muted-foreground/30 focus-visible:ring-primary w-full">
-                  <SelectValue placeholder="Select Client">
-                    {clients.find((c) => c.id === selectedClientId)?.name || order.client?.name || "Select Client"}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((c) => (
-                    <SelectItem key={c.id} value={c.id} className="text-xs">
-                      <span className="font-medium">{c.name}</span>
-                      <span className="text-[10px] text-muted-foreground ml-1 font-mono">({c.code})</span>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            ) : (
-              <p className="font-semibold text-sm truncate" title={order.client?.name || "-"}>
-                {order.client?.name || "-"}
-              </p>
-            )}
-          </div>
-
-          <div className="rounded-lg border bg-muted/30 p-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
-              <div className="flex items-center gap-1.5">
-                <Receipt className="size-3.5" />
-                <span>Invoice No.</span>
-              </div>
-              {order.category_invoices && Object.keys(order.category_invoices).length > 1 && (
-                <span className="text-[10px] font-semibold text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-sans">
-                  {Object.keys(order.category_invoices).length} Invoices
-                </span>
-              )}
-            </div>
-            {order.category_invoices && Object.keys(order.category_invoices).length > 0 ? (
-              <div className="flex flex-wrap gap-1 pt-0.5">
-                {Object.entries(order.category_invoices).map(([cat, num]) => (
-                  <span
-                    key={cat}
-                    className="inline-flex items-center gap-1 text-[11px] font-mono px-1.5 py-0.5 rounded border bg-background text-foreground shadow-2xs"
-                    title={`${cat} Invoice`}
-                  >
-                    <span className="text-[9px] font-bold text-muted-foreground uppercase">{cat.slice(0, 3)}:</span>
-                    <span className="font-semibold">{num}</span>
-                  </span>
-                ))}
-              </div>
-            ) : (
-              <p className="font-mono font-medium text-sm text-foreground">
-                {order.invoice_number || "-"}
-              </p>
-            )}
-          </div>
-
-          {/* Editable Order Date */}
-          <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1">
-            <div className="flex items-center gap-1.5 text-xs text-primary font-semibold">
-              <Calendar className="size-3.5" />
-              <span>Order Date</span>
-            </div>
-            {isEditingDate ? (
-              <div className="flex items-center gap-1">
-                <Input
-                  type="datetime-local"
-                  value={orderDateInput}
-                  onChange={(e) => setOrderDateInput(e.target.value)}
-                  autoFocus
-                  className="h-7 text-xs bg-background font-mono px-2 py-0 border-primary/40 focus-visible:ring-primary"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditingDate(false)}
-                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-                  title="Done editing date"
-                >
-                  <Check className="size-3.5 text-primary" />
-                </Button>
-              </div>
-            ) : (
-              <div
-                onClick={() => setIsEditingDate(true)}
-                className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1.5 py-0.5 -mx-1.5 transition-colors"
-                title="Click to edit order date"
-              >
-                <p className="text-xs font-medium text-foreground truncate">
-                  {formattedDisplayDate}
-                </p>
-                <span className="text-[10px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5 shrink-0 ml-1">
-                  <Pencil className="size-2.5" />
-                  Edit
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Editable Invoice Date (TRD 6.3) */}
-          <div
-            className={`rounded-lg border p-3 space-y-1 ${
-              invoiceDateError ? "border-destructive/50 bg-destructive/5" : "border-primary/30 bg-primary/5"
-            }`}
-          >
-            <div
-              className={`flex items-center gap-1.5 text-xs font-semibold ${
-                invoiceDateError ? "text-destructive" : "text-primary"
-              }`}
-            >
-              <CalendarCheck className="size-3.5" />
-              <span>Invoice Date</span>
-            </div>
-            {isEditingInvoiceDate ? (
-              <div className="flex items-center gap-1">
-                <Input
-                  id="invoice-date-input"
-                  type="date"
-                  value={invoiceDateInput}
-                  min={orderDay || undefined}
-                  onChange={(e) => setInvoiceDateInput(e.target.value)}
-                  autoFocus
-                  className="h-7 text-xs bg-background font-mono px-2 py-0 border-primary/40 focus-visible:ring-primary"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsEditingInvoiceDate(false)}
-                  className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
-                  title="Done editing invoice date"
-                >
-                  <Check className="size-3.5 text-primary" />
-                </Button>
-              </div>
-            ) : (
-              <div
-                onClick={() => setIsEditingInvoiceDate(true)}
-                className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1.5 py-0.5 -mx-1.5 transition-colors"
-                title="Click to edit invoice date"
-              >
-                {invoiceDateInput ? (
-                  <p className="text-xs font-medium text-foreground truncate tabular-nums">
-                    {formatDateOnlyForDisplay(invoiceDateInput)}
-                  </p>
-                ) : (
-                  <p className="text-xs italic text-muted-foreground truncate">Not set</p>
+        {/* Summary Info Cards (Structured 3-Panel High-Visibility Layout) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 shrink-0">
+          {/* Panel 1: Store & Client */}
+          <div className="rounded-xl border bg-card p-3.5 flex flex-col justify-between space-y-3 shadow-2xs">
+            {/* Store Section */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-1.5">
+                  <Store className="size-3.5 text-primary" />
+                  <span className="font-semibold text-foreground/80">Store</span>
+                </div>
+                {order.store?.price_tier && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 font-bold bg-primary/10 text-primary border-primary/20">
+                    {order.store.price_tier}
+                  </Badge>
                 )}
-                <span className="flex items-center gap-1 shrink-0 ml-1">
-                  {invoiceDateInput && (
-                    <button
-                      id="invoice-date-clear"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setInvoiceDateInput("")
-                      }}
-                      className="text-muted-foreground hover:text-destructive transition-colors"
-                      title="Clear invoice date"
-                    >
-                      <X className="size-3" />
-                    </button>
-                  )}
-                  <span className="text-[10px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5">
-                    <Pencil className="size-2.5" />
-                    Edit
-                  </span>
-                </span>
               </div>
-            )}
-            {invoiceDateError && (
-              <p className="text-[10px] leading-tight text-destructive">
-                Must be on or after {orderDay}
+              <p className="font-bold text-sm text-foreground leading-snug break-words" title={order.store?.name || "-"}>
+                {order.store?.name || "-"}
               </p>
-            )}
-          </div>
-
-          <div className="rounded-lg border bg-primary/10 border-primary/30 p-3 space-y-1">
-            <div className="flex items-center justify-between text-xs text-primary font-bold">
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="size-3.5" />
-                <span>Total Amount</span>
-              </div>
-              {totalCreditAmount > 0 && (
-                <Badge variant="destructive" className="text-[9px] px-1 py-0 h-4 font-mono font-bold">
-                  Credit Applied
-                </Badge>
+              {order.store?.credit_limit !== undefined && order.store.credit_limit > 0 && (
+                <span className="text-[11px] font-mono text-muted-foreground block">
+                  Credit Limit: ₩{order.store.credit_limit.toLocaleString()}
+                </span>
               )}
             </div>
-            {totalCreditAmount > 0 ? (
-              <div className="space-y-0.5 pt-0.5">
-                <div className="flex items-baseline justify-between text-[11px]">
-                  <span className="text-muted-foreground">Subtotal:</span>
-                  <span className="font-semibold tabular-nums text-foreground/80 line-through decoration-muted-foreground/60">
-                    ${totalCalculated.toFixed(2)}
-                  </span>
+
+            {/* Client Section */}
+            <div className="pt-2 border-t border-border/60 space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-1.5">
+                  <Building2 className="size-3.5 text-primary" />
+                  <span>Client</span>
                 </div>
-                <div className="flex items-baseline justify-between text-[11px] text-destructive font-semibold">
-                  <span>Total Credit:</span>
-                  <span className="font-bold tabular-nums shrink-0">
-                    -${totalCreditAmount.toFixed(2)}
-                  </span>
-                </div>
-                {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).length > 0 && (
-                  <div className="flex flex-wrap gap-1 py-0.5">
-                    {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([cat, val]) => (
-                      <span
-                        key={cat}
-                        className="inline-flex items-center gap-1 text-[9.5px] font-mono px-1 py-0.2 rounded border border-destructive/30 bg-destructive/10 text-destructive font-semibold shadow-2xs"
-                      >
-                        <span className="font-bold">{cat}:</span>
-                        <span>-${Number(val).toFixed(2)}</span>
-                      </span>
+                {isClientChanged && (
+                  <Badge variant="outline" className="text-[9px] px-1 py-0 h-4 bg-primary/10 text-primary border-primary/30">
+                    Modified
+                  </Badge>
+                )}
+              </div>
+              {clients && clients.length > 0 ? (
+                <Select value={selectedClientId} onValueChange={(val) => setSelectedClientId(val || "")}>
+                  <SelectTrigger className="h-7 text-xs bg-background font-medium px-2 py-0 border-muted-foreground/30 focus-visible:ring-primary w-full">
+                    <SelectValue placeholder="Select Client">
+                      {clients.find((c) => c.id === selectedClientId)?.name || order.client?.name || "Select Client"}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id} className="text-xs">
+                        <span className="font-medium">{c.name}</span>
+                        <span className="text-[10px] text-muted-foreground ml-1 font-mono">({c.code})</span>
+                      </SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="font-semibold text-xs text-foreground truncate" title={order.client?.name || "-"}>
+                  {order.client?.name || "-"}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Panel 2: Schedule & Invoices */}
+          <div className="rounded-xl border bg-card p-3.5 flex flex-col justify-between space-y-3 shadow-2xs">
+            {/* Dates: 2-column grid */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Order Date */}
+              <div className="rounded-lg border border-primary/25 bg-primary/5 p-2 space-y-1">
+                <div className="flex items-center gap-1 text-[11px] text-primary font-semibold">
+                  <Calendar className="size-3" />
+                  <span>Order Date</span>
+                </div>
+                {isEditingDate ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      type="datetime-local"
+                      value={orderDateInput}
+                      onChange={(e) => setOrderDateInput(e.target.value)}
+                      autoFocus
+                      className="h-6 text-[11px] bg-background font-mono px-1.5 py-0 border-primary/40 focus-visible:ring-primary"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditingDate(false)}
+                      className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                      title="Done editing date"
+                    >
+                      <Check className="size-3 text-primary" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setIsEditingDate(true)}
+                    className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1 py-0.5 -mx-1 transition-colors"
+                    title="Click to edit order date"
+                  >
+                    <p className="text-[11px] font-medium text-foreground truncate">
+                      {formattedDisplayDate}
+                    </p>
+                    <span className="text-[9px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5 shrink-0 ml-0.5">
+                      <Pencil className="size-2" />
+                      Edit
+                    </span>
                   </div>
                 )}
-                <div className="flex items-baseline justify-between border-t border-primary/25 pt-1 mt-0.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-primary">Net Total:</span>
-                  <p className="text-base font-extrabold text-primary tabular-nums">
-                    ${netTotalCalculated.toFixed(2)}
+              </div>
+
+              {/* Invoice Date */}
+              <div
+                className={`rounded-lg border p-2 space-y-1 ${
+                  invoiceDateError ? "border-destructive/50 bg-destructive/5" : "border-primary/25 bg-primary/5"
+                }`}
+              >
+                <div
+                  className={`flex items-center gap-1 text-[11px] font-semibold ${
+                    invoiceDateError ? "text-destructive" : "text-primary"
+                  }`}
+                >
+                  <CalendarCheck className="size-3" />
+                  <span>Invoice Date</span>
+                </div>
+                {isEditingInvoiceDate ? (
+                  <div className="flex items-center gap-1">
+                    <Input
+                      id="invoice-date-input"
+                      type="date"
+                      value={invoiceDateInput}
+                      min={orderDay || undefined}
+                      onChange={(e) => setInvoiceDateInput(e.target.value)}
+                      autoFocus
+                      className="h-6 text-[11px] bg-background font-mono px-1.5 py-0 border-primary/40 focus-visible:ring-primary"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsEditingInvoiceDate(false)}
+                      className="size-6 shrink-0 text-muted-foreground hover:text-foreground"
+                      title="Done editing invoice date"
+                    >
+                      <Check className="size-3 text-primary" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => setIsEditingInvoiceDate(true)}
+                    className="flex items-center justify-between cursor-pointer group hover:bg-primary/10 rounded px-1 py-0.5 -mx-1 transition-colors"
+                    title="Click to edit invoice date"
+                  >
+                    {invoiceDateInput ? (
+                      <p className="text-[11px] font-medium text-foreground truncate tabular-nums">
+                        {formatDateOnlyForDisplay(invoiceDateInput)}
+                      </p>
+                    ) : (
+                      <p className="text-[11px] italic text-muted-foreground truncate">Not set</p>
+                    )}
+                    <span className="flex items-center gap-0.5 shrink-0 ml-0.5">
+                      {invoiceDateInput && (
+                        <button
+                          id="invoice-date-clear"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setInvoiceDateInput("")
+                          }}
+                          className="text-muted-foreground hover:text-destructive transition-colors"
+                          title="Clear invoice date"
+                        >
+                          <X className="size-2.5" />
+                        </button>
+                      )}
+                      <span className="text-[9px] text-primary/70 group-hover:text-primary font-medium flex items-center gap-0.5">
+                        <Pencil className="size-2" />
+                        Edit
+                      </span>
+                    </span>
+                  </div>
+                )}
+                {invoiceDateError && (
+                  <p className="text-[9px] leading-tight text-destructive">
+                    Must be on or after {orderDay}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Invoices List */}
+            <div className="pt-2 border-t border-border/60 space-y-1">
+              <div className="flex items-center justify-between text-xs text-muted-foreground font-medium">
+                <div className="flex items-center gap-1.5">
+                  <Receipt className="size-3.5 text-primary" />
+                  <span>Invoice Numbers</span>
+                </div>
+                {order.category_invoices && Object.keys(order.category_invoices).length > 1 && (
+                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-semibold">
+                    {Object.keys(order.category_invoices).length} Invoices
+                  </Badge>
+                )}
+              </div>
+              {order.category_invoices && Object.keys(order.category_invoices).length > 0 ? (
+                <div className="flex flex-wrap gap-1 pt-0.5">
+                  {Object.entries(order.category_invoices).map(([cat, num]) => (
+                    <span
+                      key={cat}
+                      className="inline-flex items-center gap-1 text-[11px] font-mono px-2 py-0.5 rounded-md border bg-muted/40 text-foreground shadow-2xs"
+                      title={`${cat} Invoice`}
+                    >
+                      <span className="text-[9.5px] font-bold text-muted-foreground uppercase">{cat.slice(0, 3)}:</span>
+                      <span className="font-semibold">{num}</span>
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <p className="font-mono font-medium text-xs text-foreground">
+                  {order.invoice_number || "-"}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Panel 3: Billing & Net Total */}
+          <div className="rounded-xl border border-primary/25 bg-card p-3.5 flex flex-col justify-between space-y-2 shadow-2xs">
+            <div>
+              <div className="flex items-center justify-between text-xs font-semibold text-primary">
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="size-3.5" />
+                  <span>Billing Summary</span>
+                </div>
+                {hasCreditInfo && (
+                  <Badge variant="destructive" className="text-[9px] px-1.5 py-0 h-4 font-mono font-bold">
+                    Credit Applied
+                  </Badge>
+                )}
+              </div>
+
+              {hasCreditInfo ? (
+                <div className="space-y-1 pt-2">
+                  <div className="flex items-baseline justify-between text-xs">
+                    <span className="text-muted-foreground font-medium">Order Subtotal:</span>
+                    <span className="font-semibold tabular-nums text-foreground/80 line-through decoration-muted-foreground/60">
+                      ${totalCalculated.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between text-xs text-destructive font-semibold">
+                    <span className="flex items-center gap-1">
+                      <RotateCcw className="size-3" />
+                      Total Credit:
+                    </span>
+                    <span className="font-bold tabular-nums">
+                      -${totalCreditAmount.toFixed(2)}
+                    </span>
+                  </div>
+                  {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).length > 0 && (
+                    <div className="flex flex-wrap gap-1 py-0.5">
+                      {Object.entries(categoryCredits).filter(([_, v]) => Number(v) > 0).map(([cat, val]) => (
+                        <span
+                          key={cat}
+                          className="inline-flex items-center gap-1 text-[9px] font-mono px-1.5 py-0.2 rounded border border-destructive/30 bg-destructive/10 text-destructive font-semibold shadow-2xs"
+                        >
+                          <span className="font-bold">{cat}:</span>
+                          <span>-${Number(val).toFixed(2)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="pt-2 text-xs text-muted-foreground">
+                  Standard invoice without return deductions.
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2 border-t border-border/60">
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                    {hasCreditInfo ? "Net Payable Total" : "Total Amount"}
+                  </span>
+                  {hasCreditInfo && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowCreditDetails((prev) => !prev)}
+                      className="h-6 px-1.5 mt-0.5 text-[11px] font-medium text-destructive hover:text-destructive hover:bg-destructive/10 -ml-1 gap-1"
+                    >
+                      <RotateCcw className="size-3" />
+                      <span>{showCreditDetails ? "Hide Credit Details" : "View Credit Items"}</span>
+                      {showCreditDetails ? <ChevronUp className="size-3" /> : <ChevronDown className="size-3" />}
+                    </Button>
+                  )}
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-black text-primary tabular-nums tracking-tight">
+                    ${(hasCreditInfo ? netTotalCalculated : totalCalculated).toFixed(2)}
                   </p>
                 </div>
               </div>
-            ) : (
-              <p className="text-base font-extrabold text-primary tabular-nums">
-                ${totalCalculated.toFixed(2)}
-              </p>
-            )}
+            </div>
           </div>
         </div>
+
+        {/* Credit & Returns Breakdown Panel (Expands when toggled) */}
+        {hasCreditInfo && showCreditDetails && (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3.5 space-y-3 shrink-0 animate-in fade-in slide-in-from-top-1 duration-200">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <RotateCcw className="size-4 text-destructive" />
+                <h4 className="text-xs font-bold text-destructive tracking-wide uppercase">
+                  Credit & Return Items Breakdown (반품 및 크레딧 상세 명세)
+                </h4>
+                {parsedReturns.returns.length > 0 && (
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4 border-destructive/40 text-destructive font-mono">
+                    {parsedReturns.returns.length} Return Item{parsedReturns.returns.length > 1 ? "s" : ""}
+                  </Badge>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-destructive font-mono">
+                  Total Deducted: -${totalCreditAmount.toFixed(2)}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-6 text-muted-foreground hover:text-destructive"
+                  onClick={() => setShowCreditDetails(false)}
+                  title="Close credit breakdown"
+                >
+                  <X className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Itemized Table */}
+            {parsedReturns.returns.length > 0 ? (
+              <div className="rounded-lg border border-destructive/20 bg-background overflow-hidden shadow-2xs">
+                <table className="w-full text-xs text-left">
+                  <thead className="bg-destructive/10 text-[10px] uppercase font-bold text-destructive border-b border-destructive/20">
+                    <tr>
+                      <th className="py-1.5 px-3 w-10 text-center">#</th>
+                      <th className="py-1.5 px-3">Return Item Name</th>
+                      <th className="py-1.5 px-3 w-28 text-center">Returned Qty</th>
+                      <th className="py-1.5 px-3 w-28 text-center">Reason</th>
+                      <th className="py-1.5 px-3 w-32 text-right">Credit Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {parsedReturns.returns.map((ret, idx) => (
+                      <tr key={idx} className="hover:bg-muted/40 transition-colors">
+                        <td className="py-1.5 px-3 text-center font-mono text-[11px] text-muted-foreground">
+                          {idx + 1}
+                        </td>
+                        <td className="py-1.5 px-3 font-semibold text-foreground">
+                          {ret.itemName}
+                        </td>
+                        <td className="py-1.5 px-3 text-center font-mono font-medium">
+                          <span className="bg-muted px-1.5 py-0.5 rounded text-[11px]">
+                            {ret.qty} {ret.uom}
+                          </span>
+                        </td>
+                        <td className="py-1.5 px-3 text-center">
+                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 border-amber-500/40 text-amber-600 bg-amber-500/10 font-medium">
+                            {ret.reason}
+                          </Badge>
+                        </td>
+                        <td className="py-1.5 px-3 text-right font-mono font-bold text-destructive tabular-nums">
+                          {ret.creditAmount > 0 ? `-$${ret.creditAmount.toFixed(2)}` : "-"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot className="bg-destructive/5 font-bold border-t border-destructive/20 text-xs">
+                    <tr>
+                      <td colSpan={2} className="py-1.5 px-3 text-muted-foreground">
+                        Total Returned Items
+                      </td>
+                      <td className="py-1.5 px-3 text-center font-mono">
+                        {parsedReturns.totalReturnQty} EA
+                      </td>
+                      <td></td>
+                      <td className="py-1.5 px-3 text-right font-mono text-destructive">
+                        -${totalCreditAmount.toFixed(2)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ) : parsedReturns.rawReturnsText ? (
+              <div className="rounded-lg border border-destructive/20 bg-background p-2.5 text-xs">
+                <span className="font-semibold text-destructive block mb-1">Raw Return Notes:</span>
+                <p className="font-mono text-foreground/90 whitespace-pre-wrap">{parsedReturns.rawReturnsText}</p>
+              </div>
+            ) : null}
+
+            {/* Customer Memo if present */}
+            {parsedReturns.customerNote && (
+              <div className="rounded-lg border border-border/80 bg-background/80 p-2.5 text-xs space-y-1">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                  Customer Memo (주문자 추가 메모)
+                </span>
+                <p className="text-foreground italic">{parsedReturns.customerNote}</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Customer Note Callout when Credit panel is closed */}
+        {!showCreditDetails && parsedReturns.customerNote && (
+          <div className="rounded-lg border bg-muted/40 p-2.5 text-xs flex items-start gap-2 shrink-0">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground shrink-0 mt-0.5">
+              Memo:
+            </span>
+            <p className="text-foreground/90 italic">{parsedReturns.customerNote}</p>
+          </div>
+        )}
 
         {/* Ordered Line Items Section */}
         <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
