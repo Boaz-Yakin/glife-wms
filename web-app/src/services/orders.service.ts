@@ -5,6 +5,7 @@ import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { validateInvoiceDate } from "@/lib/date"
+import { parseCancelledCategories, normalizeCategory } from "@/lib/orders"
 
 const getClient = async () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -668,28 +669,6 @@ export async function permanentlyDeleteOrder(orderId: string): Promise<{ success
   }
 
   return { success: true, error: null }
-}
-
-/**
- * Orders의 cancelled_categories 및 note에서 취소된 카테고리 목록을 안전하게 파싱합니다.
- */
-export function parseCancelledCategories(rawNote?: string | null, directCancelled?: string[] | null): string[] {
-  const result = new Set<string>()
-  if (Array.isArray(directCancelled)) {
-    directCancelled.forEach((c) => {
-      if (c && typeof c === 'string') result.add(c.toUpperCase().trim())
-    })
-  }
-  if (rawNote) {
-    const match = String(rawNote).match(/\[Cancelled(?:\s*Categories)?:\s*([^\]]+)\]/i)
-    if (match && match[1]) {
-      match[1].split(',').forEach((c) => {
-        const trimmed = c.trim().toUpperCase()
-        if (trimmed) result.add(trimmed)
-      })
-    }
-  }
-  return Array.from(result)
 }
 
 /**

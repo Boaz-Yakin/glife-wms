@@ -46,7 +46,8 @@ import { Button } from "@/components/ui/button"
 import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { OrderData, OrderItemData, getOrderDetails, parseCancelledCategories } from "@/services/orders.service"
+import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
+import { parseCancelledCategories } from "@/lib/orders"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { 
   updateOrderAction, 
