@@ -58,6 +58,7 @@ import { exportToExcel } from "@/lib/export"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { BulkImportDialog } from "./BulkImportDialog"
 import { ItemFormDialog } from "./ItemFormDialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,34 +70,50 @@ import {
 
 const ActionCell = ({ item, onEdit }: { item: ItemData, onEdit: (item: ItemData) => void }) => {
   const [isDeleting, setIsDeleting] = React.useState(false)
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this item?")) return
+  const [showConfirm, setShowConfirm] = React.useState(false)
+
+  const executeDelete = async () => {
     setIsDeleting(true)
     const res = await deleteItemAction(item.id)
     setIsDeleting(false)
+    setShowConfirm(false)
     if (res.error) toast.error(res.error)
     else toast.success("Item deleted successfully")
   }
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted focus:outline-none">
-        <span className="sr-only">Open menu</span>
-        {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuGroup>
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
-            <Edit2 className="mr-2 h-4 w-4" />
-            Edit Item
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleDelete} className="text-red-600 focus:text-red-600 cursor-pointer">
-            <Trash className="mr-2 h-4 w-4" />
-            Delete Item
-          </DropdownMenuItem>
-        </DropdownMenuGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="h-8 w-8 p-0 inline-flex items-center justify-center rounded-md hover:bg-muted focus:outline-none">
+          <span className="sr-only">Open menu</span>
+          {isDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+            <DropdownMenuItem onClick={() => onEdit(item)} className="cursor-pointer">
+              <Edit2 className="mr-2 h-4 w-4" />
+              Edit Item
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setShowConfirm(true)} className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer">
+              <Trash className="mr-2 h-4 w-4" />
+              Delete Item
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      <ConfirmDialog
+        open={showConfirm}
+        onOpenChange={(open) => !isDeleting && setShowConfirm(open)}
+        title="Delete Item"
+        description={`Are you sure you want to delete "${item.name_en}" (${item.sku})?`}
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={executeDelete}
+        isPending={isDeleting}
+      />
+    </>
   )
 }
 

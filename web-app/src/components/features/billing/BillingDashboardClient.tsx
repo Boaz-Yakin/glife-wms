@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Table,
   TableBody,
@@ -55,23 +56,21 @@ export function BillingDashboardClient({
     subscription.billing_cycle || "MONTHLY"
   )
   const [loadingTier, setLoadingTier] = useState<string | null>(null)
+  const [planToChange, setPlanToChange] = useState<PlanTier | null>(null)
 
   const currentPlan = subscription.plan_tier || "PRO"
   const currentPlanConfig = PLANS[currentPlan]
 
-  const handlePlanChange = async (tier: PlanTier) => {
+  const handlePlanChange = (tier: PlanTier) => {
     if (tier === currentPlan && billingCycle === subscription.billing_cycle) {
       return
     }
+    setPlanToChange(tier)
+  }
 
-    if (
-      !confirm(
-        `요금제를 '${PLANS[tier].name}' (${billingCycle === "ANNUAL" ? "연간" : "월간"}) 플랜으로 변경하시겠습니까?`
-      )
-    ) {
-      return
-    }
-
+  const executePlanChange = async () => {
+    if (!planToChange) return
+    const tier = planToChange
     setLoadingTier(tier)
     const fd = new FormData()
     fd.append("plan_tier", tier)
@@ -79,6 +78,7 @@ export function BillingDashboardClient({
 
     const res = await changePlanServerAction(fd)
     setLoadingTier(null)
+    setPlanToChange(null)
 
     if (res.error) {
       toast.error(res.error)
@@ -497,6 +497,20 @@ export function BillingDashboardClient({
           </Table>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!planToChange}
+        onOpenChange={(open) => !open && setPlanToChange(null)}
+        title="요금제 변경"
+        description={
+          planToChange
+            ? `'${PLANS[planToChange].name}' (${billingCycle === "ANNUAL" ? "연간" : "월간"}) 플랜으로 변경하시겠습니까?`
+            : undefined
+        }
+        confirmText="변경"
+        onConfirm={executePlanChange}
+        isPending={!!loadingTier}
+      />
     </div>
   )
 }

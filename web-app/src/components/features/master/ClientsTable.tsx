@@ -25,6 +25,7 @@ import {
   Coins,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { useRouter } from "next/navigation"
 
 import {
@@ -58,6 +59,7 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
   const [editingClient, setEditingClient] = React.useState<ClientData | null>(null)
   const [loading, setLoading] = React.useState(false)
   const [actionId, setActionId] = React.useState<string | null>(null)
+  const [clientToDelete, setClientToDelete] = React.useState<ClientData | null>(null)
 
   const handleOpenCreate = () => {
     setEditingClient(null)
@@ -97,13 +99,17 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
     }
   }
 
-  const handleDelete = async (client: ClientData) => {
-    if (!confirm(`Are you sure you want to delete client "${client.name}"?\nThis cannot be undone.`)) {
-      return
-    }
+  const handleDelete = (client: ClientData) => {
+    setClientToDelete(client)
+  }
+
+  const executeDeleteClient = async () => {
+    if (!clientToDelete) return
+    const client = clientToDelete
     setActionId(client.id)
     const res = await deleteClientAction(client.id)
     setActionId(null)
+    setClientToDelete(null)
     if (res.error) {
       toast.error(res.error)
     } else {
@@ -312,6 +318,22 @@ export function ClientsTable({ data, activeClientId }: ClientsTableProps) {
         onOpenChange={setIsDialogOpen}
         onSubmit={handleSubmit}
         loading={loading}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!clientToDelete}
+        onOpenChange={(open) => !open && !actionId && setClientToDelete(null)}
+        title="Delete Client"
+        description={
+          clientToDelete
+            ? `Are you sure you want to delete client "${clientToDelete.name}"? This action cannot be undone.`
+            : undefined
+        }
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={executeDeleteClient}
+        isPending={!!actionId}
       />
     </div>
   )

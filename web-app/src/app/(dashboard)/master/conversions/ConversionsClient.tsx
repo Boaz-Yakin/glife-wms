@@ -10,6 +10,8 @@ import { ItemConversion } from "@/services/conversion.service"
 import { ConversionsTable } from "@/components/features/master/ConversionsTable"
 import { ConversionFormDialog } from "@/components/features/master/ConversionFormDialog"
 import { ManualDekitDialog } from "@/components/features/master/ManualDekitDialog"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
+import { toast } from "sonner"
 import {
   createConversionAction,
   deleteConversionAction,
@@ -32,6 +34,7 @@ export function ConversionsClient({
   const [formOpen, setFormOpen] = useState<boolean>(false)
   const [dekitOpen, setDekitOpen] = useState<boolean>(false)
   const [selectedConversion, setSelectedConversion] = useState<ItemConversion | null>(null)
+  const [deletingRuleId, setDeletingRuleId] = useState<string | null>(null)
   const [loading, setLoading] = useState<boolean>(false)
 
   React.useEffect(() => {
@@ -49,8 +52,9 @@ export function ConversionsClient({
     try {
       const res = await createConversionAction(formData)
       if (res.error) {
-        alert("오류: " + res.error)
+        toast.error("규칙 생성 실패: " + res.error)
       } else {
+        toast.success("변환 규칙이 생성되었습니다.")
         setFormOpen(false)
       }
     } finally {
@@ -59,12 +63,20 @@ export function ConversionsClient({
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("정말 이 번들 해체 변환 규칙을 삭제하시겠습니까?")) return
+    setDeletingRuleId(id)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deletingRuleId) return
+    const id = deletingRuleId
     setLoading(true)
     try {
       const res = await deleteConversionAction(id)
       if (res.error) {
-        alert("오류: " + res.error)
+        toast.error("규칙 삭제 실패: " + res.error)
+      } else {
+        toast.success("변환 규칙이 삭제되었습니다.")
+        setDeletingRuleId(null)
       }
     } finally {
       setLoading(false)
@@ -76,7 +88,9 @@ export function ConversionsClient({
     try {
       const res = await toggleAutoDekitAction(id, currentState)
       if (res.error) {
-        alert("오류: " + res.error)
+        toast.error("설정 변경 실패: " + res.error)
+      } else {
+        toast.success("자동 해체 설정이 업데이트되었습니다.")
       }
     } finally {
       setLoading(false)
@@ -88,9 +102,9 @@ export function ConversionsClient({
     try {
       const res = await manualDekitAction(parentItemId, parentQty)
       if (res.error) {
-        alert("해체 실행 실패: " + res.error)
+        toast.error("해체 실행 실패: " + res.error)
       } else {
-        alert(`✅ 해체 완료! 부모 -${res.data?.parent_deducted}개, 자식 +${res.data?.child_added}개 정상 증액되었습니다.`)
+        toast.success(`해체 완료 (부모 -${res.data?.parent_deducted}개, 자식 +${res.data?.child_added}개)`)
         setDekitOpen(false)
       }
     } finally {
@@ -191,6 +205,18 @@ export function ConversionsClient({
         conversion={selectedConversion}
         onExecute={handleManualDekit}
         loading={loading}
+      />
+
+      {/* 규칙 삭제 확인 팝업 */}
+      <ConfirmDialog
+        open={!!deletingRuleId}
+        onOpenChange={(open) => !open && setDeletingRuleId(null)}
+        title="변환 규칙 삭제"
+        description="이 번들 해체 변환 규칙을 삭제하시겠습니까?"
+        confirmText="삭제"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        isPending={loading}
       />
     </div>
   )

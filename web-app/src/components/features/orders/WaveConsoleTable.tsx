@@ -9,6 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Plus,
   Layers,
@@ -58,6 +59,7 @@ export function WaveConsoleTable({
   const [loading, setLoading] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState<string>("all")
+  const [waveToComplete, setWaveToComplete] = React.useState<{ id: string; waveNo: string } | null>(null)
 
   const handleCreateWaveSubmit = async (formData: FormData) => {
     setLoading(true)
@@ -73,14 +75,17 @@ export function WaveConsoleTable({
     }
   }
 
-  const handleCompleteWave = async (waveId: string, waveNo: string) => {
-    if (!confirm(`'${waveNo}' 파동 출고를 완료 처리하시겠습니까? 포함된 모든 주문이 출고 완료(PACKED)로 전이됩니다.`)) {
-      return
-    }
+  const handleCompleteWave = (waveId: string, waveNo: string) => {
+    setWaveToComplete({ id: waveId, waveNo })
+  }
 
+  const executeCompleteWave = async () => {
+    if (!waveToComplete) return
     setLoading(true)
-    const res = await completeWaveServerAction(waveId)
+    const res = await completeWaveServerAction(waveToComplete.id)
     setLoading(false)
+    const waveNo = waveToComplete.waveNo
+    setWaveToComplete(null)
 
     if (res.error) {
       toast.error(res.error)
@@ -325,6 +330,21 @@ export function WaveConsoleTable({
         onSubmit={handleCreateWaveSubmit}
         loading={loading}
         pendingOrders={pendingOrders}
+      />
+
+      {/* Complete Wave Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!waveToComplete}
+        onOpenChange={(open) => !open && !loading && setWaveToComplete(null)}
+        title="파동 출고 완료"
+        description={
+          waveToComplete
+            ? `'${waveToComplete.waveNo}' 파동 출고를 완료 처리하시겠습니까? 포함된 모든 주문이 출고 완료(PACKED)로 전이됩니다.`
+            : undefined
+        }
+        confirmText="완료 처리"
+        onConfirm={executeCompleteWave}
+        isPending={loading}
       />
     </div>
   )

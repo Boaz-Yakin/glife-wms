@@ -23,6 +23,7 @@ import {
   ExternalLink,
 } from "lucide-react"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -120,16 +121,26 @@ export function DeveloperSettingsClient({
     }
   }
 
-  const handleRevokeApiKey = async (id: string, name: string) => {
-    if (!confirm(`정말로 API 키 '${name}'을 폐기하시겠습니까? 연결된 외부 시스템의 호출이 즉시 차단됩니다.`)) {
-      return
-    }
-    const res = await revokeApiKeyServerAction(id)
+  const [apiKeyToRevoke, setApiKeyToRevoke] = useState<{ id: string; name: string } | null>(null)
+  const [webhookToDelete, setWebhookToDelete] = useState<string | null>(null)
+  const [isRevoking, setIsRevoking] = useState(false)
+  const [isDeletingWebhook, setIsDeletingWebhook] = useState(false)
+
+  const handleRevokeApiKey = (id: string, name: string) => {
+    setApiKeyToRevoke({ id, name })
+  }
+
+  const executeRevokeApiKey = async () => {
+    if (!apiKeyToRevoke) return
+    setIsRevoking(true)
+    const res = await revokeApiKeyServerAction(apiKeyToRevoke.id)
+    setIsRevoking(false)
     if (res.error) {
       toast.error(res.error)
     } else {
-      setKeys(keys.map((k) => (k.id === id ? { ...k, is_active: false } : k)))
+      setKeys(keys.map((k) => (k.id === apiKeyToRevoke.id ? { ...k, is_active: false } : k)))
       toast.success("API 키가 폐기되었습니다.")
+      setApiKeyToRevoke(null)
     }
   }
 
@@ -158,14 +169,21 @@ export function DeveloperSettingsClient({
     }
   }
 
-  const handleDeleteWebhook = async (id: string) => {
-    if (!confirm("이 웹훅 엔드포인트를 삭제하시겠습니까?")) return
-    const res = await deleteWebhookServerAction(id)
+  const handleDeleteWebhook = (id: string) => {
+    setWebhookToDelete(id)
+  }
+
+  const executeDeleteWebhook = async () => {
+    if (!webhookToDelete) return
+    setIsDeletingWebhook(true)
+    const res = await deleteWebhookServerAction(webhookToDelete)
+    setIsDeletingWebhook(false)
     if (res.error) {
       toast.error(res.error)
     } else {
-      setWebhooks(webhooks.filter((w) => w.id !== id))
+      setWebhooks(webhooks.filter((w) => w.id !== webhookToDelete))
       toast.success("웹훅이 삭제되었습니다.")
+      setWebhookToDelete(null)
     }
   }
 
@@ -703,6 +721,34 @@ export function DeveloperSettingsClient({
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* API Key 폐기 확인 팝업 */}
+      <ConfirmDialog
+        open={!!apiKeyToRevoke}
+        onOpenChange={(open) => !open && !isRevoking && setApiKeyToRevoke(null)}
+        title="API 키 폐기"
+        description={
+          apiKeyToRevoke
+            ? `API 키 '${apiKeyToRevoke.name}'을 폐기하시겠습니까? 외부 호출이 즉시 차단됩니다.`
+            : undefined
+        }
+        confirmText="폐기"
+        variant="destructive"
+        onConfirm={executeRevokeApiKey}
+        isPending={isRevoking}
+      />
+
+      {/* 웹훅 삭제 확인 팝업 */}
+      <ConfirmDialog
+        open={!!webhookToDelete}
+        onOpenChange={(open) => !open && !isDeletingWebhook && setWebhookToDelete(null)}
+        title="웹훅 엔드포인트 삭제"
+        description="이 웹훅 엔드포인트를 삭제하시겠습니까?"
+        confirmText="삭제"
+        variant="destructive"
+        onConfirm={executeDeleteWebhook}
+        isPending={isDeletingWebhook}
+      />
     </div>
   )
 }

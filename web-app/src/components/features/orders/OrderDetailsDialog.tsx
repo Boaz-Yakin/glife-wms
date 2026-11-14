@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { OrderData, OrderItemData, getOrderDetails } from "@/services/orders.service"
@@ -392,22 +393,10 @@ export function OrderDetailsDialog({
     return false
   }, [isOrderDateChanged, isInvoiceDateChanged, isClientChanged, isStatusChanged, deletedItemIds, items, originalItems])
 
-  // Save changes
-  const handleSaveChanges = async () => {
-    if (invoiceDateError) {
-      setErrorMsg(invoiceDateError)
-      return
-    }
-    if (
-      isInvoiceDateChanged &&
-      isInvoiceIssued &&
-      !window.confirm(
-        "This invoice has already been issued. Are you sure you want to change the invoice date?"
-      )
-    ) {
-      return
-    }
+  const [showInvoiceDateConfirm, setShowInvoiceDateConfirm] = React.useState(false)
 
+  // Save changes execution
+  const executeSaveChanges = async () => {
     setIsSaving(true)
     setErrorMsg(null)
     setSuccessMsg(null)
@@ -468,6 +457,18 @@ export function OrderDetailsDialog({
     } finally {
       setIsSaving(false)
     }
+  }
+
+  const handleSaveChanges = () => {
+    if (invoiceDateError) {
+      setErrorMsg(invoiceDateError)
+      return
+    }
+    if (isInvoiceDateChanged && isInvoiceIssued) {
+      setShowInvoiceDateConfirm(true)
+      return
+    }
+    executeSaveChanges()
   }
 
   return (
@@ -1153,6 +1154,20 @@ export function OrderDetailsDialog({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Invoice Date Change Confirmation */}
+      <ConfirmDialog
+        open={showInvoiceDateConfirm}
+        onOpenChange={(open) => !isSaving && setShowInvoiceDateConfirm(open)}
+        title="Change Issued Invoice Date"
+        description="This invoice has already been issued. Are you sure you want to change the invoice date?"
+        confirmText="Change Date"
+        onConfirm={() => {
+          setShowInvoiceDateConfirm(false)
+          executeSaveChanges()
+        }}
+        isPending={isSaving}
+      />
     </Dialog>
   )
 }

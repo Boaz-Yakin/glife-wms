@@ -9,6 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import {
   Plus,
   Pencil,
@@ -74,20 +75,23 @@ export function PricingTable({
   const [tierFilter, setTierFilter] = React.useState<string>("all")
   const [scopeFilter, setScopeFilter] = React.useState<"all" | "tier" | "store">("all")
   const [selectedPricing, setSelectedPricing] = React.useState<StoreItemPriceData | null>(null)
+  const [pricingToDelete, setPricingToDelete] = React.useState<{ id: string; itemName: string } | null>(null)
 
   const handleEdit = React.useCallback((pricing: StoreItemPriceData) => {
     setSelectedPricing(pricing)
     setFormDialogOpen(true)
   }, [])
 
-  const handleDelete = React.useCallback(async (id: string, itemName: string) => {
-    if (!confirm(`'${itemName}' 품목의 특수 단가를 삭제하고 마스터 기본가로 복원하시겠습니까?`)) {
-      return
-    }
+  const handleDelete = React.useCallback((id: string, itemName: string) => {
+    setPricingToDelete({ id, itemName })
+  }, [])
 
+  const executeDeletePricing = React.useCallback(async () => {
+    if (!pricingToDelete) return
     setLoading(true)
-    const res = await deletePricingAction(id)
+    const res = await deletePricingAction(pricingToDelete.id)
     setLoading(false)
+    setPricingToDelete(null)
 
     if (res.error) {
       toast.error(res.error)
@@ -95,7 +99,7 @@ export function PricingTable({
       toast.success("특수 단가가 삭제되었습니다.")
       router.refresh()
     }
-  }, [router])
+  }, [pricingToDelete, router])
 
   const handleFormSubmit = async (formData: FormData) => {
     setLoading(true)
@@ -409,6 +413,22 @@ export function PricingTable({
         stores={stores}
         clients={clients}
         activeClientId={activeClientId}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        open={!!pricingToDelete}
+        onOpenChange={(open) => !open && !loading && setPricingToDelete(null)}
+        title="특수 단가 삭제"
+        description={
+          pricingToDelete
+            ? `'${pricingToDelete.itemName}' 품목의 특수 단가를 삭제하고 마스터 기본가로 복원하시겠습니까?`
+            : undefined
+        }
+        confirmText="삭제"
+        variant="destructive"
+        onConfirm={executeDeletePricing}
+        isPending={loading}
       />
     </div>
   )

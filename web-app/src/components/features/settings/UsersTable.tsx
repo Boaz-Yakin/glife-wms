@@ -9,6 +9,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { toast } from "sonner"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 
 import {
   Table,
@@ -209,15 +210,23 @@ export function UsersTable({ data }: { data: UserData[] }) {
     }
   }
 
-  const handleDelete = async (userToDelete?: UserData) => {
+  const [userToDeleteState, setUserToDeleteState] = React.useState<UserData | null>(null)
+  const [showResetConfirm, setShowResetConfirm] = React.useState(false)
+
+  const handleDelete = (userToDelete?: UserData) => {
     const target = userToDelete || editingUser
     if (!target) return
-    if (!confirm(`Are you sure you want to delete user ${target.first_name} ${target.last_name}?`)) return
+    setUserToDeleteState(target)
+  }
 
+  const executeDeleteUser = async () => {
+    if (!userToDeleteState) return
+    const target = userToDeleteState
     const toastId = toast.loading(`Deleting user ${target.first_name}...`)
     setLoading(true)
     const result = await deleteUserAction(target.id)
     setLoading(false)
+    setUserToDeleteState(null)
 
     if (result?.error) {
       toast.error(result.error, { id: toastId })
@@ -229,15 +238,18 @@ export function UsersTable({ data }: { data: UserData[] }) {
     }
   }
 
-  const handleResetPassword = async () => {
+  const handleResetPassword = () => {
+    if (!editingUser) return
+    setShowResetConfirm(true)
+  }
+
+  const executeResetPassword = async () => {
     if (!editingUser) return
     const isWorker = editingUser.role === 'PICKER' || editingUser.role === 'INSPECTOR'
-    const targetSecret = isWorker ? "6-digit PIN '123456'" : "password 'password123'"
-    if (!confirm(`Are you sure you want to reset the credentials for ${editingUser.first_name} ${editingUser.last_name}?\n\nThe temporary ${targetSecret} will be assigned, and any login lockouts will be cleared.`)) return
-
     setLoading(true)
     const result = await resetUserPasswordAction(editingUser.id)
     setLoading(false)
+    setShowResetConfirm(false)
 
     if (result?.error) {
       toast.error(result.error)
@@ -412,6 +424,37 @@ export function UsersTable({ data }: { data: UserData[] }) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Delete User Confirmation */}
+      <ConfirmDialog
+        open={!!userToDeleteState}
+        onOpenChange={(open) => !open && !loading && setUserToDeleteState(null)}
+        title="Delete User"
+        description={
+          userToDeleteState
+            ? `Are you sure you want to delete user ${userToDeleteState.first_name} ${userToDeleteState.last_name}?`
+            : undefined
+        }
+        confirmText="Delete"
+        variant="destructive"
+        onConfirm={executeDeleteUser}
+        isPending={loading}
+      />
+
+      {/* Reset Password Confirmation */}
+      <ConfirmDialog
+        open={showResetConfirm}
+        onOpenChange={(open) => !open && !loading && setShowResetConfirm(open)}
+        title="Reset User Credentials"
+        description={
+          editingUser
+            ? `Assign temporary credentials to ${editingUser.first_name} ${editingUser.last_name}? Any login lockouts will be cleared.`
+            : undefined
+        }
+        confirmText="Reset"
+        onConfirm={executeResetPassword}
+        isPending={loading}
+      />
     </div>
   )
 }

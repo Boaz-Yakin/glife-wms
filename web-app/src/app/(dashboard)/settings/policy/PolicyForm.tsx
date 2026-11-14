@@ -6,6 +6,7 @@ import { Loader2, Sliders, ShieldCheck, Box, Flame, Bell } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Select,
@@ -42,9 +43,9 @@ export function PolicyForm({ initialSettings, locations }: PolicyFormProps) {
 
       const res = await updateTenantPolicyAction(formData)
       if (res.error) {
-        alert("오류: " + res.error)
+        toast.error("운영 정책 저장 실패: " + res.error)
       } else {
-        alert("✅ 테넌트 운영 정책이 성공적으로 저장되었습니다.")
+        toast.success("운영 정책이 성공적으로 저장되었습니다.")
       }
     } finally {
       setLoading(false)
