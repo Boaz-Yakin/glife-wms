@@ -6,7 +6,7 @@ export type Database = {
     Enums: {
       adjustment_reason: 'COUNT_MISMATCH' | 'DAMAGED' | 'LOST' | 'FOUND' | 'EXPIRED';
       user_role: 'ADMIN' | 'INSPECTOR' | 'PICKER' | 'STORE';
-      order_status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'DISPATCHED' | 'CANCELED';
+      order_status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'INVOICED' | 'PACKED' | 'DISPATCHED' | 'SHIPPED' | 'CANCELED';
       zone_type: 'A' | 'F';
     };
     Tables: {

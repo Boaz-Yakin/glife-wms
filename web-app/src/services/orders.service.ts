@@ -300,9 +300,13 @@ export interface NewOrderItemInput {
 
 const VALID_ORDER_STATUSES = [
   "PENDING",
+  "RECEIVED",
+  "ALLOCATED",
   "PICKING",
-  "PACKED",
+  "PICKED",
   "INVOICED",
+  "PACKED",
+  "DISPATCHED",
   "SHIPPED",
   "CANCELED",
 ] as const

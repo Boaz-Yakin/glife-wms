@@ -5,7 +5,7 @@ import { formatItemNameWithDesc } from './inventory.service';
 export interface Order {
   id: string;
   order_number: string;
-  status: 'PENDING' | 'ALLOCATED' | 'PICKING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'INVOICED' | 'PACKED' | 'DISPATCHED' | 'SHIPPED' | 'CANCELED' | 'CANCELLED';
   priority: 'URGENT' | 'NORMAL';
   store_id: string;
   created_at: string;

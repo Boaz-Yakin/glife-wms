@@ -609,7 +609,10 @@ export type Database = {
         | "ALLOCATED"
         | "PICKING"
         | "PICKED"
+        | "INVOICED"
+        | "PACKED"
         | "DISPATCHED"
+        | "SHIPPED"
         | "CANCELED"
       partner_type: "MANUFACTURER" | "SUPPLIER" | "BOTH"
       user_role: "ADMIN" | "INSPECTOR" | "PICKER" | "STORE" | "SUPERVISOR" | "SUPER_ADMIN" | "VENDOR"
@@ -747,7 +750,10 @@ export const Constants = {
         "ALLOCATED",
         "PICKING",
         "PICKED",
+        "INVOICED",
+        "PACKED",
         "DISPATCHED",
+        "SHIPPED",
         "CANCELED",
       ],
       partner_type: ["MANUFACTURER", "SUPPLIER", "BOTH"],
