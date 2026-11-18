@@ -110,7 +110,7 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/inventory';
       return NextResponse.redirect(url);
     }
-  } else if (role === 'ADMIN' || role === 'SUPERVISOR') {
+  } else if (role === 'ADMIN' || role === 'SUPERVISOR' || role === 'SUPER_ADMIN') {
     // Managers can access everything (/mode, /picking, /inventory)
   }
 

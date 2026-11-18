@@ -9,14 +9,14 @@ import { createAdminClient } from '@/lib/supabase/admin';
  * never from user_metadata (which the user can edit themselves).
  */
 
-export type WorkerRole = 'ADMIN' | 'SUPERVISOR' | 'INSPECTOR' | 'PICKER';
+export type WorkerRole = 'SUPER_ADMIN' | 'ADMIN' | 'SUPERVISOR' | 'INSPECTOR' | 'PICKER';
 
-export const MANAGER_ROLES: readonly WorkerRole[] = ['ADMIN', 'SUPERVISOR'];
+export const MANAGER_ROLES: readonly WorkerRole[] = ['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR'];
 export const INSPECTOR_ROLES: readonly WorkerRole[] = ['INSPECTOR', ...MANAGER_ROLES];
 export const PICKER_ROLES: readonly WorkerRole[] = ['PICKER', ...MANAGER_ROLES];
 
 export const PIN_PATTERN = /^\d{6}$/;
-const MOBILE_ROLES: readonly WorkerRole[] = ['ADMIN', 'SUPERVISOR', 'INSPECTOR', 'PICKER'];
+const MOBILE_ROLES: readonly WorkerRole[] = ['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR', 'INSPECTOR', 'PICKER'];
 
 export type AuthErrorCode =
   | 'UNAUTHENTICATED'

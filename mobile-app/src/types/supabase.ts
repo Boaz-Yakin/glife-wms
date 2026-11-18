@@ -5,7 +5,7 @@ export type Database = {
   public: {
     Enums: {
       adjustment_reason: 'COUNT_MISMATCH' | 'DAMAGED' | 'LOST' | 'FOUND' | 'EXPIRED';
-      user_role: 'ADMIN' | 'INSPECTOR' | 'PICKER' | 'STORE';
+      user_role: 'ADMIN' | 'INSPECTOR' | 'PICKER' | 'STORE' | 'SUPERVISOR' | 'SUPER_ADMIN' | 'VENDOR';
       order_status: 'PENDING' | 'RECEIVED' | 'ALLOCATED' | 'PICKING' | 'PICKED' | 'INVOICED' | 'PACKED' | 'DISPATCHED' | 'SHIPPED' | 'CANCELED';
       zone_type: 'A' | 'F';
     };
