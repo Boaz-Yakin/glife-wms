@@ -24,8 +24,15 @@ export default function PickingDashboard() {
           fetch("/api/picking/waves").then((r) => r.json()).catch(() => ({ success: false })),
         ]);
 
-        if (ordersRes.success) setOrders(ordersRes.orders || []);
-        if (wavesRes.success) setWaves(wavesRes.waves || []);
+        const fetchedOrders = ordersRes.success ? (ordersRes.orders || []) : [];
+        const fetchedWaves = wavesRes.success ? (wavesRes.waves || []) : [];
+
+        setOrders(fetchedOrders);
+        setWaves(fetchedWaves);
+
+        if (fetchedWaves.length === 0 && fetchedOrders.length > 0) {
+          setActiveTab("SINGLE");
+        }
       } catch (err) {
         console.error("Failed to fetch picking data:", err);
       } finally {

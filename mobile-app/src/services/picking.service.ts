@@ -28,7 +28,7 @@ export async function getAllocatedOrders(supabase: SupabaseClient): Promise<Orde
       store_id,
       stores:store_id ( name )
     `)
-    .in('status', ['PENDING', 'PICKING', 'ALLOCATED'])
+    .in('status', ['PENDING', 'RECEIVED', 'ALLOCATED', 'PICKING'])
     .order('created_at', { ascending: false });
 
   if (error) {
