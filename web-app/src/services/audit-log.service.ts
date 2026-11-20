@@ -2,6 +2,7 @@
 
 import { createClient } from "@supabase/supabase-js"
 import { getCurrentTenant } from "@/lib/tenant/context"
+import { applyPostgrestMultiSearch } from "@/lib/search-utils"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
@@ -86,9 +87,7 @@ export async function getTenantAuditLogs(
     }
 
     if (params?.search) {
-      query = query.or(
-        `description.ilike.%${params.search}%,actor_name.ilike.%${params.search}%,entity_id.ilike.%${params.search}%`
-      )
+      query = applyPostgrestMultiSearch(query, ['description', 'actor_name', 'entity_id'], params.search)
     }
 
     const { data, count, error } = await query

@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server"
 import { getActiveClientAction } from "@/app/actions/client.actions"
 import { formatToAtlantaTime } from "@/lib/date"
+import { applyPostgrestMultiSearch } from "@/lib/search-utils"
 
 export interface ItemData {
   id: string
@@ -59,7 +60,7 @@ export async function getItems({
   }
 
   if (search) {
-    query = query.or(`sku.ilike.%${search}%,name_en.ilike.%${search}%,desc_en.ilike.%${search}%`)
+    query = applyPostgrestMultiSearch(query, ['sku', 'name_en', 'desc_en', 'upc'], search)
   }
   
   const from = (page - 1) * limit
@@ -158,7 +159,7 @@ export async function getLocations({ search = '' }: { search?: string } = {}) {
   let query = supabase.from('locations').select('*').order('code', { ascending: true })
   
   if (search) {
-    query = query.ilike('code', `%${search}%`)
+    query = applyPostgrestMultiSearch(query, ['code'], search)
   }
   
   const { data: locRows, error } = await query

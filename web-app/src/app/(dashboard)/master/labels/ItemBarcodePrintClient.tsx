@@ -25,6 +25,7 @@ import Barcode from "react-barcode"
 import { QRCodeSVG } from "qrcode.react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { matchesMultiSearch } from "@/lib/search-utils"
 
 export type ItemPaperSize = "roll-50x30" | "roll-60x40" | "roll-80x50" | "a4-24up"
 export type ItemSymbology = "barcode" | "qr"
@@ -56,9 +57,6 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
 
   // Filter available items by search & category without artificial slice limits
   const filteredItems = React.useMemo(() => {
-    const rawQ = search.trim().toLowerCase()
-    const tokens = rawQ ? rawQ.split(/\s+/) : []
-
     return items.filter((item) => {
       // 1. Category check
       if (selectedCategory !== "ALL") {
@@ -67,22 +65,12 @@ export function ItemBarcodePrintClient({ items }: { items: ItemData[] }) {
       }
 
       // If no search query, match all in this category
-      if (tokens.length === 0) return true
+      if (!search.trim()) return true
 
-      const sku = (item.sku || "").toLowerCase()
-      const skuClean = sku.replace(/[^a-z0-9]/g, "")
-      const name = (item.name_en || "").toLowerCase()
-      const desc = (item.desc_en || "").toLowerCase()
-      const upc = (item.upc || "").toLowerCase()
-      const boxBarcode = (item.box_barcode || "").toLowerCase()
-      const cat = (item.category || "").toLowerCase()
-      const searchable = `${sku} ${skuClean} ${name} ${desc} ${upc} ${boxBarcode} ${cat}`
-
-      // All search tokens must be present
-      return tokens.every((tok) => {
-        const tokClean = tok.replace(/[^a-z0-9]/g, "")
-        return searchable.includes(tok) || (tokClean.length > 0 && skuClean.includes(tokClean))
-      })
+      return matchesMultiSearch(
+        [item.sku, item.name_en, item.desc_en, item.upc, item.box_barcode, item.category],
+        search
+      )
     })
   }, [items, search, selectedCategory])
 

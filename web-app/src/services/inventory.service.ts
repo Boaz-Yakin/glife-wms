@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { getActiveClientAction } from '@/app/actions/client.actions'
 import { getBuldakConversionMap } from './dekit.service'
+import { applyPostgrestMultiSearch, matchesMultiSearch } from '@/lib/search-utils'
 
 export interface GetInventoryParams {
   page?: number
@@ -93,18 +94,16 @@ export async function getInventoryList({
 
   const cleanSearch = search.trim()
   if (cleanSearch) {
-    const unhyphenated = cleanSearch.replace(/-/g, '')
-    const locSearchQuery = cleanSearch !== unhyphenated
-      ? (supabase as any).from('locations').select('id').or(`code.ilike.%${cleanSearch}%,code.ilike.%${unhyphenated}%`)
-      : (supabase as any).from('locations').select('id').ilike('code', `%${cleanSearch}%`)
+    let locSubQuery = (supabase as any).from('locations').select('id')
+    locSubQuery = applyPostgrestMultiSearch(locSubQuery, ['code'], cleanSearch)
+
+    let itemSubQuery = (supabase as any).from('items').select('id')
+    itemSubQuery = applyPostgrestMultiSearch(itemSubQuery, ['sku', 'name_en', 'desc_en'], cleanSearch)
 
     // Search both items (SKU, name_en, desc_en) and locations (code) in parallel
     const [{ data: matchingItems }, { data: matchingLocs }] = await Promise.all([
-      (supabase as any)
-        .from('items')
-        .select('id')
-        .or(`sku.ilike.%${cleanSearch}%,name_en.ilike.%${cleanSearch}%,desc_en.ilike.%${cleanSearch}%`),
-      locSearchQuery,
+      itemSubQuery,
+      locSubQuery,
     ])
 
     const itemIds = (matchingItems || []).map((i: any) => i.id)
@@ -452,19 +451,10 @@ export async function getItemInventoryList({
   }
 
   // Search filter
-  const cleanSearch = search.trim().toLowerCase()
-  if (cleanSearch) {
-    const unhyphenated = cleanSearch.replace(/-/g, '')
+  if (search.trim()) {
     list = list.filter(item => {
-      const matchSku = item.sku.toLowerCase().includes(cleanSearch)
-      const matchName = item.name.toLowerCase().includes(cleanSearch)
-      const matchDesc = (item.desc || '').toLowerCase().includes(cleanSearch)
-      const matchCat = item.category.toLowerCase().includes(cleanSearch)
-      const matchLoc = item.locations.some(loc => {
-        const c = loc.code.toLowerCase()
-        return c.includes(cleanSearch) || (unhyphenated ? c.replace(/-/g, '').includes(unhyphenated) : false)
-      })
-      return matchSku || matchName || matchDesc || matchCat || matchLoc
+      const locCodes = item.locations.map(loc => loc.code)
+      return matchesMultiSearch([item.sku, item.name, item.desc, item.category, ...locCodes], search)
     })
   }
 

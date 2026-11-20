@@ -3,6 +3,7 @@
 import { createClient as createServerClient } from "@/lib/supabase/server"
 import { createClient as createAdminClient } from "@supabase/supabase-js"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+import { matchesMultiSearch } from "@/lib/search-utils"
 
 const getAdminClient = () => {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
@@ -98,12 +99,11 @@ export async function getStoreItemPrices({
 
   let filtered = data || []
   if (search.trim()) {
-    const s = search.trim().toLowerCase()
     filtered = filtered.filter((row: any) =>
-      row.item?.name_en?.toLowerCase().includes(s) ||
-      row.item?.sku?.toLowerCase().includes(s) ||
-      row.store?.name?.toLowerCase().includes(s) ||
-      row.store?.store_no?.toLowerCase().includes(s)
+      matchesMultiSearch(
+        [row.item?.name_en, row.item?.sku, row.store?.name, row.store?.store_no],
+        search
+      )
     )
   }
 

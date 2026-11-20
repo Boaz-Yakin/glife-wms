@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { getActiveClientAction } from "@/app/actions/client.actions"
+import { applyPostgrestMultiSearch } from "@/lib/search-utils"
 
 export type PriceTier = "VIP" | "WHOLESALE" | "STANDARD" | "RETAIL"
 
@@ -66,8 +67,7 @@ export async function getStores({
 
   // 3. Search filter
   if (search.trim()) {
-    const s = search.trim()
-    query = query.or(`store_no.ilike.%${s}%,name.ilike.%${s}%,address.ilike.%${s}%,contact_person.ilike.%${s}%`)
+    query = applyPostgrestMultiSearch(query, ['store_no', 'name', 'address', 'contact_person'], search)
   }
 
   // 4. Pagination & Sorting

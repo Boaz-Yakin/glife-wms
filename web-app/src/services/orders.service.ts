@@ -6,6 +6,7 @@ import { getActiveClientAction } from "@/app/actions/client.actions"
 import { getOrderItemEffectivePrice } from "@/lib/pricing"
 import { validateInvoiceDate } from "@/lib/date"
 import { parseCancelledCategories, normalizeCategory } from "@/lib/orders"
+import { applyPostgrestMultiSearch, buildPostgrestOrString, parseMultiSearch } from "@/lib/search-utils"
 
 const getClient = async () => {
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -143,7 +144,7 @@ export async function getOrders({
     let itemsQuery = supabase
       .from('items')
       .select('id')
-      .or(`sku.ilike.%${itemKeyword}%,name_en.ilike.%${itemKeyword}%,desc_en.ilike.%${itemKeyword}%`)
+    itemsQuery = applyPostgrestMultiSearch(itemsQuery, ['sku', 'name_en', 'desc_en'], itemKeyword)
 
     if (activeClientId) {
       itemsQuery = itemsQuery.eq('client_id', activeClientId)
@@ -161,12 +162,19 @@ export async function getOrders({
       .select('order_id')
       .order('created_at', { ascending: false })
 
+    const customNameParsed = parseMultiSearch(itemKeyword)
+    const customNameOr = customNameParsed ? buildPostgrestOrString(customNameParsed.terms, ['custom_item_name']) : ''
+
     if (matchedItemIds.length > 0) {
-      orderItemsQuery = orderItemsQuery.or(
-        `item_id.in.(${matchedItemIds.join(',')}),custom_item_name.ilike.%${itemKeyword}%`
-      )
-    } else {
-      orderItemsQuery = orderItemsQuery.ilike('custom_item_name', `%${itemKeyword}%`)
+      if (customNameOr) {
+        orderItemsQuery = orderItemsQuery.or(
+          `item_id.in.(${matchedItemIds.join(',')}),${customNameOr}`
+        )
+      } else {
+        orderItemsQuery = orderItemsQuery.in('item_id', matchedItemIds)
+      }
+    } else if (customNameOr) {
+      orderItemsQuery = orderItemsQuery.or(customNameOr)
     }
 
     const { data: matchedOrderItems, error: oiErr } = await orderItemsQuery.limit(1000)
@@ -180,15 +188,22 @@ export async function getOrders({
   }
 
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleanSearch)
-  const baseOrderFilters = [
-    `order_no.ilike.%${cleanSearch}%`,
-    `shipping_address.ilike.%${cleanSearch}%`,
-    `invoice_number.ilike.%${cleanSearch}%`,
-  ]
-  if (isUuid) {
-    baseOrderFilters.push(`id.eq.${cleanSearch}`)
+  const parsedOrderSearch = parseMultiSearch(cleanSearch)
+  let orderOrFilterString = ''
+  if (parsedOrderSearch) {
+    const baseCols = ['order_no', 'shipping_address', 'invoice_number']
+    const terms = parsedOrderSearch.terms
+    const clauses: string[] = []
+    for (const term of terms) {
+      for (const col of baseCols) {
+        clauses.push(`${col}.ilike.%${term}%`)
+      }
+    }
+    if (isUuid) {
+      clauses.push(`id.eq.${cleanSearch}`)
+    }
+    orderOrFilterString = clauses.join(',')
   }
-  const orderOrFilterString = baseOrderFilters.join(',')
 
   // 검색 조건 분기 적용
   if (isItemSearch && itemKeyword) {
@@ -493,14 +508,15 @@ export interface MasterItemSearchResult {
 export async function searchMasterItemsForOrder(search: string): Promise<MasterItemSearchResult[]> {
   if (!search || search.trim().length === 0) return []
   const supabase = await getClient()
-  const cleanSearch = search.trim()
-
-  const { data, error } = await supabase
+  let query = supabase
     .from('items')
     .select('id, sku, name_en, desc_en, uom, unit_price, box_price, pack_price, category')
-    .or(`sku.ilike.%${cleanSearch}%,name_en.ilike.%${cleanSearch}%`)
     .eq('is_active', true)
-    .limit(15)
+    .limit(25)
+
+  query = applyPostgrestMultiSearch(query, ['sku', 'name_en', 'desc_en'], search)
+
+  const { data, error } = await query
 
   if (error) {
     console.error('searchMasterItemsForOrder error:', error)
