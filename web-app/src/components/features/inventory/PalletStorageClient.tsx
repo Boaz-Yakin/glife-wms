@@ -358,25 +358,25 @@ export function PalletStorageClient({
                     </div>
 
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs font-bold text-foreground">
-                      {/* Left L Rack Header */}
+                      {/* Left L Rack Header (C, B, A, FLOOR) */}
                       <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-blue-200 dark:border-blue-800">
                         <span className="flex items-center gap-1">
                           <span>⬅️</span>
                           <span>Left Rack (L)</span>
                         </span>
-                        <span className="text-[11px] font-mono opacity-80">
-                          {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
+                        <span className="text-[11px] font-mono font-bold tracking-wider opacity-90">
+                          {selectedLevel === 'ALL' ? 'C · B · A · FL' : selectedLevel}
                         </span>
                       </div>
 
                       {/* Center Aisle Header */}
                       <div className="w-16 text-center bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 rounded-lg py-1 px-1 border border-amber-300 dark:border-amber-700 font-bold text-[11px]">
-                        🚜 Aisle
+                        🚜 AISLE
                       </div>
 
-                      {/* Right R Rack Header */}
+                      {/* Right R Rack Header (FLOOR, A, B, C) */}
                       <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
-                        <span className="text-[11px] font-mono opacity-80">
+                        <span className="text-[11px] font-mono font-bold tracking-wider opacity-90">
                           {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
                         </span>
                         <span className="flex items-center gap-1">
@@ -390,7 +390,9 @@ export function PalletStorageClient({
                   {/* 32 Bay Rows */}
                   <div className="space-y-1">
                     {Array.from({ length: 32 }, (_, i) => String(i + 1).padStart(2, '0')).map((bay) => {
-                      const levels: ('FLOOR' | 'A' | 'B' | 'C')[] =
+                      const leftLevels: ('FLOOR' | 'A' | 'B' | 'C')[] =
+                        selectedLevel === 'ALL' ? ['C', 'B', 'A', 'FLOOR'] : [selectedLevel];
+                      const rightLevels: ('FLOOR' | 'A' | 'B' | 'C')[] =
                         selectedLevel === 'ALL' ? ['FLOOR', 'A', 'B', 'C'] : [selectedLevel];
 
                       return (
@@ -398,19 +400,19 @@ export function PalletStorageClient({
                           key={bay}
                           className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-0.5 px-0.5 rounded-lg hover:bg-muted/50 transition-colors"
                         >
-                          {/* LEFT (L) SLOTS */}
+                          {/* LEFT (L) SLOTS: C, B, A, FLOOR */}
                           <div
                             className={`grid gap-1 ${
-                              levels.length === 1
+                              leftLevels.length === 1
                                 ? 'grid-cols-1'
-                                : levels.length === 2
+                                : leftLevels.length === 2
                                 ? 'grid-cols-2'
-                                : levels.length === 3
+                                : leftLevels.length === 3
                                 ? 'grid-cols-3'
                                 : 'grid-cols-4'
                             }`}
                           >
-                            {levels.map((level) => {
+                            {leftLevels.map((level) => {
                               const code = `${aisle}-L-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
@@ -446,23 +448,23 @@ export function PalletStorageClient({
 
                           {/* CENTER AISLE BAY */}
                           <div className="w-16 h-9 rounded-md bg-muted border flex flex-col items-center justify-center text-foreground font-mono font-bold">
-                            <span className="text-[9px] text-muted-foreground font-sans leading-none">Bay</span>
+                            <span className="text-[9px] text-muted-foreground font-sans leading-none">AISLE</span>
                             <span className="text-xs leading-tight">{bay}</span>
                           </div>
 
-                          {/* RIGHT (R) SLOTS */}
+                          {/* RIGHT (R) SLOTS: FLOOR, A, B, C */}
                           <div
                             className={`grid gap-1 ${
-                              levels.length === 1
+                              rightLevels.length === 1
                                 ? 'grid-cols-1'
-                                : levels.length === 2
+                                : rightLevels.length === 2
                                 ? 'grid-cols-2'
-                                : levels.length === 3
+                                : rightLevels.length === 3
                                 ? 'grid-cols-3'
                                 : 'grid-cols-4'
                             }`}
                           >
-                            {levels.map((level) => {
+                            {rightLevels.map((level) => {
                               const code = `${aisle}-R-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
