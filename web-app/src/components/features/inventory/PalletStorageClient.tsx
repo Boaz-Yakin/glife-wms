@@ -463,9 +463,9 @@ export function PalletStorageClient({
                           </div>
 
                           {/* CENTER BIN COLUMN (BIN 01 ~ BIN 32) */}
-                          <div className="w-11 h-[40px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
-                            <span className="text-[8px] text-muted-foreground font-black tracking-wider leading-none">BIN</span>
-                            <span className="text-[11px] font-black leading-tight mt-0.5">{bay}</span>
+                          <div className="w-11 h-[40px] rounded-md bg-amber-100/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 flex flex-col items-center justify-center text-amber-950 dark:text-amber-200 font-mono font-bold shadow-2xs">
+                            <span className="text-[8px] text-amber-800 dark:text-amber-400 font-black tracking-wider leading-none">BIN</span>
+                            <span className="text-[11px] text-amber-950 dark:text-amber-100 leading-tight font-black mt-0.5">{bay}</span>
                           </div>
 
                           {/* RIGHT (R) SLOTS: FLOOR, A, B, C */}
