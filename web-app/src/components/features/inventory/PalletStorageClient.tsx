@@ -345,42 +345,48 @@ export function PalletStorageClient({
           </div>
 
           {viewMode === 'corridor' ? (
-            /* FACING CORRIDOR VIEW (L on Left, Corridor in Middle, R on Right) */
-            <div className="space-y-6 max-h-[640px] overflow-y-auto pr-1">
+            /* FACING CORRIDOR VIEW (L on Left, BIN in Middle, R on Right) */
+            <div
+              className={`gap-4 max-h-[720px] overflow-y-auto pr-1 items-start ${
+                (selectedAisle === 0 ? [1, 2, 3] : [selectedAisle]).length === 1
+                  ? 'flex justify-center'
+                  : 'grid grid-cols-1 xl:grid-cols-2 2xl:grid-cols-3'
+              }`}
+            >
               {(selectedAisle === 0 ? [1, 2, 3] : [selectedAisle]).map((aisle) => (
-                <div key={aisle} className="bg-muted/30 border rounded-2xl p-3.5 shadow-2xs">
+                <div key={aisle} className="bg-muted/30 border rounded-2xl p-3 shadow-2xs w-full max-w-[480px] mx-auto">
                   {/* Aisle & Rack Header */}
-                  <div className="mb-2.5">
-                    <div className="text-center pb-1.5 border-b mb-2">
+                  <div className="mb-2">
+                    <div className="text-center pb-1 border-b mb-1.5">
                       <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-xs">
-                        🏢 Aisle {aisle} Central Corridor
+                        🏢 Aisle {aisle}
                       </span>
                     </div>
 
-                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs font-bold text-foreground">
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 text-xs font-bold text-foreground">
                       {/* Left L Rack Header (C, B, A, FLOOR) */}
-                      <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-blue-200 dark:border-blue-800">
-                        <span className="flex items-center gap-1">
+                      <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-1.5 flex items-center justify-between border border-blue-200 dark:border-blue-800">
+                        <span className="flex items-center gap-0.5 text-[11px]">
                           <span>⬅️</span>
-                          <span>Left Rack (L)</span>
+                          <span>L</span>
                         </span>
-                        <span className="text-[11px] font-mono font-bold tracking-wider opacity-90">
+                        <span className="text-[10px] font-mono font-black tracking-wider opacity-90">
                           {selectedLevel === 'ALL' ? 'C · B · A · FL' : selectedLevel}
                         </span>
                       </div>
 
-                      {/* Center Aisle Header */}
-                      <div className="w-16 text-center bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 rounded-lg py-1 px-1 border border-amber-300 dark:border-amber-700 font-bold text-[11px]">
-                        🚜 AISLE
+                      {/* Center BIN Header */}
+                      <div className="w-11 text-center bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 rounded-lg py-1 px-0.5 border border-amber-300 dark:border-amber-700 font-mono font-black text-[10px]">
+                        BIN
                       </div>
 
                       {/* Right R Rack Header (FLOOR, A, B, C) */}
-                      <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
-                        <span className="text-[11px] font-mono font-bold tracking-wider opacity-90">
+                      <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-1.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
+                        <span className="text-[10px] font-mono font-black tracking-wider opacity-90">
                           {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
                         </span>
-                        <span className="flex items-center gap-1">
-                          <span>Right Rack (R)</span>
+                        <span className="flex items-center gap-0.5 text-[11px]">
+                          <span>R</span>
                           <span>➡️</span>
                         </span>
                       </div>
@@ -398,7 +404,7 @@ export function PalletStorageClient({
                       return (
                         <div
                           key={bay}
-                          className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-0.5 px-0.5 rounded-lg hover:bg-muted/50 transition-colors"
+                          className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 py-0.5 px-0.5 rounded-lg hover:bg-muted/50 transition-colors"
                         >
                           {/* LEFT (L) SLOTS: C, B, A, FLOOR */}
                           <div
@@ -422,34 +428,40 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-9 px-1 rounded-md text-left transition-all border flex flex-col justify-between ${
+                                  className={`h-[34px] px-1 py-0.5 rounded-md text-left transition-all border flex flex-col justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="text-[9px] font-bold font-mono opacity-70">
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span className="text-[10px] font-black font-mono opacity-80">
                                       {level === 'FLOOR' ? 'FL' : level}
                                     </span>
-                                    {isStored && (
-                                      <span className="text-[8px] bg-amber-400 text-slate-950 font-black px-1 rounded">
-                                        {slot.batch_list ? `#${slot.batch_list}` : 'CJ'}
+                                    {isStored && slot.batch_list && (
+                                      <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
+                                        #{slot.batch_list}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[8px] font-mono truncate w-full opacity-80">
-                                    {isStored && slot.pallet_list ? `P.${slot.pallet_list.slice(-4)}` : 'Vacant'}
+                                  <div className="flex items-center justify-between w-full leading-tight font-mono">
+                                    {isStored && slot.pallet_list ? (
+                                      <span className="text-[10px] font-black tracking-tight text-white dark:text-slate-900 truncate">
+                                        P.{slot.pallet_list.slice(-4)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9px] text-muted-foreground/40 font-normal">-</span>
+                                    )}
                                   </div>
                                 </button>
                               );
                             })}
                           </div>
 
-                          {/* CENTER AISLE BAY */}
-                          <div className="w-16 h-9 rounded-md bg-muted border flex flex-col items-center justify-center text-foreground font-mono font-bold">
-                            <span className="text-[9px] text-muted-foreground font-sans leading-none">AISLE</span>
-                            <span className="text-xs leading-tight">{bay}</span>
+                          {/* CENTER BIN COLUMN (BIN 01 ~ BIN 32) */}
+                          <div className="w-11 h-[34px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
+                            <span className="text-[8px] text-muted-foreground font-black tracking-wider leading-none">BIN</span>
+                            <span className="text-[11px] font-black leading-tight">{bay}</span>
                           </div>
 
                           {/* RIGHT (R) SLOTS: FLOOR, A, B, C */}
@@ -474,24 +486,30 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-9 px-1 rounded-md text-left transition-all border flex flex-col justify-between ${
+                                  className={`h-[34px] px-1 py-0.5 rounded-md text-left transition-all border flex flex-col justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between w-full">
-                                    <span className="text-[9px] font-bold font-mono opacity-70">
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span className="text-[10px] font-black font-mono opacity-80">
                                       {level === 'FLOOR' ? 'FL' : level}
                                     </span>
-                                    {isStored && (
-                                      <span className="text-[8px] bg-amber-400 text-slate-950 font-black px-1 rounded">
-                                        {slot.batch_list ? `#${slot.batch_list}` : 'CJ'}
+                                    {isStored && slot.batch_list && (
+                                      <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
+                                        #{slot.batch_list}
                                       </span>
                                     )}
                                   </div>
-                                  <div className="text-[8px] font-mono truncate w-full opacity-80">
-                                    {isStored && slot.pallet_list ? `P.${slot.pallet_list.slice(-4)}` : 'Vacant'}
+                                  <div className="flex items-center justify-between w-full leading-tight font-mono">
+                                    {isStored && slot.pallet_list ? (
+                                      <span className="text-[10px] font-black tracking-tight text-white dark:text-slate-900 truncate">
+                                        P.{slot.pallet_list.slice(-4)}
+                                      </span>
+                                    ) : (
+                                      <span className="text-[9px] text-muted-foreground/40 font-normal">-</span>
+                                    )}
                                   </div>
                                 </button>
                               );
