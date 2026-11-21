@@ -429,33 +429,33 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[38px] px-1.5 py-0.5 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
+                                  className={`h-[40px] px-1.5 py-1 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* Left: Level */}
-                                  <span className="text-[10px] font-black font-mono opacity-80">
+                                  {/* Left: Level (Vertically Centered) */}
+                                  <span className="text-[11px] font-black font-mono opacity-80 self-center leading-none pl-0.5">
                                     {level === 'FLOOR' ? 'FL' : level}
                                   </span>
 
-                                  {/* Right: Batch # (No '#', roomy yellow badge) and Pallet # (directly below) */}
+                                  {/* Right: Batch # (roomy yellow badge) and Pallet # (vertically centered together) */}
                                   {isStored ? (
-                                    <div className="flex flex-col items-end gap-0.5 leading-none">
+                                    <div className="flex flex-col items-center justify-center my-auto">
                                       {batchText && (
-                                        <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-xs leading-none shadow-2xs">
+                                        <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
                                           {batchText}
                                         </span>
                                       )}
                                       {palletText && (
-                                        <span className="text-[9px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none">
+                                        <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
                                           {palletText}
                                         </span>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-[9px] text-muted-foreground/30 font-mono">-</span>
+                                    <span className="text-[10px] text-muted-foreground/30 font-mono pr-1">-</span>
                                   )}
                                 </button>
                               );
@@ -463,9 +463,9 @@ export function PalletStorageClient({
                           </div>
 
                           {/* CENTER BIN COLUMN (BIN 01 ~ BIN 32) */}
-                          <div className="w-11 h-[38px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
+                          <div className="w-11 h-[40px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
                             <span className="text-[8px] text-muted-foreground font-black tracking-wider leading-none">BIN</span>
-                            <span className="text-[11px] font-black leading-tight">{bay}</span>
+                            <span className="text-[11px] font-black leading-tight mt-0.5">{bay}</span>
                           </div>
 
                           {/* RIGHT (R) SLOTS: FLOOR, A, B, C */}
@@ -493,33 +493,33 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[38px] px-1.5 py-0.5 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
+                                  className={`h-[40px] px-1.5 py-1 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* Left: Level */}
-                                  <span className="text-[10px] font-black font-mono opacity-80">
+                                  {/* Left: Level (Vertically Centered) */}
+                                  <span className="text-[11px] font-black font-mono opacity-80 self-center leading-none pl-0.5">
                                     {level === 'FLOOR' ? 'FL' : level}
                                   </span>
 
-                                  {/* Right: Batch # (No '#', roomy yellow badge) and Pallet # (directly below) */}
+                                  {/* Right: Batch # (roomy yellow badge) and Pallet # (vertically centered together) */}
                                   {isStored ? (
-                                    <div className="flex flex-col items-end gap-0.5 leading-none">
+                                    <div className="flex flex-col items-center justify-center my-auto">
                                       {batchText && (
-                                        <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-xs leading-none shadow-2xs">
+                                        <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
                                           {batchText}
                                         </span>
                                       )}
                                       {palletText && (
-                                        <span className="text-[9px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none">
+                                        <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
                                           {palletText}
                                         </span>
                                       )}
                                     </div>
                                   ) : (
-                                    <span className="text-[9px] text-muted-foreground/30 font-mono">-</span>
+                                    <span className="text-[10px] text-muted-foreground/30 font-mono pr-1">-</span>
                                   )}
                                 </button>
                               );
