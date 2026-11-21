@@ -190,9 +190,32 @@ export async function getLocations({ search = '' }: { search?: string } = {}) {
     }
   }
 
+  // Fetch current stored pallets (CJ) mapped to locations
+  const { data: palletRows } = await (supabase as any)
+    .from('pallets')
+    .select('location_id, batch_no, pallet_no')
+    .eq('status', 'STORED')
+
+  if (palletRows) {
+    for (const p of palletRows) {
+      const existing = invMap.get(p.location_id)
+      if (existing) {
+        existing.onHandQty += 1
+        existing.name = (existing.name || '') + `, #${p.pallet_no}`
+      } else {
+        invMap.set(p.location_id, {
+          onHandQty: 1,
+          sku: `CJ-${p.batch_no}`,
+          name: `CJ Pallet #${p.pallet_no} (Batch ${p.batch_no})`,
+        })
+      }
+    }
+  }
+
   const data: LocationData[] = locRows.map((loc: any) => {
     const code = loc.code || ''
     const match = code.match(/^LOC-([A-Z])([0-9]{2})([0-9]{2})([A-D])([0-9]{2})$/)
+    const palletMatch = code.match(/^([1-3])-([LR])-([0-3][0-9])-(FLOOR|A|B|C)$/)
     
     let zoneCode: 'A' | 'F' | 'S' = (loc.zone_type || 'A') as 'A' | 'F'
     let aisleNum = '01'
@@ -206,6 +229,12 @@ export async function getLocations({ search = '' }: { search?: string } = {}) {
       bayNum = match[3]
       levelCode = match[4]
       binNum = match[5]
+    } else if (palletMatch) {
+      zoneCode = 'A'
+      aisleNum = `0${palletMatch[1]}`
+      bayNum = palletMatch[3]
+      levelCode = palletMatch[4] === 'FLOOR' ? 'F' : palletMatch[4]
+      binNum = palletMatch[2] === 'L' ? '01' : '02'
     } else if (code.startsWith('LOC-S')) {
       zoneCode = 'S'
     }
