@@ -32,15 +32,26 @@ export function PalletStorageClient({
   const [activeTab, setActiveTab] = useState<'grid' | 'table'>('grid');
 
   // Filters
-  const [selectedAisle, setSelectedAisle] = useState<number>(0); // 0 = all
+  const [selectedAisle, setSelectedAisle] = useState<number>(1); // 0 = all, 1 = default
+  const [selectedLevel, setSelectedLevel] = useState<'ALL' | 'FLOOR' | 'A' | 'B' | 'C'>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'STORED' | 'EMPTY'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'corridor' | 'grid'>('corridor');
 
   // 3PL Billing rate simulation
   const [dailyRate, setDailyRate] = useState<number>(initialStats.dailyStorageRate || 0.85);
 
   // Selected slot detail modal
   const [selectedSlot, setSelectedSlot] = useState<PalletSummarySlot | null>(null);
+
+  // Fast map lookup: "1-L-01-FLOOR" -> PalletSummarySlot
+  const slotMap = useMemo(() => {
+    const map = new Map<string, PalletSummarySlot>();
+    for (const slot of slots) {
+      map.set(slot.location_code, slot);
+    }
+    return map;
+  }, [slots]);
 
   // Computed 3PL Billing
   const computedMonthlyBilling = useMemo(() => {
@@ -53,8 +64,10 @@ export function PalletStorageClient({
       const parts = slot.location_code.split('-');
       if (parts.length < 4) return false;
       const aisle = Number(parts[0]);
+      const level = parts[3];
 
       if (selectedAisle !== 0 && aisle !== selectedAisle) return false;
+      if (selectedLevel !== 'ALL' && level !== selectedLevel) return false;
 
       const isStored = slot.slot_status === '보관중' || slot.stored_pallet_count > 0;
       if (statusFilter === 'STORED' && !isStored) return false;
@@ -70,7 +83,7 @@ export function PalletStorageClient({
 
       return true;
     });
-  }, [slots, selectedAisle, statusFilter, searchQuery]);
+  }, [slots, selectedAisle, selectedLevel, statusFilter, searchQuery]);
 
   // Filtered Pallets for Table
   const filteredPallets = useMemo(() => {
@@ -218,7 +231,7 @@ export function PalletStorageClient({
           {/* Aisle Selection */}
           <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
             <span className="text-xs font-semibold px-2 text-muted-foreground">Aisle:</span>
-            {[0, 1, 2, 3].map((a) => (
+            {[1, 2, 3, 0].map((a) => (
               <button
                 key={a}
                 type="button"
@@ -230,6 +243,25 @@ export function PalletStorageClient({
                 }`}
               >
                 {a === 0 ? 'All' : `Aisle ${a}`}
+              </button>
+            ))}
+          </div>
+
+          {/* Level Selection */}
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
+            <span className="text-xs font-semibold px-2 text-muted-foreground">Level:</span>
+            {(['ALL', 'FLOOR', 'A', 'B', 'C'] as const).map((lv) => (
+              <button
+                key={lv}
+                type="button"
+                onClick={() => setSelectedLevel(lv)}
+                className={`px-2 py-1 text-xs font-bold rounded-lg transition-all ${
+                  selectedLevel === lv
+                    ? 'bg-primary text-primary-foreground shadow-xs'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {lv === 'ALL' ? 'All' : lv === 'FLOOR' ? 'FL' : `${lv}F`}
               </button>
             ))}
           </div>
@@ -250,6 +282,32 @@ export function PalletStorageClient({
                 {st === 'ALL' ? 'All Slots' : st === 'STORED' ? 'Occupied' : 'Vacant'}
               </button>
             ))}
+          </div>
+
+          {/* View Mode Toggle */}
+          <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setViewMode('corridor')}
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'corridor'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              ↔️ Facing L/R
+            </button>
+            <button
+              type="button"
+              onClick={() => setViewMode('grid')}
+              className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                viewMode === 'grid'
+                  ? 'bg-background text-foreground shadow-xs'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              ▦ Grid
+            </button>
           </div>
         </div>
 
@@ -272,6 +330,7 @@ export function PalletStorageClient({
           <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
             <span>
               Showing <strong className="text-foreground">{filteredSlots.length}</strong> of 768 warehouse slots
+              {viewMode === 'corridor' && ' (Facing Layout: Left Rack ↔ Central Aisle ↔ Right Rack)'}
             </span>
             <div className="flex items-center gap-4">
               <span className="flex items-center gap-1.5">
@@ -285,39 +344,200 @@ export function PalletStorageClient({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5 max-h-[580px] overflow-y-auto p-1 bg-muted/30 border rounded-xl">
-            {filteredSlots.map((slot) => {
-              const isStored = slot.slot_status === '보관중' || slot.stored_pallet_count > 0;
-              return (
-                <button
-                  key={slot.location_id}
-                  type="button"
-                  onClick={() => setSelectedSlot(slot)}
-                  className={`p-2 rounded-lg text-left transition-all border ${
-                    isStored
-                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
-                      : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
-                  }`}
-                >
-                  <div className="text-[10px] font-mono font-bold truncate">{slot.location_code}</div>
-                  <div className="mt-1 flex items-center justify-between text-[9px]">
-                    <span
-                      className={`px-1 py-0.2 rounded font-bold ${
-                        isStored
-                          ? 'bg-amber-400 text-slate-900'
-                          : 'bg-muted text-muted-foreground'
-                      }`}
-                    >
-                      {isStored ? (slot.batch_list ? `#${slot.batch_list}` : 'CJ') : 'Empty'}
-                    </span>
-                    {isStored && slot.pallet_list && (
-                      <span className="font-mono opacity-80">P.{slot.pallet_list.slice(0, 4)}</span>
-                    )}
+          {viewMode === 'corridor' ? (
+            /* FACING CORRIDOR VIEW (L on Left, Corridor in Middle, R on Right) */
+            <div className="space-y-6 max-h-[640px] overflow-y-auto pr-1">
+              {(selectedAisle === 0 ? [1, 2, 3] : [selectedAisle]).map((aisle) => (
+                <div key={aisle} className="bg-muted/30 border rounded-2xl p-3.5 shadow-2xs">
+                  {/* Aisle & Rack Header */}
+                  <div className="mb-2.5">
+                    <div className="text-center pb-1.5 border-b mb-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 font-bold text-xs">
+                        🏢 Aisle {aisle} Central Corridor
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 text-xs font-bold text-foreground">
+                      {/* Left L Rack Header */}
+                      <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-blue-200 dark:border-blue-800">
+                        <span className="flex items-center gap-1">
+                          <span>⬅️</span>
+                          <span>Left Rack (L)</span>
+                        </span>
+                        <span className="text-[11px] font-mono opacity-80">
+                          {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
+                        </span>
+                      </div>
+
+                      {/* Center Aisle Header */}
+                      <div className="w-16 text-center bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 rounded-lg py-1 px-1 border border-amber-300 dark:border-amber-700 font-bold text-[11px]">
+                        🚜 Aisle
+                      </div>
+
+                      {/* Right R Rack Header */}
+                      <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-2.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
+                        <span className="text-[11px] font-mono opacity-80">
+                          {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <span>Right Rack (R)</span>
+                          <span>➡️</span>
+                        </span>
+                      </div>
+                    </div>
                   </div>
-                </button>
-              );
-            })}
-          </div>
+
+                  {/* 32 Bay Rows */}
+                  <div className="space-y-1">
+                    {Array.from({ length: 32 }, (_, i) => String(i + 1).padStart(2, '0')).map((bay) => {
+                      const levels: ('FLOOR' | 'A' | 'B' | 'C')[] =
+                        selectedLevel === 'ALL' ? ['FLOOR', 'A', 'B', 'C'] : [selectedLevel];
+
+                      return (
+                        <div
+                          key={bay}
+                          className="grid grid-cols-[1fr_auto_1fr] items-center gap-2 py-0.5 px-0.5 rounded-lg hover:bg-muted/50 transition-colors"
+                        >
+                          {/* LEFT (L) SLOTS */}
+                          <div
+                            className={`grid gap-1 ${
+                              levels.length === 1
+                                ? 'grid-cols-1'
+                                : levels.length === 2
+                                ? 'grid-cols-2'
+                                : levels.length === 3
+                                ? 'grid-cols-3'
+                                : 'grid-cols-4'
+                            }`}
+                          >
+                            {levels.map((level) => {
+                              const code = `${aisle}-L-${bay}-${level}`;
+                              const slot = slotMap.get(code);
+                              const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+
+                              return (
+                                <button
+                                  key={level}
+                                  type="button"
+                                  onClick={() => slot && setSelectedSlot(slot)}
+                                  className={`h-9 px-1 rounded-md text-left transition-all border flex flex-col justify-between ${
+                                    isStored
+                                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
+                                      : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-[9px] font-bold font-mono opacity-70">
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
+                                    {isStored && (
+                                      <span className="text-[8px] bg-amber-400 text-slate-950 font-black px-1 rounded">
+                                        {slot.batch_list ? `#${slot.batch_list}` : 'CJ'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[8px] font-mono truncate w-full opacity-80">
+                                    {isStored && slot.pallet_list ? `P.${slot.pallet_list.slice(-4)}` : 'Vacant'}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {/* CENTER AISLE BAY */}
+                          <div className="w-16 h-9 rounded-md bg-muted border flex flex-col items-center justify-center text-foreground font-mono font-bold">
+                            <span className="text-[9px] text-muted-foreground font-sans leading-none">Bay</span>
+                            <span className="text-xs leading-tight">{bay}</span>
+                          </div>
+
+                          {/* RIGHT (R) SLOTS */}
+                          <div
+                            className={`grid gap-1 ${
+                              levels.length === 1
+                                ? 'grid-cols-1'
+                                : levels.length === 2
+                                ? 'grid-cols-2'
+                                : levels.length === 3
+                                ? 'grid-cols-3'
+                                : 'grid-cols-4'
+                            }`}
+                          >
+                            {levels.map((level) => {
+                              const code = `${aisle}-R-${bay}-${level}`;
+                              const slot = slotMap.get(code);
+                              const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+
+                              return (
+                                <button
+                                  key={level}
+                                  type="button"
+                                  onClick={() => slot && setSelectedSlot(slot)}
+                                  className={`h-9 px-1 rounded-md text-left transition-all border flex flex-col justify-between ${
+                                    isStored
+                                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
+                                      : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between w-full">
+                                    <span className="text-[9px] font-bold font-mono opacity-70">
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
+                                    {isStored && (
+                                      <span className="text-[8px] bg-amber-400 text-slate-950 font-black px-1 rounded">
+                                        {slot.batch_list ? `#${slot.batch_list}` : 'CJ'}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="text-[8px] font-mono truncate w-full opacity-80">
+                                    {isStored && slot.pallet_list ? `P.${slot.pallet_list.slice(-4)}` : 'Vacant'}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* FLAT GRID VIEW */
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5 max-h-[580px] overflow-y-auto p-1 bg-muted/30 border rounded-xl">
+              {filteredSlots.map((slot) => {
+                const isStored = slot.slot_status === '보관중' || slot.stored_pallet_count > 0;
+                return (
+                  <button
+                    key={slot.location_id}
+                    type="button"
+                    onClick={() => setSelectedSlot(slot)}
+                    className={`p-2 rounded-lg text-left transition-all border ${
+                      isStored
+                        ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
+                        : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
+                    }`}
+                  >
+                    <div className="text-[10px] font-mono font-bold truncate">{slot.location_code}</div>
+                    <div className="mt-1 flex items-center justify-between text-[9px]">
+                      <span
+                        className={`px-1 py-0.2 rounded font-bold ${
+                          isStored
+                            ? 'bg-amber-400 text-slate-900'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        {isStored ? (slot.batch_list ? `#${slot.batch_list}` : 'CJ') : 'Empty'}
+                      </span>
+                      {isStored && slot.pallet_list && (
+                        <span className="font-mono opacity-80">P.{slot.pallet_list.slice(0, 4)}</span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
