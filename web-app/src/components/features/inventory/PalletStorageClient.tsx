@@ -375,10 +375,8 @@ export function PalletStorageClient({
                         </span>
                       </div>
 
-                      {/* Center BIN Header */}
-                      <div className="w-11 text-center bg-amber-100 dark:bg-amber-950/50 text-amber-900 dark:text-amber-200 rounded-lg py-1 px-0.5 border border-amber-300 dark:border-amber-700 font-mono font-black text-[10px]">
-                        BIN
-                      </div>
+                      {/* Center Empty Placeholder (Header Yellow BIN Removed) */}
+                      <div className="w-11" />
 
                       {/* Right R Rack Header (FLOOR, A, B, C) */}
                       <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-1.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
@@ -422,44 +420,50 @@ export function PalletStorageClient({
                               const code = `${aisle}-L-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const batchText = slot?.batch_list?.replace(/^#/, '') || '';
+                              const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
+                              const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
 
                               return (
                                 <button
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[34px] px-1 py-0.5 rounded-md text-left transition-all border flex flex-col justify-between overflow-hidden ${
+                                  className={`h-[38px] px-1.5 py-0.5 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between w-full leading-none">
-                                    <span className="text-[10px] font-black font-mono opacity-80">
-                                      {level === 'FLOOR' ? 'FL' : level}
-                                    </span>
-                                    {isStored && slot.batch_list && (
-                                      <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
-                                        #{slot.batch_list}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center justify-between w-full leading-tight font-mono">
-                                    {isStored && slot.pallet_list ? (
-                                      <span className="text-[10px] font-black tracking-tight text-white dark:text-slate-900 truncate">
-                                        P.{slot.pallet_list.slice(-4)}
-                                      </span>
-                                    ) : (
-                                      <span className="text-[9px] text-muted-foreground/40 font-normal">-</span>
-                                    )}
-                                  </div>
+                                  {/* Left: Level */}
+                                  <span className="text-[10px] font-black font-mono opacity-80">
+                                    {level === 'FLOOR' ? 'FL' : level}
+                                  </span>
+
+                                  {/* Right: Batch # (No '#', roomy yellow badge) and Pallet # (directly below) */}
+                                  {isStored ? (
+                                    <div className="flex flex-col items-end gap-0.5 leading-none">
+                                      {batchText && (
+                                        <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-xs leading-none shadow-2xs">
+                                          {batchText}
+                                        </span>
+                                      )}
+                                      {palletText && (
+                                        <span className="text-[9px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none">
+                                          {palletText}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-[9px] text-muted-foreground/30 font-mono">-</span>
+                                  )}
                                 </button>
                               );
                             })}
                           </div>
 
                           {/* CENTER BIN COLUMN (BIN 01 ~ BIN 32) */}
-                          <div className="w-11 h-[34px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
+                          <div className="w-11 h-[38px] rounded-md bg-muted/90 border flex flex-col items-center justify-center text-foreground font-mono font-bold">
                             <span className="text-[8px] text-muted-foreground font-black tracking-wider leading-none">BIN</span>
                             <span className="text-[11px] font-black leading-tight">{bay}</span>
                           </div>
@@ -480,37 +484,43 @@ export function PalletStorageClient({
                               const code = `${aisle}-R-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const batchText = slot?.batch_list?.replace(/^#/, '') || '';
+                              const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
+                              const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
 
                               return (
                                 <button
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[34px] px-1 py-0.5 rounded-md text-left transition-all border flex flex-col justify-between overflow-hidden ${
+                                  className={`h-[38px] px-1.5 py-0.5 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="flex items-center justify-between w-full leading-none">
-                                    <span className="text-[10px] font-black font-mono opacity-80">
-                                      {level === 'FLOOR' ? 'FL' : level}
-                                    </span>
-                                    {isStored && slot.batch_list && (
-                                      <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1 rounded-xs">
-                                        #{slot.batch_list}
-                                      </span>
-                                    )}
-                                  </div>
-                                  <div className="flex items-center justify-between w-full leading-tight font-mono">
-                                    {isStored && slot.pallet_list ? (
-                                      <span className="text-[10px] font-black tracking-tight text-white dark:text-slate-900 truncate">
-                                        P.{slot.pallet_list.slice(-4)}
-                                      </span>
-                                    ) : (
-                                      <span className="text-[9px] text-muted-foreground/40 font-normal">-</span>
-                                    )}
-                                  </div>
+                                  {/* Left: Level */}
+                                  <span className="text-[10px] font-black font-mono opacity-80">
+                                    {level === 'FLOOR' ? 'FL' : level}
+                                  </span>
+
+                                  {/* Right: Batch # (No '#', roomy yellow badge) and Pallet # (directly below) */}
+                                  {isStored ? (
+                                    <div className="flex flex-col items-end gap-0.5 leading-none">
+                                      {batchText && (
+                                        <span className="text-[9px] bg-amber-400 text-slate-950 font-black px-1.5 py-0.5 rounded-xs leading-none shadow-2xs">
+                                          {batchText}
+                                        </span>
+                                      )}
+                                      {palletText && (
+                                        <span className="text-[9px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none">
+                                          {palletText}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <span className="text-[9px] text-muted-foreground/30 font-mono">-</span>
+                                  )}
                                 </button>
                               );
                             })}
