@@ -74,6 +74,7 @@ export function AppSidebar({ tenant, ...props }: AppSidebarProps) {
       items: [
         { title: "Stock Overview", url: "/inventory" },
         { title: "CJ Pallet Storage", url: "/inventory/pallets" },
+        { title: "CJ Operators", url: "/inventory/operators" },
         { title: "Reports & Analytics", url: "/inventory/reports" },
         { title: "Audit History", url: "/inventory/audit" },
       ]
