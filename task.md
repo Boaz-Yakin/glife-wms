@@ -1173,6 +1173,15 @@
   - `cancelledCategories` 반영: 취소된 카테고리 인보이스 결번(VOID) 표기, 피킹 리스트 취소 마킹 및 API 처리
 - [x] 90.7 아키텍처 및 TypeScript 무결성 검증 (`tsc --noEmit` 통과)
 
+---
+
+## 🏢 Phase 91: CJ Pallet Storage 총 슬롯 정합성(768) 및 Occupied/Vacant 필터 인터랙션 교정
+- [x] 91.1 `pallet-storage.service.ts`: `getWarehousePalletSummary()`에서 일반 WMS 랙(LOC-*) 69개를 제외하고 CJ 768 표준 규격(`^[1-3]-[LR]-[0-9]{2}-(FLOOR|[ABC])$`)만 정확히 필터링하도록 수정 (Total Slots: 768, Vacant Slots: 484, 점유율 37.0% 정상화)
+- [x] 91.2 `PalletStorageClient.tsx`: Facing Corridor (↔️ Facing L/R) 뷰 렌더링 루프에 `statusFilter`(`isFilteredOut`) 조건 연동 (Occupied 선택 시 보관 슬롯 강조 & 빈 슬롯 디밍, Vacant 선택 시 빈 슬롯 강조 & 보관 슬롯 디밍)
+- [x] 91.3 `PalletStorageClient.tsx`: 상단 `All Slots / Occupied / Vacant` 토글 버튼 액티브 스타일 및 슬롯 카운트 요약 문구(`(Occupied only)` / `(Vacant only)`) 시각화 개선
+- [x] 91.4 `supabase/migrations/20261122000000_fix_v_warehouse_summary_cj_slots.sql` 마이그레이션 생성
+- [x] 91.5 Next.js 16 프로덕션 빌드 무결성 검증 통과 및 Vercel 프로덕션 배포 완료 (`https://glife-web-app.vercel.app`)
+
 
 
 
