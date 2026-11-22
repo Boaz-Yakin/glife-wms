@@ -254,7 +254,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
     if (result?.error) {
       toast.error(result.error)
     } else {
-      toast.success(isWorker ? "Temporary PIN '123456' issued & lock cleared." : "Password reset to 'password123'.")
+      toast.success(isWorker ? "Temporary 4-digit PIN '1234' issued & lock cleared." : "Password reset to 'password123'.")
       setIsEditOpen(false)
     }
   }
@@ -276,7 +276,7 @@ export function UsersTable({ data }: { data: UserData[] }) {
               <DialogTitle>Register New User</DialogTitle>
               <DialogDescription>
                 Add a new worker or admin to access the system.<br/>
-                Initial password will be set to <strong>password123</strong>.
+                Initial credentials: <strong>1234</strong> (Workers: 4-digit PIN) / <strong>password123</strong> (Admins).
               </DialogDescription>
             </DialogHeader>
             <form action={handleCreateSubmit}>

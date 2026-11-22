@@ -35,7 +35,7 @@ export async function createUserAction(formData: FormData) {
   const tenant = await getCurrentTenant()
   const email = formatTenantVirtualEmail(phone, tenant.code)
   const isWorker = role === 'PICKER' || role === 'INSPECTOR'
-  const password = isWorker ? "123456" : "password123" // 6-digit PIN for workers, password for managers
+  const password = isWorker ? "123400" : "password123" // 4-digit PIN ('1234') for workers, password for managers
 
   // 1. Create in auth.users
   const { data: authData, error: authError } = await adminClient.auth.admin.createUser({
@@ -263,7 +263,7 @@ export async function resetUserPasswordAction(userId: string) {
   // 1. Fetch user to check role & phone
   const { data: pubUser } = await adminClient.from("users").select("role, phone").eq("id", userId).maybeSingle()
   const isWorker = pubUser?.role === 'PICKER' || pubUser?.role === 'INSPECTOR'
-  const newPassword = isWorker ? "123456" : "password123"
+  const newPassword = isWorker ? "123400" : "password123"
 
   // 2. Update password and force change on next login
   const { error } = await adminClient.auth.admin.updateUserById(userId, {
@@ -285,5 +285,5 @@ export async function resetUserPasswordAction(userId: string) {
   }
 
   revalidatePath("/settings/users")
-  return { success: true, temporarySecret: newPassword, isWorker }
+  return { success: true, temporarySecret: isWorker ? "1234" : "password123", isWorker }
 }
