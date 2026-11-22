@@ -54,7 +54,11 @@ export async function getWarehousePalletSummary(aisle?: number): Promise<{ data:
     if (error) {
       return { data: [], error: error.message };
     }
-    return { data: data || [], error: null };
+    // CJ 표준 768 슬롯(1-L-01-FLOOR ~ 3-R-32-C)만 엄격히 필터링 (일반 WMS 로케이션 LOC-* 제외)
+    const cjSlots = (data || []).filter((s: PalletSummarySlot) =>
+      /^[1-3]-[LR]-[0-9]{2}-(FLOOR|[ABC])$/.test(s.location_code)
+    );
+    return { data: cjSlots, error: null };
   } catch (err: unknown) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' };
   }

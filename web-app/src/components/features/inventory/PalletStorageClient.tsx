@@ -284,20 +284,28 @@ export function PalletStorageClient({
 
           {/* Status Selection */}
           <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
-            {(['ALL', 'STORED', 'EMPTY'] as const).map((st) => (
-              <button
-                key={st}
-                type="button"
-                onClick={() => setStatusFilter(st)}
-                className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all ${
-                  statusFilter === st
-                    ? 'bg-background text-foreground shadow-xs'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                {st === 'ALL' ? 'All Slots' : st === 'STORED' ? 'Occupied' : 'Vacant'}
-              </button>
-            ))}
+            {(['ALL', 'STORED', 'EMPTY'] as const).map((st) => {
+              const isActive = statusFilter === st;
+              const label = st === 'ALL' ? 'All Slots' : st === 'STORED' ? 'Occupied' : 'Vacant';
+              return (
+                <button
+                  key={st}
+                  type="button"
+                  onClick={() => setStatusFilter(st)}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
+                    isActive
+                      ? st === 'STORED'
+                        ? 'bg-[#173452] text-white shadow-xs dark:bg-slate-100 dark:text-slate-900'
+                        : st === 'EMPTY'
+                        ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 dark:text-slate-950'
+                        : 'bg-background text-foreground shadow-xs'
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
 
           {/* View Mode Toggle */}
@@ -346,6 +354,11 @@ export function PalletStorageClient({
           <div className="flex items-center justify-between mb-3 text-xs text-muted-foreground">
             <span>
               Showing <strong className="text-foreground">{filteredSlots.length}</strong> of 768 warehouse slots
+              {statusFilter !== 'ALL' && (
+                <span className="ml-1 font-semibold text-primary">
+                  ({statusFilter === 'STORED' ? 'Occupied only' : 'Vacant only'})
+                </span>
+              )}
               {viewMode === 'corridor' && ' (Facing Layout: Left Rack ↔ Central Aisle ↔ Right Rack)'}
             </span>
             <div className="flex items-center gap-4">
@@ -429,6 +442,7 @@ export function PalletStorageClient({
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
+                              const isFilteredOut = (statusFilter === 'STORED' && !isStored) || (statusFilter === 'EMPTY' && isStored);
                               const batchText = slot?.batch_list?.replace(/^#/, '') || '';
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
                               const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
@@ -439,7 +453,9 @@ export function PalletStorageClient({
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
                                   className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
-                                    isMatch
+                                    isFilteredOut
+                                      ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
+                                      : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
@@ -511,6 +527,7 @@ export function PalletStorageClient({
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
+                              const isFilteredOut = (statusFilter === 'STORED' && !isStored) || (statusFilter === 'EMPTY' && isStored);
                               const batchText = slot?.batch_list?.replace(/^#/, '') || '';
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
                               const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
@@ -521,7 +538,9 @@ export function PalletStorageClient({
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
                                   className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
-                                    isMatch
+                                    isFilteredOut
+                                      ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
+                                      : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
