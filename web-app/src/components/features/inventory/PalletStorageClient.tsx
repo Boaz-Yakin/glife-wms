@@ -13,6 +13,7 @@ import {
   Filter
 } from 'lucide-react';
 import type { PalletSummarySlot, PalletItem, PalletStorageStats } from '@/services/pallet-storage.service';
+import { formatDisplayLocation } from '@/lib/location';
 
 interface PalletStorageClientProps {
   initialSlots: PalletSummarySlot[];
@@ -97,6 +98,21 @@ export function PalletStorageClient({
         p.locations?.code.toLowerCase().includes(sq)
     );
   }, [pallets, searchQuery]);
+
+  // Check if slot matches search query
+  const isSearchMatch = (slot?: PalletSummarySlot) => {
+    if (!slot || !searchQuery.trim()) return false;
+    const term = searchQuery.trim().toLowerCase();
+    const cleanTerm = term.replace(/[\s-]/g, '');
+    return (
+      slot.location_code.toLowerCase().includes(term) ||
+      slot.location_code.toLowerCase().replace(/[\s-]/g, '').includes(cleanTerm) ||
+      formatDisplayLocation(slot.location_code).toLowerCase().includes(term) ||
+      formatDisplayLocation(slot.location_code).toLowerCase().replace(/[\s-]/g, '').includes(cleanTerm) ||
+      (slot.batch_list?.toLowerCase().includes(term) ?? false) ||
+      (slot.pallet_list?.toLowerCase().includes(term) ?? false)
+    );
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -364,36 +380,28 @@ export function PalletStorageClient({
                     </div>
 
                     <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1.5 text-xs font-bold text-foreground">
-                      {/* Left L Rack Header (C, B, A, FLOOR) */}
-                      <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-1.5 flex items-center justify-between border border-blue-200 dark:border-blue-800">
-                        <span className="flex items-center gap-0.5 text-[11px]">
-                          <span>⬅️</span>
-                          <span>L</span>
-                        </span>
-                        <span className="text-[10px] font-mono font-black tracking-wider opacity-90">
-                          {selectedLevel === 'ALL' ? 'C · B · A · FL' : selectedLevel}
+                      {/* Left L Rack Header: L 단독 중앙 표기 */}
+                      <div className="bg-blue-50 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 rounded-lg py-1 px-1.5 flex items-center justify-center border border-blue-200 dark:border-blue-800">
+                        <span className="font-black text-xs sm:text-sm tracking-widest">
+                          L
                         </span>
                       </div>
 
-                      {/* Center Empty Placeholder (Header Yellow BIN Removed) */}
-                      <div className="w-11" />
+                      {/* Center Empty Placeholder */}
+                      <div className="w-11 shrink-0" />
 
-                      {/* Right R Rack Header (FLOOR, A, B, C) */}
-                      <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-1.5 flex items-center justify-between border border-indigo-200 dark:border-indigo-800">
-                        <span className="text-[10px] font-mono font-black tracking-wider opacity-90">
-                          {selectedLevel === 'ALL' ? 'FL · A · B · C' : selectedLevel}
-                        </span>
-                        <span className="flex items-center gap-0.5 text-[11px]">
-                          <span>R</span>
-                          <span>➡️</span>
+                      {/* Right R Rack Header: R 단독 중앙 표기 */}
+                      <div className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-800 dark:text-indigo-300 rounded-lg py-1 px-1.5 flex items-center justify-center border border-indigo-200 dark:border-indigo-800">
+                        <span className="font-black text-xs sm:text-sm tracking-widest">
+                          R
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* 32 Bay Rows */}
+                  {/* 32 Bay Rows (위에서 아래로 32 -> 01 감소순 정렬) */}
                   <div className="space-y-1">
-                    {Array.from({ length: 32 }, (_, i) => String(i + 1).padStart(2, '0')).map((bay) => {
+                    {Array.from({ length: 32 }, (_, i) => String(32 - i).padStart(2, '0')).map((bay) => {
                       const leftLevels: ('FLOOR' | 'A' | 'B' | 'C')[] =
                         selectedLevel === 'ALL' ? ['C', 'B', 'A', 'FLOOR'] : [selectedLevel];
                       const rightLevels: ('FLOOR' | 'A' | 'B' | 'C')[] =
@@ -420,6 +428,7 @@ export function PalletStorageClient({
                               const code = `${aisle}-L-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const isMatch = isSearchMatch(slot);
                               const batchText = slot?.batch_list?.replace(/^#/, '') || '';
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
                               const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
@@ -429,42 +438,49 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[40px] px-1 py-1 rounded-md text-left transition-all border flex items-center overflow-hidden ${
-                                    isStored
-                                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
+                                  className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
+                                    isMatch
+                                      ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
+                                      : isStored
+                                      ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="grid grid-cols-[1fr_auto] items-center w-full h-full gap-0.5">
-                                    {/* 좌측: 층수 (좌측 테두리와 우측 수치 사이의 정중앙에 배치) */}
-                                    <div className="flex items-center justify-center">
+                                  {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span
+                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                        isMatch
+                                          ? 'text-red-600 font-black'
+                                          : isStored
+                                          ? 'text-blue-200 dark:text-blue-700'
+                                          : 'text-muted-foreground/60'
+                                      }`}
+                                    >
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
+
+                                    {isStored && batchText ? (
+                                      <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
+                                        {batchText}
+                                      </span>
+                                    ) : null}
+                                  </div>
+
+                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
+                                  <div className="flex items-center justify-center w-full leading-none">
+                                    {isStored ? (
                                       <span
-                                        className={`text-[11px] font-black font-mono leading-none ${
-                                          isStored ? 'text-blue-200' : 'text-slate-400'
+                                        className={`text-[10px] sm:text-[10.5px] font-black font-mono tracking-tight leading-none ${
+                                          isMatch ? 'text-slate-950' : 'text-white dark:text-slate-900'
                                         }`}
                                       >
-                                        {level === 'FLOOR' ? 'FL' : level}
+                                        {palletText}
                                       </span>
-                                    </div>
-
-                                    {/* 우측: 차수(여유있는 황색 박스) 및 하단 팔렛번호(#11) - 수직 중앙 정렬 */}
-                                    {isStored ? (
-                                      <div className="flex flex-col items-center justify-center pr-0.5">
-                                        {batchText && (
-                                          <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
-                                            {batchText}
-                                          </span>
-                                        )}
-                                        {palletText && (
-                                          <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
-                                            {palletText}
-                                          </span>
-                                        )}
-                                      </div>
                                     ) : (
-                                      <div className="flex items-center justify-center pr-1.5">
-                                        <span className="text-[10px] text-muted-foreground/30 font-mono">-</span>
-                                      </div>
+                                      <span className={`text-[9.5px] font-normal leading-none ${isMatch ? 'text-slate-600' : 'text-muted-foreground/30'}`}>
+                                        -
+                                      </span>
                                     )}
                                   </div>
                                 </button>
@@ -472,8 +488,8 @@ export function PalletStorageClient({
                             })}
                           </div>
 
-                          {/* CENTER BIN COLUMN (BIN 01 ~ BIN 32) */}
-                          <div className="w-11 h-[40px] rounded-md bg-amber-100/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 flex flex-col items-center justify-center text-amber-950 dark:text-amber-200 font-mono font-bold shadow-2xs">
+                          {/* CENTER BIN COLUMN (BIN 32 ~ BIN 01) */}
+                          <div className="w-11 h-[42px] rounded-md bg-amber-100/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 flex flex-col items-center justify-center text-amber-950 dark:text-amber-200 font-mono font-bold shadow-2xs">
                             <span className="text-[8px] text-amber-800 dark:text-amber-400 font-black tracking-wider leading-none">BIN</span>
                             <span className="text-[11px] text-amber-950 dark:text-amber-100 leading-tight font-black mt-0.5">{bay}</span>
                           </div>
@@ -494,6 +510,7 @@ export function PalletStorageClient({
                               const code = `${aisle}-R-${bay}-${level}`;
                               const slot = slotMap.get(code);
                               const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const isMatch = isSearchMatch(slot);
                               const batchText = slot?.batch_list?.replace(/^#/, '') || '';
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
                               const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
@@ -503,42 +520,49 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[40px] px-1 py-1 rounded-md text-left transition-all border flex items-center overflow-hidden ${
-                                    isStored
-                                      ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
+                                  className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
+                                    isMatch
+                                      ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
+                                      : isStored
+                                      ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  <div className="grid grid-cols-[1fr_auto] items-center w-full h-full gap-0.5">
-                                    {/* 좌측: 층수 (좌측 테두리와 우측 수치 사이의 정중앙에 배치) */}
-                                    <div className="flex items-center justify-center">
+                                  {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span
+                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                        isMatch
+                                          ? 'text-red-600 font-black'
+                                          : isStored
+                                          ? 'text-blue-200 dark:text-blue-700'
+                                          : 'text-muted-foreground/60'
+                                      }`}
+                                    >
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
+
+                                    {isStored && batchText ? (
+                                      <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
+                                        {batchText}
+                                      </span>
+                                    ) : null}
+                                  </div>
+
+                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
+                                  <div className="flex items-center justify-center w-full leading-none">
+                                    {isStored ? (
                                       <span
-                                        className={`text-[11px] font-black font-mono leading-none ${
-                                          isStored ? 'text-blue-200' : 'text-slate-400'
+                                        className={`text-[10px] sm:text-[10.5px] font-black font-mono tracking-tight leading-none ${
+                                          isMatch ? 'text-slate-950' : 'text-white dark:text-slate-900'
                                         }`}
                                       >
-                                        {level === 'FLOOR' ? 'FL' : level}
+                                        {palletText}
                                       </span>
-                                    </div>
-
-                                    {/* 우측: 차수(여유있는 황색 박스) 및 하단 팔렛번호(#11) - 수직 중앙 정렬 */}
-                                    {isStored ? (
-                                      <div className="flex flex-col items-center justify-center pr-0.5">
-                                        {batchText && (
-                                          <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
-                                            {batchText}
-                                          </span>
-                                        )}
-                                        {palletText && (
-                                          <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
-                                            {palletText}
-                                          </span>
-                                        )}
-                                      </div>
                                     ) : (
-                                      <div className="flex items-center justify-center pr-1.5">
-                                        <span className="text-[10px] text-muted-foreground/30 font-mono">-</span>
-                                      </div>
+                                      <span className={`text-[9.5px] font-normal leading-none ${isMatch ? 'text-slate-600' : 'text-muted-foreground/30'}`}>
+                                        -
+                                      </span>
                                     )}
                                   </div>
                                 </button>
@@ -568,7 +592,9 @@ export function PalletStorageClient({
                         : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                     }`}
                   >
-                    <div className="text-[10px] font-mono font-bold truncate">{slot.location_code}</div>
+                    <div className="text-[10px] font-mono font-bold truncate">
+                      {formatDisplayLocation(slot.location_code)}
+                    </div>
                     <div className="mt-1 flex items-center justify-between text-[9px]">
                       <span
                         className={`px-1 py-0.2 rounded font-bold ${
@@ -650,7 +676,9 @@ export function PalletStorageClient({
             <div className="flex items-center justify-between border-b pb-3 mb-3">
               <div>
                 <span className="text-[10px] font-bold text-muted-foreground uppercase">Slot Info</span>
-                <h3 className="text-lg font-black font-mono">{selectedSlot.location_code}</h3>
+                <h3 className="text-lg font-black font-mono">
+                  {formatDisplayLocation(selectedSlot.location_code)}
+                </h3>
               </div>
               <button
                 type="button"
