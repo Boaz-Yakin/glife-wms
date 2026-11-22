@@ -1192,6 +1192,7 @@
 - [x] 92.5 `AuditTable.tsx`, `ItemInventoryTable.tsx`, `InventoryReportsView.tsx`: 재고 실사 감사 로그, 품목별 재고 팝오버, 재고 분석 리포트 화면 및 엑셀 시트에 `formatDisplayLocation` 일괄 적용
 - [x] 92.6 `ExpirationAlertCard.tsx`, `DynamicSlottingCard.tsx`, `BinAssignModal.tsx`: 대시보드 FEFO 만료 카드, 슬로팅 최적화 카드, 슬롯 배정 다이얼로그 위치 정보에 `formatDisplayLocation` 적용
 - [x] 92.7 Next.js 16 프로덕션 빌드 무결성 검증 통과 및 Vercel 프로덕션 배포 완료 (`https://glife-web-app.vercel.app`)
+- [x] 92.8 `PalletStorageClient.tsx`: Aisle, Slots, View Mode 필터 버튼 액티브 스타일을 Level과 동일한 `bg-primary text-primary-foreground`로 통일 (선택 항목 시각적 하이라이트 정상화)
 
 
 

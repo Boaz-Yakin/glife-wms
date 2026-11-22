@@ -254,7 +254,7 @@ export function PalletStorageClient({
                 onClick={() => setSelectedAisle(a)}
                 className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                   selectedAisle === a
-                    ? 'bg-background text-foreground shadow-xs'
+                    ? 'bg-primary text-primary-foreground shadow-xs'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -294,11 +294,7 @@ export function PalletStorageClient({
                   onClick={() => setStatusFilter(st)}
                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                     isActive
-                      ? st === 'STORED'
-                        ? 'bg-[#173452] text-white shadow-xs dark:bg-slate-100 dark:text-slate-900'
-                        : st === 'EMPTY'
-                        ? 'bg-emerald-600 text-white shadow-xs dark:bg-emerald-500 dark:text-slate-950'
-                        : 'bg-background text-foreground shadow-xs'
+                      ? 'bg-primary text-primary-foreground shadow-xs'
                       : 'text-muted-foreground hover:text-foreground'
                   }`}
                 >
@@ -315,7 +311,7 @@ export function PalletStorageClient({
               onClick={() => setViewMode('corridor')}
               className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 viewMode === 'corridor'
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -326,7 +322,7 @@ export function PalletStorageClient({
               onClick={() => setViewMode('grid')}
               className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
                 viewMode === 'grid'
-                  ? 'bg-background text-foreground shadow-xs'
+                  ? 'bg-primary text-primary-foreground shadow-xs'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
