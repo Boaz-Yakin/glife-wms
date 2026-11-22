@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
+import { formatDisplayLocation } from "@/lib/location"
 import {
   searchAssignableItemsAction,
   assignItemToBinAction,
@@ -159,7 +160,7 @@ export function BinAssignModal({
                 Assign Stock to Bin Slot
               </DialogTitle>
               <DialogDescription className="text-xs font-mono mt-0.5 text-primary font-semibold">
-                {locationCode}
+                {formatDisplayLocation(locationCode)}
               </DialogDescription>
             </div>
           </div>

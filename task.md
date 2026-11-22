@@ -1182,6 +1182,17 @@
 - [x] 91.4 `supabase/migrations/20261122000000_fix_v_warehouse_summary_cj_slots.sql` 마이그레이션 생성
 - [x] 91.5 Next.js 16 프로덕션 빌드 무결성 검증 통과 및 Vercel 프로덕션 배포 완료 (`https://glife-web-app.vercel.app`)
 
+---
+
+## 🏷️ Phase 92: web-app 창고 위치정보 표기 형식 간소화 (`1L-04F` 표준 규격화)
+- [x] 92.1 `lib/location.ts`: `formatDisplayLocation` 정규식 고도화 (Aisle-Side-Bay-Level 구조를 `1L-04F`, `1L-04A` 컴팩트 포맷으로 변환, "FLOOR" 및 "FL"은 "F"로 통일) 및 역변환 함수 `parseToDatabaseLocation` 추가
+- [x] 92.2 `LocationsTable.tsx`: 로케이션 마스터 테이블 Location Code 배지에 `formatDisplayLocation` 적용 (`1-L-04-FLOOR` ➔ `1L-04F`)
+- [x] 92.3 `PalletStorageClient.tsx`: 팔레트 마스터 리스트 테이블의 Location 컬럼에 `formatDisplayLocation` 적용
+- [x] 92.4 `InventoryTable.tsx`: 재고 현황 테이블 및 엑셀 내보내기 시트의 Location 표기에 `formatDisplayLocation` 적용
+- [x] 92.5 `AuditTable.tsx`, `ItemInventoryTable.tsx`, `InventoryReportsView.tsx`: 재고 실사 감사 로그, 품목별 재고 팝오버, 재고 분석 리포트 화면 및 엑셀 시트에 `formatDisplayLocation` 일괄 적용
+- [x] 92.6 `ExpirationAlertCard.tsx`, `DynamicSlottingCard.tsx`, `BinAssignModal.tsx`: 대시보드 FEFO 만료 카드, 슬로팅 최적화 카드, 슬롯 배정 다이얼로그 위치 정보에 `formatDisplayLocation` 적용
+- [x] 92.7 Next.js 16 프로덕션 빌드 무결성 검증 통과 및 Vercel 프로덕션 배포 완료 (`https://glife-web-app.vercel.app`)
+
 
 
 

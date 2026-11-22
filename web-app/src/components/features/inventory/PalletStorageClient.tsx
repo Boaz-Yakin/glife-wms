@@ -669,7 +669,13 @@ export function PalletStorageClient({
                         </span>
                       </td>
                       <td className="py-3 px-4 font-mono font-bold text-foreground">#{p.pallet_no}</td>
-                      <td className="py-3 px-4 font-mono font-medium">{p.locations?.code || '-'}</td>
+                      <td className="py-3 px-4 font-mono font-medium">
+                        {p.locations?.code ? (
+                          <span className="font-mono font-bold text-xs bg-muted/60 px-2 py-0.5 rounded border text-foreground">
+                            {formatDisplayLocation(p.locations.code)}
+                          </span>
+                        ) : '-'}
+                      </td>
                       <td className="py-3 px-4">{p.clients?.name || 'CJ'}</td>
                       <td className="py-3 px-4">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">

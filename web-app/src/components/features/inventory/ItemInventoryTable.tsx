@@ -47,6 +47,7 @@ import {
 } from "lucide-react"
 import { DeKitDialog } from "./DeKitDialog"
 import { exportMultiSheetExcel } from "@/lib/export"
+import { formatDisplayLocation } from "@/lib/location"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type {
@@ -322,7 +323,7 @@ export function ItemInventoryTable({
       "Total Available": d.totalAvailable,
       "Bin Count": d.locationCount,
       "Storage Locations Breakdown": d.locations
-        .map((l) => `${l.code} (On-Hand: ${l.onHand}, Avail: ${l.available})`)
+        .map((l) => `${formatDisplayLocation(l.code)} (On-Hand: ${l.onHand}, Avail: ${l.available})`)
         .join("; "),
       "Daily Velocity (ADU)": d.dynamicThreshold?.dailyVelocity ?? 0,
       "Safety Stock": d.dynamicThreshold?.safetyStock ?? 10,
@@ -423,7 +424,7 @@ export function ItemInventoryTable({
                     className="p-1.5 rounded-md bg-muted/40 border border-border/40 flex items-center justify-between text-xs font-mono"
                   >
                     <div className="flex items-center gap-1">
-                      <span className="font-bold text-foreground">{loc.code}</span>
+                      <span className="font-bold text-foreground">{formatDisplayLocation(loc.code)}</span>
                       <span className="text-[10px] text-muted-foreground">({loc.zone})</span>
                     </div>
                     <div className="flex items-center gap-2 text-[11px]">

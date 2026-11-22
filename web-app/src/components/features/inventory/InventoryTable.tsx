@@ -46,6 +46,7 @@ import {
 } from "lucide-react"
 import { DeKitDialog } from "./DeKitDialog"
 import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
+import { formatDisplayLocation } from "@/lib/location"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import type { DynamicItemThreshold } from "@/services/inventory.service"
@@ -412,7 +413,7 @@ export function InventoryTable({
       const vel = d.item?.dynamicThreshold?.dailyVelocity ?? 0
       const dos = vel > 0 ? Math.round((available / vel) * 10) / 10 : 'N/A'
       return {
-        Location: d.location?.code || 'N/A',
+        Location: formatDisplayLocation(d.location?.code) || 'N/A',
         Zone: d.location?.zone_type || 'N/A',
         SKU: d.item?.sku || 'N/A',
         "Item Name": formatItemNameWithDesc(d.item),
@@ -450,7 +451,7 @@ export function InventoryTable({
           Urgency: urgency,
           SKU: d.item?.sku || 'N/A',
           "Item Name": formatItemNameWithDesc(d.item),
-          Location: d.location?.code || 'N/A',
+          Location: formatDisplayLocation(d.location?.code) || 'N/A',
           Available: available,
           "Safety Stock": ss,
           "Reorder Point": rop,
@@ -479,7 +480,7 @@ export function InventoryTable({
             "Risk Level": risk,
             SKU: d.item?.sku || 'N/A',
             "Item Name": formatItemNameWithDesc(d.item),
-            Location: d.location?.code || 'N/A',
+            Location: formatDisplayLocation(d.location?.code) || 'N/A',
             Available: available,
             "Daily Velocity (ADU)": vel,
             "Days of Supply (DOS)": dos,
@@ -510,7 +511,7 @@ export function InventoryTable({
             "Lot No": d.lot_no || 'N/A',
             SKU: d.item?.sku || 'N/A',
             "Item Name": formatItemNameWithDesc(d.item),
-            Location: d.location?.code || 'N/A',
+            Location: formatDisplayLocation(d.location?.code) || 'N/A',
             "On Hand Qty": d.on_hand_qty,
             Allocated: d.allocated_qty,
           })
@@ -531,7 +532,7 @@ export function InventoryTable({
           Classification: "DEAD STOCK (No Outbound in 30d)",
           SKU: d.item?.sku || 'N/A',
           "Item Name": formatItemNameWithDesc(d.item),
-          Location: d.location?.code || 'N/A',
+          Location: formatDisplayLocation(d.location?.code) || 'N/A',
           Available: available,
           "Daily Velocity (ADU)": 0,
           "Surplus Point": surplus,
@@ -541,7 +542,7 @@ export function InventoryTable({
           Classification: "SURPLUS (Excess Stock)",
           SKU: d.item?.sku || 'N/A',
           "Item Name": formatItemNameWithDesc(d.item),
-          Location: d.location?.code || 'N/A',
+          Location: formatDisplayLocation(d.location?.code) || 'N/A',
           Available: available,
           "Daily Velocity (ADU)": vel,
           "Surplus Point": surplus,
@@ -593,7 +594,7 @@ export function InventoryTable({
           )
         }
 
-        return <div className="font-semibold tabular-nums text-foreground">{currentLocation}</div>
+        return <div className="font-semibold tabular-nums text-foreground">{formatDisplayLocation(currentLocation)}</div>
       },
     },
     {

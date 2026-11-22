@@ -4,6 +4,7 @@ import * as React from "react"
 import { ArrowRight, CheckCircle2, Layers, MoveRight, Sparkles } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { SlottingOptimizationData } from "@/services/dashboard.service"
+import { formatDisplayLocation } from "@/lib/location"
 import { toast } from "sonner"
 
 interface DynamicSlottingCardProps {
@@ -100,7 +101,7 @@ export function DynamicSlottingCard({ data }: DynamicSlottingCardProps) {
                         {item.sku}
                       </span>
                       <span className="text-[10px] text-muted-foreground">
-                        Loc: <strong>{item.currentLocationCode}</strong>
+                        Loc: <strong>{formatDisplayLocation(item.currentLocationCode)}</strong>
                       </span>
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate mt-0.5">

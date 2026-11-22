@@ -23,6 +23,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { LocationData } from "@/services/master.service"
 import { WarehouseStructureModal } from "@/components/features/dashboard/WarehouseStructureModal"
+import { formatDisplayLocation } from "@/lib/location"
 import {
   SunMedium,
   ThermometerSnowflake,
@@ -43,7 +44,7 @@ const columns: ColumnDef<LocationData>[] = [
     cell: ({ row }) => (
       <div className="flex items-center gap-2">
         <span className="font-mono font-bold text-xs bg-muted px-2 py-0.5 rounded border text-foreground">
-          {row.original.code}
+          {formatDisplayLocation(row.original.code)}
         </span>
       </div>
     ),

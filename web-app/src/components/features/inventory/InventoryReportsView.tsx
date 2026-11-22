@@ -36,6 +36,7 @@ import {
   ArrowUpDown,
 } from "lucide-react"
 import { exportToExcel, exportMultiSheetExcel } from "@/lib/export"
+import { formatDisplayLocation } from "@/lib/location"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -102,7 +103,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
         Urgency: r.urgency,
         SKU: r.sku,
         "Item Name": r.nameEn,
-        Locations: r.locationCode,
+        Locations: formatDisplayLocation(r.locationCode),
         Available: r.available,
         "Safety Stock": r.safetyStock,
         "Reorder Point": r.reorderPoint,
@@ -118,7 +119,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
         "Risk Level": s.riskLevel,
         SKU: s.sku,
         "Item Name": s.nameEn,
-        Locations: s.locationCode,
+        Locations: formatDisplayLocation(s.locationCode),
         Available: s.available,
         "Daily Velocity (ADU)": s.dailyVelocity,
         "Days of Supply (DOS)": s.daysOfSupply,
@@ -134,7 +135,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
         "Lot No": e.lotNo,
         SKU: e.sku,
         "Item Name": e.nameEn,
-        Location: e.locationCode,
+        Location: formatDisplayLocation(e.locationCode),
         "On Hand Qty": e.onHandQty,
       }))
       exportToExcel(rows, `FEFO_Expiry_Alert_${new Date().toISOString().slice(0, 10)}`, "FEFO Expiry Alert")
@@ -144,7 +145,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
         Classification: s.classification,
         SKU: s.sku,
         "Item Name": s.nameEn,
-        Locations: s.locationCode,
+        Locations: formatDisplayLocation(s.locationCode),
         Available: s.available,
         "Daily Velocity (ADU)": s.dailyVelocity,
         "Surplus Threshold": s.surplusPoint,
@@ -166,7 +167,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                 Urgency: r.urgency,
                 SKU: r.sku,
                 "Item Name": r.nameEn,
-                Locations: r.locationCode,
+                Locations: formatDisplayLocation(r.locationCode),
                 Available: r.available,
                 "Safety Stock": r.safetyStock,
                 "Reorder Point": r.reorderPoint,
@@ -182,7 +183,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                 "Risk Level": s.riskLevel,
                 SKU: s.sku,
                 "Item Name": s.nameEn,
-                Locations: s.locationCode,
+                Locations: formatDisplayLocation(s.locationCode),
                 Available: s.available,
                 "Daily Velocity (ADU)": s.dailyVelocity,
                 "Days of Supply (DOS)": s.daysOfSupply,
@@ -198,7 +199,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                 "Lot No": e.lotNo,
                 SKU: e.sku,
                 "Item Name": e.nameEn,
-                Location: e.locationCode,
+                Location: formatDisplayLocation(e.locationCode),
                 "On Hand Qty": e.onHandQty,
               })),
             },
@@ -208,7 +209,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                 Classification: s.classification,
                 SKU: s.sku,
                 "Item Name": s.nameEn,
-                Locations: s.locationCode,
+                Locations: formatDisplayLocation(s.locationCode),
                 Available: s.available,
                 "Daily Velocity (ADU)": s.dailyVelocity,
                 "Surplus Threshold": s.surplusPoint,
@@ -537,7 +538,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                     <TableCell className="font-medium max-w-xs truncate" title={item.nameEn}>
                       {item.nameEn}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">{item.locationCode}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-mono">{formatDisplayLocation(item.locationCode)}</TableCell>
                     <TableCell className="text-right font-mono font-bold tabular-nums">
                       <span className={item.available <= 0 ? "text-rose-600" : ""}>{item.available}</span>
                     </TableCell>
@@ -604,7 +605,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                     <TableCell className="font-medium max-w-sm truncate" title={item.nameEn}>
                       {item.nameEn}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">{item.locationCode}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-mono">{formatDisplayLocation(item.locationCode)}</TableCell>
                     <TableCell className="text-right font-mono font-bold tabular-nums">{item.available}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-muted-foreground">{item.dailyVelocity} / day</TableCell>
                     <TableCell className="text-right font-mono tabular-nums font-bold text-rose-600 dark:text-rose-400">
@@ -669,7 +670,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                     <TableCell className="font-medium max-w-sm truncate" title={item.nameEn}>
                       {item.nameEn}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">{item.locationCode}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-mono">{formatDisplayLocation(item.locationCode)}</TableCell>
                     <TableCell className="text-right font-mono font-bold tabular-nums">{item.onHandQty}</TableCell>
                   </TableRow>
                 ))
@@ -719,7 +720,7 @@ export function InventoryReportsView({ data }: { data: InventoryReportsData }) {
                     <TableCell className="font-medium max-w-sm truncate" title={item.nameEn}>
                       {item.nameEn}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs font-mono">{item.locationCode}</TableCell>
+                    <TableCell className="text-muted-foreground text-xs font-mono">{formatDisplayLocation(item.locationCode)}</TableCell>
                     <TableCell className="text-right font-mono font-bold tabular-nums">{item.available}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums text-muted-foreground">{item.dailyVelocity} / day</TableCell>
                     <TableCell className="text-right font-mono text-muted-foreground tabular-nums">{item.surplusPoint}</TableCell>

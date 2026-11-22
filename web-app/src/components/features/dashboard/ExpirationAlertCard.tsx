@@ -4,6 +4,7 @@ import * as React from "react"
 import { AlertCircle, CalendarClock, ShieldAlert, CheckCircle2, ChevronRight, MapPin, Box } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { ExpirationRiskData } from "@/services/dashboard.service"
+import { formatDisplayLocation } from "@/lib/location"
 
 interface ExpirationAlertCardProps {
   data: ExpirationRiskData
@@ -128,7 +129,7 @@ export function ExpirationAlertCard({ data }: ExpirationAlertCardProps) {
                         </span>
                         <span className="text-[10px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-mono flex items-center gap-0.5">
                           <MapPin className="h-2.5 w-2.5" />
-                          {item.locationCode}
+                          {formatDisplayLocation(item.locationCode)}
                         </span>
                         <span className="text-[10px] text-muted-foreground font-mono">
                           {item.lotNo}

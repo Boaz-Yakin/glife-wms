@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { exportToExcel } from "@/lib/export"
+import { formatDisplayLocation } from "@/lib/location"
 
 export type AuditData = {
   id: string
@@ -63,7 +64,7 @@ const columns: ColumnDef<AuditData>[] = [
   {
     accessorKey: "inventory.location.code",
     header: "Location",
-    cell: ({ row }) => <div className="font-medium">{row.original.inventory?.location?.code || 'N/A'}</div>,
+    cell: ({ row }) => <div className="font-medium">{formatDisplayLocation(row.original.inventory?.location?.code) || 'N/A'}</div>,
   },
   {
     accessorKey: "inventory.item.name_en",
@@ -167,7 +168,7 @@ export function AuditTable({ data, totalCount }: AuditTableProps) {
   const handleExport = () => {
     const flattened = data.map((d) => ({
       "Date/Time": d.created_at ? new Date(d.created_at).toLocaleString('en-US') : '',
-      Location: d.inventory?.location?.code || 'N/A',
+      Location: formatDisplayLocation(d.inventory?.location?.code) || 'N/A',
       SKU: d.inventory?.item?.sku || 'N/A',
       "Item Name": d.inventory?.item?.desc_en ? `${d.inventory?.item?.name_en} (${d.inventory?.item?.desc_en})` : (d.inventory?.item?.name_en || 'N/A'),
       "Audited By": d.operator
