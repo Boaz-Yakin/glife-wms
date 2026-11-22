@@ -16,15 +16,15 @@ export default function ChangePinPage() {
   const handleKeyPress = (num: string) => {
     setError(null);
     if (activeStep === "new") {
-      if (pin.length < 4) {
+      if (pin.length < 6) {
         const next = pin + num;
         setPin(next);
-        if (next.length === 4) {
+        if (next.length === 6) {
           setActiveStep("confirm");
         }
       }
     } else {
-      if (confirmPin.length < 4) {
+      if (confirmPin.length < 6) {
         setConfirmPin((prev) => prev + num);
       }
     }
@@ -53,8 +53,8 @@ export default function ChangePinPage() {
   };
 
   const handleSubmit = async () => {
-    if (pin.length !== 4 || confirmPin.length !== 4) {
-      setError("Please complete all 4 digits for both PINs.");
+    if (pin.length !== 6 || confirmPin.length !== 6) {
+      setError("Please complete all 6 digits for both PINs.");
       return;
     }
     if (pin !== confirmPin) {
@@ -98,7 +98,7 @@ export default function ChangePinPage() {
         </div>
         <h1 className="text-2xl font-black tracking-tight">Set New PIN</h1>
         <p className="text-xs text-zinc-400 mt-1">
-          Temporary PIN detected. Set your personal 4-digit PIN.
+          Temporary PIN detected. Set your personal 6-digit PIN.
         </p>
       </div>
 
@@ -114,9 +114,9 @@ export default function ChangePinPage() {
           }`}
         >
           <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">1. New 4-Digit PIN</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">1. New 6-Digit PIN</div>
             <div className="flex items-center gap-2 mt-1">
-              {[0, 1, 2, 3].map((idx) => (
+              {[0, 1, 2, 3, 4, 5].map((idx) => (
                 <div
                   key={idx}
                   className={`w-4 h-4 rounded-full border transition-all ${
@@ -128,13 +128,13 @@ export default function ChangePinPage() {
               ))}
             </div>
           </div>
-          {pin.length === 4 && <CheckCircle2 className="w-5 h-5 text-amber-400" />}
+          {pin.length === 6 && <CheckCircle2 className="w-5 h-5 text-amber-400" />}
         </div>
 
         {/* Step 2: Confirm PIN */}
         <div
           onClick={() => {
-            if (pin.length === 4) setActiveStep("confirm");
+            if (pin.length === 6) setActiveStep("confirm");
           }}
           className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
             activeStep === "confirm"
@@ -145,7 +145,7 @@ export default function ChangePinPage() {
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">2. Confirm PIN</div>
             <div className="flex items-center gap-2 mt-1">
-              {[0, 1, 2, 3].map((idx) => (
+              {[0, 1, 2, 3, 4, 5].map((idx) => (
                 <div
                   key={idx}
                   className={`w-4 h-4 rounded-full border transition-all ${
@@ -157,7 +157,7 @@ export default function ChangePinPage() {
               ))}
             </div>
           </div>
-          {confirmPin.length === 4 && confirmPin === pin && (
+          {confirmPin.length === 6 && confirmPin === pin && (
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           )}
         </div>
@@ -209,7 +209,7 @@ export default function ChangePinPage() {
       <div className="pb-4">
         <Button
           onClick={handleSubmit}
-          disabled={loading || pin.length !== 4 || confirmPin.length !== 4}
+          disabled={loading || pin.length !== 6 || confirmPin.length !== 6}
           className="w-full h-14 bg-amber-600 hover:bg-amber-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-base font-bold rounded-xl shadow-lg shadow-amber-950/40 transition-all active:scale-[0.98]"
         >
           {loading ? "Saving PIN..." : "SAVE NEW PIN"}

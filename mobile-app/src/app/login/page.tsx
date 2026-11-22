@@ -34,7 +34,7 @@ export default function LoginPage() {
         }
       }
     } else {
-      if (pin.length < 4) {
+      if (pin.length < 6) {
         setPin((prev) => prev + num);
       }
     }
@@ -73,8 +73,8 @@ export default function LoginPage() {
       setActiveField("phone");
       return;
     }
-    if (pin.length < 4) {
-      setError("Please enter your 4-digit PIN.");
+    if (pin.length < 6) {
+      setError("Please enter your 6-digit PIN.");
       setActiveField("pin");
       return;
     }
@@ -170,9 +170,9 @@ export default function LoginPage() {
           <div className="flex items-center gap-3">
             <Lock className={`w-5 h-5 ${activeField === "pin" ? "text-emerald-400" : "text-zinc-500"}`} />
             <div>
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">4-Digit PIN</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">6-Digit PIN</div>
               <div className="flex items-center gap-2 mt-1">
-                {[0, 1, 2, 3].map((idx) => {
+                {[0, 1, 2, 3, 4, 5].map((idx) => {
                   const filled = idx < pin.length;
                   return (
                     <div
@@ -188,7 +188,7 @@ export default function LoginPage() {
               </div>
             </div>
           </div>
-          {pin.length === 4 && (
+          {pin.length === 6 && (
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />
           )}
         </div>
@@ -241,7 +241,7 @@ export default function LoginPage() {
       <div className="pb-4">
         <Button
           onClick={() => handleSubmit()}
-          disabled={loading || phone.replace(/\D/g, "").length < 10 || pin.length < 4}
+          disabled={loading || phone.replace(/\D/g, "").length < 10 || pin.length < 6}
           className="w-full h-14 bg-emerald-600 hover:bg-emerald-500 disabled:bg-zinc-800 disabled:text-zinc-600 text-white text-base font-bold rounded-xl shadow-lg shadow-emerald-950/40 transition-all active:scale-[0.98]"
         >
           {loading ? "Signing in..." : "SIGN IN"}

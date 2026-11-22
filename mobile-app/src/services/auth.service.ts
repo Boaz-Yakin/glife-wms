@@ -15,7 +15,7 @@ export const MANAGER_ROLES: readonly WorkerRole[] = ['SUPER_ADMIN', 'ADMIN', 'SU
 export const INSPECTOR_ROLES: readonly WorkerRole[] = ['INSPECTOR', ...MANAGER_ROLES];
 export const PICKER_ROLES: readonly WorkerRole[] = ['PICKER', ...MANAGER_ROLES];
 
-export const PIN_PATTERN = /^\d{4}$/;
+export const PIN_PATTERN = /^\d{6}$/;
 const MOBILE_ROLES: readonly WorkerRole[] = ['SUPER_ADMIN', 'ADMIN', 'SUPERVISOR', 'INSPECTOR', 'PICKER'];
 
 export type AuthErrorCode =
@@ -153,8 +153,8 @@ export interface LoginResult {
  */
 export async function loginWorker(rawPhone: string, secret: string): Promise<LoginResult> {
   const phone = normalizePhone(rawPhone);
-  if (phone.length < 10 || secret.length < 4) {
-    throw new AuthError('INVALID_INPUT', 'Enter a 10-digit phone number and 4-digit PIN.');
+  if (phone.length < 10 || secret.length < 6) {
+    throw new AuthError('INVALID_INPUT', 'Enter a 10-digit phone number and 6-digit PIN.');
   }
 
   const admin = createAdminClient();
@@ -174,44 +174,20 @@ export async function loginWorker(rawPhone: string, secret: string): Promise<Log
   const supabase = await createClient();
   const workerEmail = await resolveWorkerEmail(admin, phone);
 
-  // If secret is 4 digits, pad with "00" to meet Supabase Auth min 6-chars requirement
-  const authPassword = PIN_PATTERN.test(secret) ? `${secret}00` : secret;
-
   let { data, error } = await supabase.auth.signInWithPassword({
     email: workerEmail,
-    password: authPassword,
+    password: secret,
   });
 
-  // Fallback retry with legacy/raw password if needed
-  if ((error || !data.user) && authPassword !== secret) {
+  // Fallback retry with legacy Glife email if custom domain sign-in fails
+  if ((error || !data.user) && workerEmail !== `${phone}@glife.com`) {
     const retry = await supabase.auth.signInWithPassword({
-      email: workerEmail,
+      email: `${phone}@glife.com`,
       password: secret,
     });
     if (!retry.error && retry.data?.user) {
       data = retry.data;
       error = null;
-    }
-  }
-
-  // Fallback retry with legacy Glife email if custom domain sign-in fails
-  if ((error || !data.user) && workerEmail !== `${phone}@glife.com`) {
-    let retry = await supabase.auth.signInWithPassword({
-      email: `${phone}@glife.com`,
-      password: authPassword,
-    });
-    if (!retry.error && retry.data?.user) {
-      data = retry.data;
-      error = null;
-    } else if (authPassword !== secret) {
-      const retryRaw = await supabase.auth.signInWithPassword({
-        email: `${phone}@glife.com`,
-        password: secret,
-      });
-      if (!retryRaw.error && retryRaw.data?.user) {
-        data = retryRaw.data;
-        error = null;
-      }
     }
   }
 
@@ -238,7 +214,7 @@ export async function loginWorker(rawPhone: string, secret: string): Promise<Log
   }
 
   // Legacy workers still on a non-PIN password (e.g. the web-app default)
-  // are migrated to a 4-digit PIN on this login.
+  // are migrated to a 6-digit PIN on this login.
   let mustChangePin = profile.mustChangePin;
   if (!MANAGER_ROLES.includes(profile.role) && !PIN_PATTERN.test(secret) && !mustChangePin) {
     const { error: flagError } = await admin
@@ -252,18 +228,17 @@ export async function loginWorker(rawPhone: string, secret: string): Promise<Log
   return { role: profile.role, mustChangePin };
 }
 
-/** Sets a new 4-digit PIN and clears the forced-change flag (TRD-002 Q10). */
+/** Sets a new 6-digit PIN and clears the forced-change flag (TRD-002 Q10). */
 export async function changeWorkerPin(newPin: string): Promise<WorkerRole> {
   if (!PIN_PATTERN.test(newPin)) {
-    throw new AuthError('INVALID_INPUT', 'PIN must be exactly 4 digits.');
+    throw new AuthError('INVALID_INPUT', 'PIN must be exactly 6 digits.');
   }
 
   const { userId, role, supabase } = await requireWorker(MOBILE_ROLES, {
     allowPinChangePending: true,
   });
 
-  // Supabase Auth requires >= 6 chars password: pad 4-digit PIN with "00"
-  const { error } = await supabase.auth.updateUser({ password: `${newPin}00` });
+  const { error } = await supabase.auth.updateUser({ password: newPin });
   if (error) {
     throw new AuthError('INVALID_INPUT', error.message);
   }
