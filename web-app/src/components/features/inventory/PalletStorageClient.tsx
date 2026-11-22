@@ -429,34 +429,44 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[40px] px-1.5 py-1 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
+                                  className={`h-[40px] px-1 py-1 rounded-md text-left transition-all border flex items-center overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* Left: Level (Vertically Centered) */}
-                                  <span className="text-[11px] font-black font-mono opacity-80 self-center leading-none pl-0.5">
-                                    {level === 'FLOOR' ? 'FL' : level}
-                                  </span>
-
-                                  {/* Right: Batch # (roomy yellow badge) and Pallet # (vertically centered together) */}
-                                  {isStored ? (
-                                    <div className="flex flex-col items-center justify-center my-auto">
-                                      {batchText && (
-                                        <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
-                                          {batchText}
-                                        </span>
-                                      )}
-                                      {palletText && (
-                                        <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
-                                          {palletText}
-                                        </span>
-                                      )}
+                                  <div className="grid grid-cols-[1fr_auto] items-center w-full h-full gap-0.5">
+                                    {/* 좌측: 층수 (좌측 테두리와 우측 수치 사이의 정중앙에 배치) */}
+                                    <div className="flex items-center justify-center">
+                                      <span
+                                        className={`text-[11px] font-black font-mono leading-none ${
+                                          isStored ? 'text-blue-200' : 'text-slate-400'
+                                        }`}
+                                      >
+                                        {level === 'FLOOR' ? 'FL' : level}
+                                      </span>
                                     </div>
-                                  ) : (
-                                    <span className="text-[10px] text-muted-foreground/30 font-mono pr-1">-</span>
-                                  )}
+
+                                    {/* 우측: 차수(여유있는 황색 박스) 및 하단 팔렛번호(#11) - 수직 중앙 정렬 */}
+                                    {isStored ? (
+                                      <div className="flex flex-col items-center justify-center pr-0.5">
+                                        {batchText && (
+                                          <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
+                                            {batchText}
+                                          </span>
+                                        )}
+                                        {palletText && (
+                                          <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
+                                            {palletText}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center justify-center pr-1.5">
+                                        <span className="text-[10px] text-muted-foreground/30 font-mono">-</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
@@ -493,34 +503,44 @@ export function PalletStorageClient({
                                   key={level}
                                   type="button"
                                   onClick={() => slot && setSelectedSlot(slot)}
-                                  className={`h-[40px] px-1.5 py-1 rounded-md text-left transition-all border flex items-center justify-between overflow-hidden ${
+                                  className={`h-[40px] px-1 py-1 rounded-md text-left transition-all border flex items-center overflow-hidden ${
                                     isStored
                                       ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-2xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* Left: Level (Vertically Centered) */}
-                                  <span className="text-[11px] font-black font-mono opacity-80 self-center leading-none pl-0.5">
-                                    {level === 'FLOOR' ? 'FL' : level}
-                                  </span>
-
-                                  {/* Right: Batch # (roomy yellow badge) and Pallet # (vertically centered together) */}
-                                  {isStored ? (
-                                    <div className="flex flex-col items-center justify-center my-auto">
-                                      {batchText && (
-                                        <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
-                                          {batchText}
-                                        </span>
-                                      )}
-                                      {palletText && (
-                                        <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
-                                          {palletText}
-                                        </span>
-                                      )}
+                                  <div className="grid grid-cols-[1fr_auto] items-center w-full h-full gap-0.5">
+                                    {/* 좌측: 층수 (좌측 테두리와 우측 수치 사이의 정중앙에 배치) */}
+                                    <div className="flex items-center justify-center">
+                                      <span
+                                        className={`text-[11px] font-black font-mono leading-none ${
+                                          isStored ? 'text-blue-200' : 'text-slate-400'
+                                        }`}
+                                      >
+                                        {level === 'FLOOR' ? 'FL' : level}
+                                      </span>
                                     </div>
-                                  ) : (
-                                    <span className="text-[10px] text-muted-foreground/30 font-mono pr-1">-</span>
-                                  )}
+
+                                    {/* 우측: 차수(여유있는 황색 박스) 및 하단 팔렛번호(#11) - 수직 중앙 정렬 */}
+                                    {isStored ? (
+                                      <div className="flex flex-col items-center justify-center pr-0.5">
+                                        {batchText && (
+                                          <span className="text-[9.5px] bg-amber-400 text-slate-950 font-black px-1.5 py-[2px] rounded-xs leading-none shadow-2xs flex items-center justify-center">
+                                            {batchText}
+                                          </span>
+                                        )}
+                                        {palletText && (
+                                          <span className="text-[10px] font-black font-mono tracking-tight text-white dark:text-slate-900 leading-none mt-1">
+                                            {palletText}
+                                          </span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <div className="flex items-center justify-center pr-1.5">
+                                        <span className="text-[10px] text-muted-foreground/30 font-mono">-</span>
+                                      </div>
+                                    )}
+                                  </div>
                                 </button>
                               );
                             })}
