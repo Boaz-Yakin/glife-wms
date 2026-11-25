@@ -458,28 +458,25 @@ export function PalletStorageClient({
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* 좌측 중앙 층수 표기 (FL, A, B, C) */}
-                                  <span
-                                    className={`absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-black font-mono leading-none pointer-events-none select-none z-10 ${
-                                      isMatch
-                                        ? 'text-red-600 font-black'
-                                        : isStored
-                                        ? 'text-blue-200 dark:text-blue-700'
-                                        : 'text-muted-foreground/60'
-                                    }`}
-                                  >
-                                    {level === 'FLOOR' ? 'FL' : level}
-                                  </span>
+                                  {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span
+                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                        isMatch
+                                          ? 'text-red-600 font-black'
+                                          : isStored
+                                          ? 'text-blue-200 dark:text-blue-700'
+                                          : 'text-muted-foreground/60'
+                                      }`}
+                                    >
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
 
-                                  {/* 상단 행: 우측 차수(황색 뱃지) */}
-                                  <div className="flex items-center justify-end w-full leading-none">
                                     {isStored && batchText ? (
                                       <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
                                         {batchText}
                                       </span>
-                                    ) : (
-                                      <div className="h-[12px]" />
-                                    )}
+                                    ) : null}
                                   </div>
 
                                   {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
@@ -546,28 +543,25 @@ export function PalletStorageClient({
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                                   }`}
                                 >
-                                  {/* 좌측 중앙 층수 표기 (FL, A, B, C) */}
-                                  <span
-                                    className={`absolute left-1 top-1/2 -translate-y-1/2 text-[10px] font-black font-mono leading-none pointer-events-none select-none z-10 ${
-                                      isMatch
-                                        ? 'text-red-600 font-black'
-                                        : isStored
-                                        ? 'text-blue-200 dark:text-blue-700'
-                                        : 'text-muted-foreground/60'
-                                    }`}
-                                  >
-                                    {level === 'FLOOR' ? 'FL' : level}
-                                  </span>
+                                  {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
+                                  <div className="flex items-center justify-between w-full leading-none">
+                                    <span
+                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                        isMatch
+                                          ? 'text-red-600 font-black'
+                                          : isStored
+                                          ? 'text-blue-200 dark:text-blue-700'
+                                          : 'text-muted-foreground/60'
+                                      }`}
+                                    >
+                                      {level === 'FLOOR' ? 'FL' : level}
+                                    </span>
 
-                                  {/* 상단 행: 우측 차수(황색 뱃지) */}
-                                  <div className="flex items-center justify-end w-full leading-none">
                                     {isStored && batchText ? (
                                       <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
                                         {batchText}
                                       </span>
-                                    ) : (
-                                      <div className="h-[12px]" />
-                                    )}
+                                    ) : null}
                                   </div>
 
                                   {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
