@@ -32,6 +32,7 @@ export interface PalletStorageStats {
   totalSlots: number;
   occupiedSlots: number;
   emptySlots: number;
+  reservedSlots?: number;
   occupancyRate: number;
   storedPalletCount: number;
   dailyStorageRate: number;
@@ -112,8 +113,9 @@ export async function getPalletList(params?: {
 export async function getPalletStorageStats(dailyRate = 0.85): Promise<PalletStorageStats> {
   const { data: slots } = await getWarehousePalletSummary();
   const totalSlots = slots.length || 768;
+  const reservedSlots = slots.filter((s) => s.slot_status === '예약').length;
   const occupiedSlots = slots.filter((s) => s.slot_status === '보관중' || s.stored_pallet_count > 0).length;
-  const emptySlots = Math.max(0, totalSlots - occupiedSlots);
+  const emptySlots = Math.max(0, totalSlots - occupiedSlots - reservedSlots);
   const occupancyRate = totalSlots > 0 ? parseFloat(((occupiedSlots / totalSlots) * 100).toFixed(1)) : 0;
   
   // Total actual pallets
@@ -124,6 +126,7 @@ export async function getPalletStorageStats(dailyRate = 0.85): Promise<PalletSto
     totalSlots,
     occupiedSlots,
     emptySlots,
+    reservedSlots,
     occupancyRate,
     storedPalletCount,
     dailyStorageRate: dailyRate,

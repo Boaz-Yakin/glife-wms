@@ -35,7 +35,7 @@ export function PalletStorageClient({
   // Filters
   const [selectedAisle, setSelectedAisle] = useState<number>(1); // 0 = all, 1 = default
   const [selectedLevel, setSelectedLevel] = useState<'ALL' | 'FLOOR' | 'A' | 'B' | 'C'>('ALL');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'STORED' | 'EMPTY'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'STORED' | 'EMPTY' | 'RESERVED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'corridor' | 'grid'>('corridor');
 
@@ -70,9 +70,11 @@ export function PalletStorageClient({
       if (selectedAisle !== 0 && aisle !== selectedAisle) return false;
       if (selectedLevel !== 'ALL' && level !== selectedLevel) return false;
 
-      const isStored = slot.slot_status === '보관중' || slot.stored_pallet_count > 0;
+      const isReserved = slot.slot_status === '예약';
+      const isStored = !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
       if (statusFilter === 'STORED' && !isStored) return false;
-      if (statusFilter === 'EMPTY' && isStored) return false;
+      if (statusFilter === 'EMPTY' && (isStored || isReserved)) return false;
+      if (statusFilter === 'RESERVED' && !isReserved) return false;
 
       if (searchQuery.trim()) {
         const sq = searchQuery.trim().toLowerCase();
@@ -284,9 +286,16 @@ export function PalletStorageClient({
 
           {/* Status Selection */}
           <div className="flex items-center gap-1 bg-muted p-1 rounded-xl">
-            {(['ALL', 'STORED', 'EMPTY'] as const).map((st) => {
+            {(['ALL', 'STORED', 'EMPTY', 'RESERVED'] as const).map((st) => {
               const isActive = statusFilter === st;
-              const label = st === 'ALL' ? 'All Slots' : st === 'STORED' ? 'Occupied' : 'Vacant';
+              const label =
+                st === 'ALL'
+                  ? 'All Slots'
+                  : st === 'STORED'
+                  ? 'Occupied'
+                  : st === 'EMPTY'
+                  ? 'Vacant'
+                  : 'Reserved';
               return (
                 <button
                   key={st}
@@ -436,12 +445,16 @@ export function PalletStorageClient({
                             {leftLevels.map((level) => {
                               const code = `${aisle}-L-${bay}-${level}`;
                               const slot = slotMap.get(code);
-                              const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const isReserved = slot && slot.slot_status === '예약';
+                              const isStored = slot && !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
-                              const isFilteredOut = (statusFilter === 'STORED' && !isStored) || (statusFilter === 'EMPTY' && isStored);
-                              const batchText = slot?.batch_list?.replace(/^#/, '') || '';
+                              const isFilteredOut =
+                                (statusFilter === 'STORED' && !isStored) ||
+                                (statusFilter === 'EMPTY' && (isStored || isReserved)) ||
+                                (statusFilter === 'RESERVED' && !isReserved);
+                              const batchText = isReserved ? 'RSV' : (slot?.batch_list?.replace(/^#/, '') || '');
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
-                              const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
+                              const palletText = isReserved ? '예약' : (rawPallet ? `#${rawPallet.slice(-4)}` : '');
 
                               return (
                                 <button
@@ -453,6 +466,8 @@ export function PalletStorageClient({
                                       ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
                                       : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
+                                      : isReserved
+                                      ? 'bg-purple-100/90 text-purple-950 border-purple-300 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-800 shadow-xs hover:opacity-90'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
@@ -464,6 +479,8 @@ export function PalletStorageClient({
                                       className={`text-[9.5px] font-black font-mono leading-none shrink-0 ${
                                         isMatch
                                           ? 'text-red-600 font-black'
+                                          : isReserved
+                                          ? 'text-purple-700 dark:text-purple-300 font-bold'
                                           : isStored
                                           ? 'text-blue-200 dark:text-blue-700'
                                           : 'text-muted-foreground/60'
@@ -521,12 +538,16 @@ export function PalletStorageClient({
                             {rightLevels.map((level) => {
                               const code = `${aisle}-R-${bay}-${level}`;
                               const slot = slotMap.get(code);
-                              const isStored = slot && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
+                              const isReserved = slot && slot.slot_status === '예약';
+                              const isStored = slot && !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
-                              const isFilteredOut = (statusFilter === 'STORED' && !isStored) || (statusFilter === 'EMPTY' && isStored);
-                              const batchText = slot?.batch_list?.replace(/^#/, '') || '';
+                              const isFilteredOut =
+                                (statusFilter === 'STORED' && !isStored) ||
+                                (statusFilter === 'EMPTY' && (isStored || isReserved)) ||
+                                (statusFilter === 'RESERVED' && !isReserved);
+                              const batchText = isReserved ? 'RSV' : (slot?.batch_list?.replace(/^#/, '') || '');
                               const rawPallet = slot?.pallet_list?.replace(/^P\.?/i, '') || '';
-                              const palletText = rawPallet ? `#${rawPallet.slice(-4)}` : '';
+                              const palletText = isReserved ? '예약' : (rawPallet ? `#${rawPallet.slice(-4)}` : '');
 
                               return (
                                 <button
@@ -538,6 +559,8 @@ export function PalletStorageClient({
                                       ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
                                       : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
+                                      : isReserved
+                                      ? 'bg-purple-100/90 text-purple-950 border-purple-300 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-800 shadow-xs hover:opacity-90'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
@@ -549,6 +572,8 @@ export function PalletStorageClient({
                                       className={`text-[9.5px] font-black font-mono leading-none shrink-0 ${
                                         isMatch
                                           ? 'text-red-600 font-black'
+                                          : isReserved
+                                          ? 'text-purple-700 dark:text-purple-300 font-bold'
                                           : isStored
                                           ? 'text-blue-200 dark:text-blue-700'
                                           : 'text-muted-foreground/60'
@@ -595,14 +620,17 @@ export function PalletStorageClient({
             /* FLAT GRID VIEW */
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5 max-h-[580px] overflow-y-auto p-1 bg-muted/30 border rounded-xl">
               {filteredSlots.map((slot) => {
-                const isStored = slot.slot_status === '보관중' || slot.stored_pallet_count > 0;
+                const isReserved = slot.slot_status === '예약';
+                const isStored = !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                 return (
                   <button
                     key={slot.location_id}
                     type="button"
                     onClick={() => setSelectedSlot(slot)}
                     className={`p-2 rounded-lg text-left transition-all border ${
-                      isStored
+                      isReserved
+                        ? 'bg-purple-100 text-purple-950 dark:bg-purple-950/70 dark:text-purple-200 border-purple-300 dark:border-purple-800 shadow-xs hover:opacity-90'
+                        : isStored
                         ? 'bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 border-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                         : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
                     }`}
@@ -613,12 +641,14 @@ export function PalletStorageClient({
                     <div className="mt-1 flex items-center justify-between text-[9px]">
                       <span
                         className={`px-1 py-0.2 rounded font-bold ${
-                          isStored
+                          isReserved
+                            ? 'bg-purple-200 text-purple-950 dark:bg-purple-900 dark:text-purple-200'
+                            : isStored
                             ? 'bg-amber-400 text-slate-900'
                             : 'bg-muted text-muted-foreground'
                         }`}
                       >
-                        {isStored ? (slot.batch_list ? `#${slot.batch_list}` : 'CJ') : 'Empty'}
+                        {isReserved ? 'Reserved' : isStored ? (slot.batch_list ? `#${slot.batch_list}` : 'CJ') : 'Empty'}
                       </span>
                       {isStored && slot.pallet_list && (
                         <span className="font-mono opacity-80">P.{slot.pallet_list.slice(0, 4)}</span>
@@ -713,7 +743,9 @@ export function PalletStorageClient({
             <div className="space-y-2 text-xs mb-5">
               <div className="flex justify-between py-1 border-b">
                 <span className="text-muted-foreground">Status</span>
-                <span className="font-bold text-primary">{selectedSlot.slot_status}</span>
+                <span className={`font-bold ${selectedSlot.slot_status === '예약' ? 'text-purple-600 dark:text-purple-400' : 'text-primary'}`}>
+                  {selectedSlot.slot_status}
+                </span>
               </div>
               {selectedSlot.batch_list && (
                 <div className="flex justify-between py-1 border-b">
