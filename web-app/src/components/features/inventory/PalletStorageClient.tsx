@@ -459,9 +459,9 @@ export function PalletStorageClient({
                                   }`}
                                 >
                                   {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
-                                  <div className="flex items-center justify-between w-full leading-none">
+                                  <div className="flex items-center justify-between w-full leading-none gap-0.5">
                                     <span
-                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                      className={`text-[9.5px] font-black font-mono leading-none shrink-0 ${
                                         isMatch
                                           ? 'text-red-600 font-black'
                                           : isStored
@@ -473,7 +473,7 @@ export function PalletStorageClient({
                                     </span>
 
                                     {isStored && batchText ? (
-                                      <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
+                                      <span className="text-[8px] sm:text-[8.5px] bg-amber-400 text-slate-950 font-black px-1 py-[0.5px] rounded-xs leading-none shadow-2xs text-center shrink-0 tracking-tighter">
                                         {batchText}
                                       </span>
                                     ) : null}
@@ -544,9 +544,9 @@ export function PalletStorageClient({
                                   }`}
                                 >
                                   {/* 상단 행: 좌측 층수(FL, A, B, C) + 우측 차수(황색 뱃지) */}
-                                  <div className="flex items-center justify-between w-full leading-none">
+                                  <div className="flex items-center justify-between w-full leading-none gap-0.5">
                                     <span
-                                      className={`text-[10px] font-black font-mono leading-none shrink-0 ${
+                                      className={`text-[9.5px] font-black font-mono leading-none shrink-0 ${
                                         isMatch
                                           ? 'text-red-600 font-black'
                                           : isStored
@@ -558,7 +558,7 @@ export function PalletStorageClient({
                                     </span>
 
                                     {isStored && batchText ? (
-                                      <span className="text-[8.5px] sm:text-[9px] bg-amber-400 text-slate-950 font-black px-1 py-[1px] rounded-xs leading-none shadow-2xs text-center shrink-0">
+                                      <span className="text-[8px] sm:text-[8.5px] bg-amber-400 text-slate-950 font-black px-1 py-[0.5px] rounded-xs leading-none shadow-2xs text-center shrink-0 tracking-tighter">
                                         {batchText}
                                       </span>
                                     ) : null}
