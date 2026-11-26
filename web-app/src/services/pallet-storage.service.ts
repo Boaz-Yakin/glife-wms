@@ -1,5 +1,12 @@
 import { createClient } from '@/lib/supabase/server';
 
+export const RESERVED_SLOT_CODES = new Set([
+  '1-R-01-FLOOR', '1-R-01-A', '1-R-01-B', '1-R-01-C',
+  '1-R-02-FLOOR', '1-R-02-A', '1-R-02-B', '1-R-02-C',
+  '2-L-02-FLOOR', '2-L-02-A', '2-L-02-B', '2-L-02-C',
+  '2-R-02-FLOOR', '2-R-02-A', '2-R-02-B', '2-R-02-C',
+]);
+
 export interface PalletSummarySlot {
   location_id: string;
   location_code: string;
@@ -56,9 +63,21 @@ export async function getWarehousePalletSummary(aisle?: number): Promise<{ data:
       return { data: [], error: error.message };
     }
     // CJ 표준 768 슬롯(1-L-01-FLOOR ~ 3-R-32-C)만 엄격히 필터링 (일반 WMS 로케이션 LOC-* 제외)
-    const cjSlots = (data || []).filter((s: PalletSummarySlot) =>
-      /^[1-3]-[LR]-[0-9]{2}-(FLOOR|[ABC])$/.test(s.location_code)
-    );
+    const cjSlots = (data || [])
+      .filter((s: PalletSummarySlot) =>
+        /^[1-3]-[LR]-[0-9]{2}-(FLOOR|[ABC])$/.test(s.location_code)
+      )
+      .map((s: PalletSummarySlot) => {
+        if (RESERVED_SLOT_CODES.has(s.location_code) || s.batch_list?.includes('RESERVED')) {
+          return {
+            ...s,
+            slot_status: '예약',
+            batch_list: 'RESERVED',
+            pallet_list: '예약',
+          };
+        }
+        return s;
+      });
     return { data: cjSlots, error: null };
   } catch (err: unknown) {
     return { data: [], error: err instanceof Error ? err.message : 'Unknown error' };
@@ -118,8 +137,10 @@ export async function getPalletStorageStats(dailyRate = 0.85): Promise<PalletSto
   const emptySlots = Math.max(0, totalSlots - occupiedSlots - reservedSlots);
   const occupancyRate = totalSlots > 0 ? parseFloat(((occupiedSlots / totalSlots) * 100).toFixed(1)) : 0;
   
-  // Total actual pallets
-  const storedPalletCount = slots.reduce((acc, s) => acc + (Number(s.stored_pallet_count) || 0), 0);
+  // Total actual pallets (exclude reserved slots from billing count)
+  const storedPalletCount = slots
+    .filter((s) => s.slot_status !== '예약')
+    .reduce((acc, s) => acc + (Number(s.stored_pallet_count) || 0), 0);
   const monthlyEstimatedBilling = parseFloat((storedPalletCount * dailyRate * 30).toFixed(2));
 
   return {

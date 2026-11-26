@@ -12,7 +12,7 @@ import {
   TrendingUp,
   Filter
 } from 'lucide-react';
-import type { PalletSummarySlot, PalletItem, PalletStorageStats } from '@/services/pallet-storage.service';
+import { RESERVED_SLOT_CODES, type PalletSummarySlot, type PalletItem, type PalletStorageStats } from '@/services/pallet-storage.service';
 import { formatDisplayLocation } from '@/lib/location';
 
 interface PalletStorageClientProps {
@@ -70,7 +70,10 @@ export function PalletStorageClient({
       if (selectedAisle !== 0 && aisle !== selectedAisle) return false;
       if (selectedLevel !== 'ALL' && level !== selectedLevel) return false;
 
-      const isReserved = slot.slot_status === '예약';
+      const isReserved =
+        slot.slot_status === '예약' ||
+        slot.batch_list?.includes('RESERVED') ||
+        RESERVED_SLOT_CODES.has(slot.location_code);
       const isStored = !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
       if (statusFilter === 'STORED' && !isStored) return false;
       if (statusFilter === 'EMPTY' && (isStored || isReserved)) return false;
@@ -445,7 +448,9 @@ export function PalletStorageClient({
                             {leftLevels.map((level) => {
                               const code = `${aisle}-L-${bay}-${level}`;
                               const slot = slotMap.get(code);
-                              const isReserved = slot && slot.slot_status === '예약';
+                              const isReserved =
+                                (slot && (slot.slot_status === '예약' || slot.batch_list?.includes('RESERVED'))) ||
+                                RESERVED_SLOT_CODES.has(code);
                               const isStored = slot && !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
                               const isFilteredOut =
@@ -460,7 +465,21 @@ export function PalletStorageClient({
                                 <button
                                   key={level}
                                   type="button"
-                                  onClick={() => slot && setSelectedSlot(slot)}
+                                  onClick={() => {
+                                    if (slot) {
+                                      setSelectedSlot(slot);
+                                    } else if (isReserved) {
+                                      setSelectedSlot({
+                                        location_id: code,
+                                        location_code: code,
+                                        zone_type: 'A',
+                                        stored_pallet_count: 0,
+                                        slot_status: '예약',
+                                        batch_list: 'RESERVED',
+                                        pallet_list: '예약',
+                                      });
+                                    }
+                                  }}
                                   className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
                                     isFilteredOut
                                       ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
@@ -538,7 +557,9 @@ export function PalletStorageClient({
                             {rightLevels.map((level) => {
                               const code = `${aisle}-R-${bay}-${level}`;
                               const slot = slotMap.get(code);
-                              const isReserved = slot && slot.slot_status === '예약';
+                              const isReserved =
+                                (slot && (slot.slot_status === '예약' || slot.batch_list?.includes('RESERVED'))) ||
+                                RESERVED_SLOT_CODES.has(code);
                               const isStored = slot && !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                               const isMatch = isSearchMatch(slot);
                               const isFilteredOut =
@@ -553,7 +574,21 @@ export function PalletStorageClient({
                                 <button
                                   key={level}
                                   type="button"
-                                  onClick={() => slot && setSelectedSlot(slot)}
+                                  onClick={() => {
+                                    if (slot) {
+                                      setSelectedSlot(slot);
+                                    } else if (isReserved) {
+                                      setSelectedSlot({
+                                        location_id: code,
+                                        location_code: code,
+                                        zone_type: 'A',
+                                        stored_pallet_count: 0,
+                                        slot_status: '예약',
+                                        batch_list: 'RESERVED',
+                                        pallet_list: '예약',
+                                      });
+                                    }
+                                  }}
                                   className={`h-[42px] p-1 rounded-md text-left transition-all relative overflow-hidden border flex flex-col justify-between min-w-0 ${
                                     isFilteredOut
                                       ? 'opacity-15 grayscale pointer-events-none border-dashed border-border/40 bg-muted/20'
@@ -620,7 +655,10 @@ export function PalletStorageClient({
             /* FLAT GRID VIEW */
             <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-12 gap-1.5 max-h-[580px] overflow-y-auto p-1 bg-muted/30 border rounded-xl">
               {filteredSlots.map((slot) => {
-                const isReserved = slot.slot_status === '예약';
+                const isReserved =
+                  slot.slot_status === '예약' ||
+                  slot.batch_list?.includes('RESERVED') ||
+                  RESERVED_SLOT_CODES.has(slot.location_code);
                 const isStored = !isReserved && (slot.slot_status === '보관중' || slot.stored_pallet_count > 0);
                 return (
                   <button
@@ -743,8 +781,8 @@ export function PalletStorageClient({
             <div className="space-y-2 text-xs mb-5">
               <div className="flex justify-between py-1 border-b">
                 <span className="text-muted-foreground">Status</span>
-                <span className={`font-bold ${selectedSlot.slot_status === '예약' ? 'text-purple-600 dark:text-purple-400' : 'text-primary'}`}>
-                  {selectedSlot.slot_status}
+                <span className={`font-bold ${selectedSlot.slot_status === '예약' || selectedSlot.batch_list?.includes('RESERVED') || RESERVED_SLOT_CODES.has(selectedSlot.location_code) ? 'text-purple-600 dark:text-purple-400' : 'text-primary'}`}>
+                  {selectedSlot.slot_status === '예약' || selectedSlot.batch_list?.includes('RESERVED') || RESERVED_SLOT_CODES.has(selectedSlot.location_code) ? '예약 (RESERVED)' : selectedSlot.slot_status}
                 </span>
               </div>
               {selectedSlot.batch_list && (
