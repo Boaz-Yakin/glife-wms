@@ -1,5 +1,5 @@
 -- ==============================================================================
--- CJ-Inv: 1R-01/02 & 2L-02/2R-02 슬롯 전용 예약(RESERVED) 설정 마이그레이션
+-- WMS-G: 1R-01/02 & 2L-01/02 & 2R-01/02 슬롯 전용 예약(RESERVED) 설정 마이그레이션
 -- Target: Supabase PostgreSQL (WMS Shared DB)
 -- Migration Date: 2026-11-25
 -- ==============================================================================
@@ -15,7 +15,9 @@ SELECT
         WHEN BOOL_OR(p.status = 'RESERVED') OR l.code IN (
             '1-R-01-FLOOR', '1-R-01-A', '1-R-01-B', '1-R-01-C',
             '1-R-02-FLOOR', '1-R-02-A', '1-R-02-B', '1-R-02-C',
+            '2-L-01-FLOOR', '2-L-01-A', '2-L-01-B', '2-L-01-C',
             '2-L-02-FLOOR', '2-L-02-A', '2-L-02-B', '2-L-02-C',
+            '2-R-01-FLOOR', '2-R-01-A', '2-R-01-B', '2-R-01-C',
             '2-R-02-FLOOR', '2-R-02-A', '2-R-02-B', '2-R-02-C'
         ) THEN '예약'
         WHEN COUNT(CASE WHEN p.status = 'STORED' THEN p.id END) > 0 THEN '보관중' 
@@ -28,7 +30,7 @@ LEFT JOIN public.pallets p
     ON l.id = p.location_id AND p.status IN ('STORED', 'RESERVED')
 GROUP BY l.id, l.code, l.zone_type;
 
--- 2. 1R-01/02 & 2L-02/2R-02 총 16개 슬롯에 대해 예약(RESERVED) 레코드 등록
+-- 2. 1R-01/02 & 2L-01/02 & 2R-01/02 총 24개 슬롯에 대해 예약(RESERVED) 레코드 등록
 DO $$
 DECLARE
     v_tenant_id UUID;
@@ -38,7 +40,9 @@ DECLARE
     v_target_codes TEXT[] := ARRAY[
         '1-R-01-FLOOR', '1-R-01-A', '1-R-01-B', '1-R-01-C',
         '1-R-02-FLOOR', '1-R-02-A', '1-R-02-B', '1-R-02-C',
+        '2-L-01-FLOOR', '2-L-01-A', '2-L-01-B', '2-L-01-C',
         '2-L-02-FLOOR', '2-L-02-A', '2-L-02-B', '2-L-02-C',
+        '2-R-01-FLOOR', '2-R-01-A', '2-R-01-B', '2-R-01-C',
         '2-R-02-FLOOR', '2-R-02-A', '2-R-02-B', '2-R-02-C'
     ];
     v_code TEXT;
@@ -60,7 +64,7 @@ BEGIN
         SELECT id INTO v_client_id FROM public.clients WHERE tenant_id = v_tenant_id LIMIT 1;
     END IF;
 
-    -- 16개 슬롯 예약 처리
+    -- 24개 슬롯 예약 처리
     FOREACH v_code IN ARRAY v_target_codes LOOP
         -- 로케이션 확인 또는 생성
         SELECT id INTO v_loc_id FROM public.locations WHERE code = v_code;

@@ -234,7 +234,7 @@ export function OperatorsManagementClient({ initialOperators }: OperatorsManagem
           <div>
             <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Active</p>
             <h3 className="text-2xl font-black mt-1 text-emerald-600">{stats.active}명</h3>
-            <p className="text-xs text-muted-foreground mt-0.5">CJ-Inv 로그인 가능</p>
+            <p className="text-xs text-muted-foreground mt-0.5">WMS-G 로그인 가능</p>
           </div>
           <div className="size-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
             <UserCheck className="size-6" />
@@ -428,7 +428,7 @@ export function OperatorsManagementClient({ initialOperators }: OperatorsManagem
           <div className="bg-card text-foreground w-full max-w-sm rounded-3xl p-5 shadow-2xl border animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b pb-3 mb-4">
               <div>
-                <span className="text-[10px] font-bold text-muted-foreground uppercase">CJ-Inv Auth</span>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase">WMS-G Auth</span>
                 <h3 className="text-lg font-black">새 작업자 등록</h3>
               </div>
               <button
