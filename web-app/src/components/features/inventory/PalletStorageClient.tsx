@@ -487,7 +487,7 @@ export function PalletStorageClient({
                                       : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
                                       : isReserved
-                                      ? 'bg-purple-100/90 text-purple-950 border-purple-300 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-800 shadow-xs hover:opacity-90'
+                                      ? 'bg-slate-50/80 text-foreground border-dashed border-slate-300 dark:bg-slate-900/40 dark:border-slate-700 shadow-2xs hover:bg-slate-100/80'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
@@ -500,7 +500,7 @@ export function PalletStorageClient({
                                         isMatch
                                           ? 'text-red-600 font-black'
                                           : isReserved
-                                          ? 'text-purple-700 dark:text-purple-300 font-bold'
+                                          ? 'text-muted-foreground/60 font-medium'
                                           : isStored
                                           ? 'text-blue-200 dark:text-blue-700'
                                           : 'text-muted-foreground/60'
@@ -516,9 +516,13 @@ export function PalletStorageClient({
                                     ) : null}
                                   </div>
 
-                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
+                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 또는 예약/빈자리 */}
                                   <div className="flex items-center justify-center w-full leading-none">
-                                    {isStored ? (
+                                    {isReserved ? (
+                                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-tight leading-none">
+                                        예약
+                                      </span>
+                                    ) : isStored ? (
                                       <span
                                         className={`text-[10px] sm:text-[10.5px] font-black font-mono tracking-tight leading-none ${
                                           isMatch ? 'text-slate-950' : 'text-white dark:text-slate-900'
@@ -596,7 +600,7 @@ export function PalletStorageClient({
                                       : isMatch
                                       ? 'ring-2 ring-amber-500 bg-amber-50 border-amber-500 shadow-md animate-heartbeat'
                                       : isReserved
-                                      ? 'bg-purple-100/90 text-purple-950 border-purple-300 dark:bg-purple-950/70 dark:text-purple-200 dark:border-purple-800 shadow-xs hover:opacity-90'
+                                      ? 'bg-slate-50/80 text-foreground border-dashed border-slate-300 dark:bg-slate-900/40 dark:border-slate-700 shadow-2xs hover:bg-slate-100/80'
                                       : isStored
                                       ? 'bg-[#173452] text-white border-[#173452] dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100 shadow-xs hover:opacity-90'
                                       : 'bg-card text-foreground border-border hover:border-primary/50 hover:bg-muted/40'
@@ -609,7 +613,7 @@ export function PalletStorageClient({
                                         isMatch
                                           ? 'text-red-600 font-black'
                                           : isReserved
-                                          ? 'text-purple-700 dark:text-purple-300 font-bold'
+                                          ? 'text-muted-foreground/60 font-medium'
                                           : isStored
                                           ? 'text-blue-200 dark:text-blue-700'
                                           : 'text-muted-foreground/60'
@@ -625,9 +629,13 @@ export function PalletStorageClient({
                                     ) : null}
                                   </div>
 
-                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 */}
+                                  {/* 하단 행: 팔렛 번호 (#11) 중앙 배치 또는 예약/빈자리 */}
                                   <div className="flex items-center justify-center w-full leading-none">
-                                    {isStored ? (
+                                    {isReserved ? (
+                                      <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 tracking-tight leading-none">
+                                        예약
+                                      </span>
+                                    ) : isStored ? (
                                       <span
                                         className={`text-[10px] sm:text-[10.5px] font-black font-mono tracking-tight leading-none ${
                                           isMatch ? 'text-slate-950' : 'text-white dark:text-slate-900'
