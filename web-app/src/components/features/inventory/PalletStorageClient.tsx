@@ -12,7 +12,8 @@ import {
   TrendingUp,
   Filter
 } from 'lucide-react';
-import { RESERVED_SLOT_CODES, type PalletSummarySlot, type PalletItem, type PalletStorageStats } from '@/services/pallet-storage.service';
+import { RESERVED_SLOT_CODES } from '@/constants/slots';
+import type { PalletSummarySlot, PalletItem, PalletStorageStats } from '@/services/pallet-storage.service';
 import { formatDisplayLocation } from '@/lib/location';
 
 interface PalletStorageClientProps {
